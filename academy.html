@@ -15,13 +15,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20260824-buymodal-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20260825-flow-v1">
 </head>
 <body class="academy-body academy-sale-body">
 
 <header class="top-header academy-top academy-sale-top">
   <a href="index.html" class="brand" aria-label="Kenji Academy - hlavní stránka"><div class="brand-name">KENJI ACADEMY</div></a>
-  <a class="academy-top-cta" href="index.html?start=1" data-cta-location="header-free">Vyzkoušet zdarma</a>
+  <div class="academy-top-actions">
+    <button type="button" class="academy-top-login" id="academy-login-btn">Přihlásit se</button>
+    <a class="academy-top-cta" href="index.html?start=1" data-cta-location="header-free">Vyzkoušet zdarma</a>
+  </div>
 </header>
 
 <main class="academy-page academy-sale-page">
@@ -412,6 +415,25 @@
 </main>
 
 <script src="assets/academy-gallery.js?v=20260824-ai-retry-v1"></script>
+<script src="assets/auth.js?v=20260825-flow-v1"></script>
 <script src="assets/script.js?v=20260824-ai-retry-v1"></script>
+<script>
+// Přihlašovací tlačítko na prodejní stránce. Existující člen se přihlásí a jde rovnou
+// do aplikace (ne přes onboarding). Přihlášenému se tlačítko změní na „Do aplikace".
+(function () {
+  var btn = document.getElementById('academy-login-btn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    if (window.KenjiAuth && window.KenjiAuth.login) window.KenjiAuth.login();
+    else location.href = 'index.html';
+  });
+  function sync() {
+    var logged = !!(window.KenjiAuth && window.KenjiAuth.isLoggedIn && window.KenjiAuth.isLoggedIn());
+    btn.textContent = logged ? 'Do aplikace →' : 'Přihlásit se';
+  }
+  document.addEventListener('kenji-auth-ready', sync);
+  setTimeout(sync, 1200);
+})();
+</script>
 </body>
 </html>

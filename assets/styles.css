@@ -5239,6 +5239,21 @@ body.selfp-modal-open { overflow: hidden; }
   font-size: 13px;
   font-weight: 900;
 }
+.academy-top-actions { display: flex; align-items: center; gap: 10px; }
+/* „Přihlásit se" — minimalistické, ne oranžové (sekundární vedle CTA) */
+.academy-top-login {
+  color: var(--text-strong);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.26);
+  border-radius: 999px;
+  padding: 9px 15px;
+  font: 800 13px/1 'Inter', sans-serif;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.academy-top-login:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.45); }
 .academy-page {
   width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
@@ -5633,6 +5648,26 @@ body.selfp-modal-open { overflow: hidden; }
   color: var(--text-dim);
   background: rgba(255,255,255,.06);
 }
+/* Stránka po platbě — vylepšený vzhled + přihlašovací krok */
+.checkout-success { width: min(560px, 100%); padding: 40px 38px 34px; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+.checkout-badge { width: 66px; height: 66px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(80,200,120,.14); border: 1px solid rgba(80,200,120,.34); color: #50c878; }
+.checkout-badge svg { width: 30px; height: 30px; }
+.checkout-lead { max-width: 440px; margin: 6px auto 24px; color: var(--text-dim); font-size: 15px; line-height: 1.6; }
+.checkout-lead strong { color: var(--text-strong); }
+.checkout-form { display: flex; flex-direction: column; gap: 10px; max-width: 380px; margin: 0 auto; }
+.checkout-input { width: 100%; height: 50px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--border-strong, #333);
+  background: var(--bg-elevated); color: var(--text-strong); font: 500 15px/1 'Inter', sans-serif; text-align: center; transition: border-color .15s; }
+.checkout-input::placeholder { color: var(--text-mute); }
+.checkout-input:focus { outline: none; border-color: var(--orange); }
+.checkout-form .academy-cta { width: 100%; justify-content: center; text-align: center; }
+.checkout-error { max-width: 380px; margin: 12px auto 0; color: #ff6b6b; font-size: 13px; line-height: 1.5; }
+.checkout-sent { max-width: 400px; margin: 8px auto 0; padding: 16px 18px; border-radius: 12px;
+  background: rgba(80,200,120,.08); border: 1px solid rgba(80,200,120,.24); color: var(--text); font-size: 14px; line-height: 1.55; }
+.checkout-sent strong { color: var(--text-strong); }
+.checkout-sent-ico { font-size: 26px; margin-bottom: 8px; }
+.checkout-sent-spam { color: var(--text-dim); }
+.checkout-note { max-width: 400px; margin: 16px auto 0; color: var(--text-mute); font-size: 12px; line-height: 1.5; }
 .checkout-panel h1 {
   font-size: clamp(42px, 7vw, 72px);
   margin-bottom: 12px;

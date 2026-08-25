@@ -4,27 +4,94 @@
 <script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Platba proběhla — Kenji Academy</title>
-<meta name="description" content="Platba proběhla úspěšně. Přístup do Kenji Academy se připravuje.">
+<title>Vítej v Kenji Academy — platba proběhla</title>
+<meta name="description" content="Platba proběhla. Přihlas se e-mailem a máš plný přístup do Kenji Academy.">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20260824-buymodal-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20260825-flow-v1">
 </head>
 <body>
 <main class="checkout-state">
   <a href="index.html" class="brand checkout-brand"><div class="brand-name">KENJI ACADEMY</div></a>
-  <section class="checkout-panel">
-    <div class="checkout-icon">✓</div>
-    <p class="academy-kicker">Platba proběhla</p>
-    <h1>Vítej v Kenji Academy.</h1>
-    <p>Stripe platbu potvrdil. Pokud jsi použil stejný e-mail jako při přihlášení, přístup se po zpracování webhooku automaticky odemkne.</p>
-    <div class="checkout-actions">
-      <a class="academy-cta" href="kurzy.html">Pokračovat do kurzů</a>
-      <a class="academy-cta secondary" href="index.html">Zpět do databáze</a>
+  <section class="checkout-panel checkout-success">
+    <div class="checkout-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5 11-12"/></svg>
+    </div>
+    <p class="academy-kicker">Platba proběhla · máš plný přístup</p>
+    <h1>Vítej v Kenji Academy. 🎉</h1>
+
+    <!-- Přihlášený uživatel → rovnou do aplikace -->
+    <div id="cs-logged" hidden>
+      <p class="checkout-lead">Jsi uvnitř. Klikni a pojď si to prohlédnout — kurzy, komunita, databáze i Kenji AI jsou teď tvoje.</p>
+      <div class="checkout-actions">
+        <a class="academy-cta" href="index.html">Vstoupit do Academy →</a>
+      </div>
+    </div>
+
+    <!-- Nepřihlášený (zaplatil na prodejní stránce) → dokončit přihlášení -->
+    <div id="cs-login">
+      <p class="checkout-lead">Zbývá jediný krok. Přihlas se <strong>stejným e-mailem, který jsi zadal u platby</strong> — pošleme ti přihlašovací odkaz. Klikneš na něj, projdeš krátkým nastavením a jsi uvnitř.</p>
+      <form id="cs-form" class="checkout-form" novalidate>
+        <input id="cs-email" class="checkout-input" type="email" inputmode="email" autocomplete="email" placeholder="tvuj@email.cz" aria-label="E-mail">
+        <button id="cs-submit" class="academy-cta" type="submit">Poslat přihlašovací odkaz →</button>
+      </form>
+      <p id="cs-error" class="checkout-error" hidden></p>
+      <div id="cs-sent" class="checkout-sent" hidden>
+        <div class="checkout-sent-ico" aria-hidden="true">📩</div>
+        <p>Poslali jsme přihlašovací odkaz na <strong id="cs-sent-email"></strong>. Otevři e-mail a klikni na tlačítko — pak dokončíš krátké nastavení a jsi uvnitř. <span class="checkout-sent-spam">(Když nic nevidíš, mrkni i do spamu.)</span></p>
+      </div>
+      <p class="checkout-note">Přístup je připravený u tvého e-mailu. Odkaz slouží jen k přihlášení.</p>
     </div>
   </section>
 </main>
+
+<script src="assets/auth.js?v=20260825-flow-v1"></script>
+<script>
+(function () {
+  var loggedBox = document.getElementById('cs-logged');
+  var loginBox = document.getElementById('cs-login');
+  var form = document.getElementById('cs-form');
+  var emailEl = document.getElementById('cs-email');
+  var submitEl = document.getElementById('cs-submit');
+  var errEl = document.getElementById('cs-error');
+  var sentEl = document.getElementById('cs-sent');
+
+  function showLogged() { loginBox.hidden = true; loggedBox.hidden = false; }
+
+  // Když je uživatel už přihlášený (zaplatil přihlášený), ukaž rovnou vstup do aplikace.
+  function checkLogged() {
+    if (window.KenjiAuth && window.KenjiAuth.isLoggedIn && window.KenjiAuth.isLoggedIn()) { showLogged(); return true; }
+    return false;
+  }
+  document.addEventListener('kenji-auth-ready', checkLogged);
+  setTimeout(checkLogged, 1200);
+
+  function err(msg) { errEl.textContent = msg; errEl.hidden = false; }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    errEl.hidden = true;
+    var email = (emailEl.value || '').trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err('Zadej platný e-mail — ten samý, který jsi použil u platby.'); emailEl.focus(); return; }
+    if (!window.KenjiAuth || !window.KenjiAuth.requestMagicLink) { err('Přihlášení se teď nepodařilo načíst. Zkus stránku obnovit.'); return; }
+    submitEl.disabled = true; submitEl.textContent = 'Posílám…';
+    try {
+      var res = await window.KenjiAuth.requestMagicLink(email, { redirect: 'index.html' });
+      if (res && res.ok) {
+        document.getElementById('cs-sent-email').textContent = email;
+        form.hidden = true; sentEl.hidden = false;
+      } else {
+        submitEl.disabled = false; submitEl.textContent = 'Poslat přihlašovací odkaz →';
+        err('Odkaz se teď nepovedlo odeslat. Zkus to prosím za chvíli.');
+      }
+    } catch (_) {
+      submitEl.disabled = false; submitEl.textContent = 'Poslat přihlašovací odkaz →';
+      err('Odkaz se teď nepovedlo odeslat. Zkus to prosím za chvíli.');
+    }
+  });
+})();
+</script>
 </body>
 </html>

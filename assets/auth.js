@@ -29,7 +29,7 @@
   };
 
   // Stránky přístupné BEZ přihlášení (gate je nezamkne) — ať si lze přečíst Zásady před souhlasem
-  const PUBLIC_PAGES = ['zasady-ochrany-udaju.html', 'obchodni-podminky.html', 'cookies.html', '404.html'];
+  const PUBLIC_PAGES = ['academy.html', 'platba-uspesna.html', 'platba-zrusena.html', 'zasady-ochrany-udaju.html', 'obchodni-podminky.html', 'cookies.html', '404.html'];
 
   const isLive = !!(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);
 
@@ -191,12 +191,15 @@
   // Pošle na e-mail přihlašovací odkaz. Po kliknutí se uživatel vrátí s tokeny
   // v URL, Supabase je zpracuje a naběhne session (viz getInitialSession).
   // Funguje s jakýmkoli providerem (Seznam, Gmail, Centrum…) a ověří vlastnictví e-mailu.
+  // Kam se vrátit po kliknutí na magic link. null = aktuální stránka.
+  // Přihlášení z prodejní stránky ho nastaví na dashboard, ať člen neskončí zpět v prodeji.
+  let gateRedirectTo = null;
   async function sendMagicLink(email) {
     const sb = await getSupabase();
     if (!sb) return { ok: false, err: 'offline' };
     const { error } = await sb.auth.signInWithOtp({
       email: email,
-      options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true }
+      options: { emailRedirectTo: gateRedirectTo || (location.origin + location.pathname), shouldCreateUser: true }
     });
     if (error) { console.warn('magic link', error); return { ok: false, err: error.message }; }
     return { ok: true };
@@ -929,12 +932,21 @@
     live: isLive,
     getSupabase: getSupabase,   // sdílený Supabase klient (pro feed apod.)
     updateUserProfile: updateUserProfile,
-    requestMagicLink: sendMagicLink,
+    requestMagicLink: function (email, opts) {
+      if (opts && opts.redirect) { try { gateRedirectTo = new URL(opts.redirect, location.href).href; } catch (e) {} }
+      return sendMagicLink(email);
+    },
     logout: doLogout,
     track: trackEvent,
     recordTool: recordTool,
     anonymousId: anonymousId,
-    promptSavePlan: function () { showGate('saveplan'); }  // build-before-register výzva po onboardingu
+    promptSavePlan: function () { showGate('saveplan'); },  // build-before-register výzva po onboardingu
+    // Přihlášení z prodejní stránky — otevře magic-link bránu, po přihlášení míří do aplikace (ne onboarding).
+    login: function () {
+      if (isLoggedIn()) { location.href = ROOT + 'index.html'; return; }
+      try { gateRedirectTo = new URL(ROOT + 'index.html', location.href).href; } catch (e) { gateRedirectTo = null; }
+      showGate('login');
+    }
   };
 
   // Synchronní přihlášení stihne načíst průvodce hned; magic link jej načte ve finishBoot().
