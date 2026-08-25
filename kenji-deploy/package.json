@@ -1,0 +1,12 @@
+{
+  "name": "kenji-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kenji Academy static platform with Netlify Functions for checkout.",
+  "dependencies": {
+    "stripe": "^18.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

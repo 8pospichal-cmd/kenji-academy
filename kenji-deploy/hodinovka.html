@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulačka hodinovky pro tvůrce 2026 | Kenji Knihovna</title>
+<meta name="description" content="Spočítej si reálnou hodinovou sazbu. Navol si výdaje na život i podnikání, daně a odvody (CZ 2026) a fakturovatelné hodiny — kalkulačka ti vyplivne minimální hodinovku, kterou si máš říct.">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kalkulačka hodinovky pro tvůrce">
+<meta property="og:description" content="Navol si výdaje a fakturovatelné hodiny — spočítáme ti reálnou hodinovku (CZ 2026).">
+<meta property="og:image" content="assets/og-image.svg">
+<meta property="og:locale" content="cs_CZ">
+<meta name="theme-color" content="#0a0a0a">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=20260819-culture">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* ===== KALKULAČKA HODINOVKY — scopnuto pod .calc-app ===== */
+.calc-app {
+  --a-orange: var(--orange); --a-orange-dim: rgba(255,107,26,.12); --a-orange-glow: rgba(255,107,26,.22);
+  --a-surface: var(--bg-card); --a-surface2: var(--bg-elevated); --a-border: var(--border);
+  --a-border-hot: rgba(255,107,26,.4); --a-text: var(--text); --a-muted: var(--text-dim); --a-dim: var(--text-mute);
+  --a-green:#34d399; --a-red:#ff5e5e; --a-rad:14px; --a-rad-sm:10px;
+  max-width: 760px; margin: 0 auto;
+}
+.calc-app * { box-sizing: border-box; }
+.calc-app .eyebrow { font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--a-orange); margin-bottom:.75rem; }
+.calc-app .step-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,5.5vw,46px); line-height:1.05; letter-spacing:-.5px; margin-bottom:12px; }
+.calc-app .step-title .hl { color:var(--a-orange); }
+.calc-app .lead { font-size:15px; color:var(--a-muted); line-height:1.7; margin-bottom:.5rem; max-width:600px; }
+.calc-app .lead-tip { font-size:13.5px; color:var(--a-dim); line-height:1.6; margin-bottom:2rem; max-width:600px; }
+.calc-app .lead-tip b { color:var(--a-muted); }
+
+.calc-app .sec-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.5px; color:var(--a-text); margin:2.25rem 0 .5rem; display:flex; align-items:center; gap:12px; }
+.calc-app .sec-title::after { content:''; flex:1; height:1px; background:var(--a-border); }
+.calc-app .block-hint { font-size:12.5px; color:var(--a-dim); margin:0 0 1rem; line-height:1.5; }
+
+/* regime toggle */
+.calc-app .regime-tabs { display:flex; gap:8px; margin:.5rem 0 .5rem; flex-wrap:wrap; }
+.calc-app .regime-tab { padding:8px 16px; border-radius:20px; font-size:13px; font-weight:600; background:transparent; border:1px solid var(--a-border); color:var(--a-muted); cursor:pointer; transition:all .15s; font-family:'Inter',sans-serif; }
+.calc-app .regime-tab.active { background:var(--a-orange); border-color:var(--a-orange); color:#fff; }
+.calc-app .regime-tab:hover:not(.active) { border-color:var(--a-dim); color:var(--a-text); }
+.calc-app .regime-note { font-size:12.5px; color:var(--a-dim); line-height:1.6; margin:.25rem 0 0; }
+
+/* cost rows */
+.calc-app .cost-list { display:flex; flex-direction:column; gap:14px; margin-bottom:12px; }
+.calc-app .cost-row { background:var(--a-surface); border:1px solid var(--a-border); border-radius:var(--a-rad-sm); padding:12px 14px; }
+.calc-app .cost-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.calc-app .cost-label { flex:1; min-width:0; background:transparent; border:none; color:var(--a-text); font-family:'Inter',sans-serif; font-size:14px; font-weight:500; padding:2px 0; outline:none; border-bottom:1px solid transparent; transition:border-color .15s; }
+.calc-app .cost-label:focus { border-bottom-color:var(--a-border-hot); }
+.calc-app .cost-val { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--a-orange); letter-spacing:0; white-space:nowrap; }
+.calc-app .cost-del { flex-shrink:0; width:24px; height:24px; border-radius:6px; background:transparent; border:1px solid var(--a-border); color:var(--a-dim); font-size:14px; line-height:1; cursor:pointer; transition:all .15s; }
+.calc-app .cost-del:hover { border-color:var(--a-red); color:var(--a-red); }
+.calc-app input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:3px; background:var(--a-surface2); border-radius:2px; outline:none; cursor:pointer; }
+.calc-app input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--a-orange); cursor:pointer; box-shadow:0 0 0 4px var(--a-orange-dim); transition:box-shadow .15s; }
+.calc-app input[type=range]::-webkit-slider-thumb:hover { box-shadow:0 0 0 7px var(--a-orange-dim); }
+.calc-app input[type=range]::-moz-range-thumb { width:18px; height:18px; border:none; border-radius:50%; background:var(--a-orange); cursor:pointer; }
+
+.calc-app .add-btn { background:transparent; border:1px dashed var(--a-border); color:var(--a-muted); border-radius:var(--a-rad-sm); padding:11px 16px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; width:100%; }
+.calc-app .add-btn:hover { border-color:var(--a-orange); color:var(--a-orange); }
+
+/* subtotal pill */
+.calc-app .subtotal { display:flex; justify-content:space-between; align-items:baseline; margin-top:10px; padding:10px 14px; background:var(--a-surface2); border-radius:var(--a-rad-sm); }
+.calc-app .subtotal .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--a-dim); font-weight:600; }
+.calc-app .subtotal .val { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--a-text); }
+
+/* hours block */
+.calc-app .hours-card { background:var(--a-surface); border:1px solid var(--a-border-hot); border-radius:var(--a-rad); padding:18px; }
+.calc-app .hours-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:10px; }
+.calc-app .hours-name { font-size:14px; color:var(--a-text); font-weight:600; }
+.calc-app .hours-val { font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--a-orange); }
+.calc-app .hours-hint { font-size:12.5px; color:var(--a-dim); line-height:1.6; margin-top:10px; }
+
+/* compute btn */
+.calc-app .calc-btn { margin-top:2rem; width:100%; padding:18px 24px; background:linear-gradient(135deg,var(--orange) 0%,#ff4500 100%); color:#fff; border:none; border-radius:var(--a-rad-sm); font-family:'Inter',sans-serif; font-size:16px; font-weight:800; cursor:pointer; transition:filter .15s, transform .15s; display:flex; align-items:center; justify-content:center; gap:10px; }
+.calc-app .calc-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+
+/* result */
+.calc-app #calc-result { margin-top:2.5rem; }
+.calc-app .hero-rate { background:var(--a-surface); border:1px solid var(--a-border-hot); border-radius:var(--a-rad); padding:2rem; text-align:center; position:relative; overflow:hidden; margin-bottom:1.25rem; }
+.calc-app .hero-rate::before { content:''; position:absolute; inset:0; background:var(--a-orange-dim); pointer-events:none; }
+.calc-app .hero-rate .rr-lbl { position:relative; font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--a-orange); margin-bottom:8px; }
+.calc-app .hero-rate .rr-big { position:relative; font-family:'Bebas Neue',sans-serif; font-size:clamp(54px,12vw,86px); line-height:.9; color:var(--a-orange); }
+.calc-app .hero-rate .rr-sub { position:relative; font-size:13.5px; color:var(--a-muted); margin-top:10px; }
+.calc-app .metrics-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:1.25rem; }
+@media(max-width:560px){ .calc-app .metrics-row{ grid-template-columns:1fr 1fr;} }
+.calc-app .metric-card { background:var(--a-surface); border:1px solid var(--a-border); border-radius:var(--a-rad); padding:16px; }
+.calc-app .metric-lbl { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--a-dim); margin-bottom:8px; font-weight:600; }
+.calc-app .metric-val { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--a-text); line-height:.95; }
+.calc-app .metric-sub { font-size:11px; color:var(--a-dim); margin-top:6px; line-height:1.4; }
+.calc-app .chart-wrapper { background:var(--a-surface); border:1px solid var(--a-border); border-radius:var(--a-rad); padding:1.5rem; margin-bottom:1.25rem; }
+.calc-app .chart-title { font-weight:700; font-size:15px; color:var(--a-text); margin-bottom:1rem; }
+.calc-app .chart-canvas-wrap { position:relative; height:240px; }
+.calc-app .insight { display:flex; gap:14px; padding:16px; border-radius:var(--a-rad-sm); margin-bottom:8px; border:1px solid var(--a-border); background:var(--a-surface); }
+.calc-app .insight.ok { border-color:rgba(52,211,153,.22); background:rgba(52,211,153,.04); }
+.calc-app .insight.warn { border-color:rgba(251,191,36,.22); background:rgba(251,191,36,.04); }
+.calc-app .insight-bullet { width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; background:var(--a-orange); }
+.calc-app .insight.ok .insight-bullet { background:var(--a-green); }
+.calc-app .insight.warn .insight-bullet { background:#FBBF24; }
+.calc-app .insight-txt { font-size:13.5px; color:var(--a-muted); line-height:1.6; }
+.calc-app .insight-txt b { color:var(--a-text); }
+.calc-app .disclaimer { font-size:11.5px; color:var(--a-dim); line-height:1.6; margin-top:1.25rem; text-align:center; }
+.calc-app .restart-btn { display:block; margin:1.5rem auto 0; background:transparent; border:1px solid var(--a-border); border-radius:var(--a-rad-sm); padding:10px 20px; font-size:13px; color:var(--a-dim); cursor:pointer; font-family:'Inter',sans-serif; }
+.calc-app .restart-btn:hover { border-color:var(--a-dim); color:var(--a-muted); }
+</style>
+</head>
+<body>
+
+<header class="top-header">
+  <button class="menu-toggle" aria-label="Otevřít menu">☰</button>
+  <a href="index.html" class="brand"><div class="brand-name">KENJI ACADEMY</div></a>
+  <div class="header-spacer"></div>
+  <div class="header-actions"><span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span></div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main">
+    <div class="main-inner">
+
+      <div class="breadcrumbs">
+        <a href="index.html">Databáze</a>
+        <span class="separator">/</span>
+        <span class="current">Kalkulačka hodinovky</span>
+      </div>
+
+      <div class="calc-app">
+        <div class="eyebrow">NÁSTROJ • CZ 2026</div>
+        <h1 class="step-title">Spočítej si svoji <span class="hl">hodinovku.</span></h1>
+        <p class="lead">Většina tvůrců si cenu jen tipne — a pak se diví, že na konci měsíce nic nezbude. Tady si navolíš reálné výdaje a kalkulačka ti spočítá <b>minimální hodinovku</b>, pod kterou se ti nevyplatí jít.</p>
+        <p class="lead-tip">💡 Klíč je v <b>fakturovatelných hodinách</b> — ne kolik odpracuješ, ale kolik reálně vyfakturuješ. Zbytek (akvizice, editace zdarma, admin) ti nikdo nezaplatí, takže se musí promítnout do sazby.</p>
+
+        <!-- DAŇOVÝ REŽIM -->
+        <div class="sec-title">Daňový režim</div>
+        <div class="regime-tabs">
+          <button class="regime-tab active" data-regime="pausal60">Paušál 60 % výdajů</button>
+          <button class="regime-tab" data-regime="pausaldan">Paušální daň</button>
+        </div>
+        <p class="regime-note" id="regime-note"></p>
+
+        <!-- 1. ŽIVOT -->
+        <div class="sec-title">1 · Náklady na život</div>
+        <div class="cost-list" id="list-zivot"></div>
+        <button class="add-btn" data-target="zivot">+ přidat položku</button>
+        <div class="subtotal"><span class="lbl">Život celkem / měsíc</span><span class="val" id="sub-zivot">—</span></div>
+
+        <!-- 2. PODNIKÁNÍ -->
+        <div class="sec-title">2 · Náklady na podnikání</div>
+        <p class="block-hint">Sociální a zdravotní pojištění <b>nepřidávej</b> — dopočítáme je automaticky podle režimu a tvého obratu.</p>
+        <div class="cost-list" id="list-podnikani"></div>
+        <button class="add-btn" data-target="podnikani">+ přidat položku</button>
+        <div class="subtotal"><span class="lbl">Podnikání celkem / měsíc</span><span class="val" id="sub-podnikani">—</span></div>
+
+        <!-- 3. ZISK -->
+        <div class="sec-title">3 · Kolik si chci nechat navíc</div>
+        <p class="block-hint">Rezerva na horší měsíce, dovolenou, nemoc a tvůj zisk navíc. „Chci se mít dobře."</p>
+        <div class="cost-list" id="list-zisk"></div>
+
+        <!-- 4. HODINY -->
+        <div class="sec-title">4 · Fakturovatelné hodiny</div>
+        <div class="hours-card">
+          <div class="hours-head"><span class="hours-name">Hodin měsíčně, které reálně vyfakturuju</span><span class="hours-val" id="hours-val">80 h</span></div>
+          <input type="range" id="hours-slider" min="20" max="180" step="5" value="80">
+          <div class="hours-hint">Tip: většina tvůrců odpracuje ~160 h měsíčně, ale reálně vyfakturuje jen <b>40–50 %</b> (zbytek je akvizice, editace, komunikace, cesty). Buď upřímný — čím nižší číslo, tím vyšší musí být sazba.</div>
+        </div>
+
+        <!-- SPOČÍTAT -->
+        <button class="calc-btn" id="calc-btn">Spočítej moji hodinovku <span>🔒</span></button>
+
+        <!-- VÝSLEDEK / ZÁMEK -->
+        <div id="calc-result"></div>
+
+        <!-- UPSELL: zamčené video k cenotvorbě (Kenji Academy) -->
+        <div class="sec-title">Video k cenotvorbě</div>
+        <p class="block-hint">Číslo z kalkulačky je základ. Jak si o cenu říct, ustát ji před klientem, kdy a jak zdražit a jak prodávat balíčky místo hodin — to celé rozebírám ve videu v akademii.</p>
+        <a class="video-lock" href="academy.html">
+          <div class="vl-bg has-img" style="background-image:url('assets/kenji-video.webp')"></div>
+          <div class="vl-overlay"></div>
+          <div class="vl-top">
+            <span class="vl-brand">KENJI ACADEMY</span>
+            <span class="vl-tag">🔒 Členský kurz</span>
+          </div>
+          <div class="vl-center">
+            <span class="vl-play">
+              <span class="vl-play-icon">▶</span>
+              <span class="vl-lock">🔒</span>
+            </span>
+            <span class="vl-cta">Odemknout v akademii →</span>
+          </div>
+          <div class="vl-bottom">
+            <div class="vl-info">
+              <div class="vl-kicker">VIDEO K TÉMATU</div>
+              <div class="vl-title">Cenotvorba pro tvůrce — jak si říct o víc a ustát to</div>
+            </div>
+            <span class="vl-dur">24 min</span>
+          </div>
+        </a>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="assets/articles.js?v=20260822-guided"></script>
+<script src="assets/nav.js?v=20260822-guided"></script>
+<script src="assets/auth.js?v=20260819-ux"></script>
+<script src="assets/script.js"></script>
+
+<script>
+(function(){
+  // ---- Konstanty CZ 2026 (ověřeno) ----
+  var C = {
+    socMin: 5720, zdravMin: 3306,
+    socRate: 0.292, socBase: 0.55,      // sociální: 29,2 % z 55 % daňového základu
+    zdravRate: 0.135, zdravBase: 0.50,  // zdravotní: 13,5 % z 50 % daňového základu
+    pausalVydaj: 0.60,                  // 60 % výdajový paušál → daňový základ = 40 % příjmů
+    danRate: 0.15, sleva: 2570,         // daň z příjmu 15 %, sleva na poplatníka 30 840/rok
+    pdBands: [ {limit:1000000, amount:9984}, {limit:1500000, amount:16745}, {limit:2000000, amount:27139} ]
+  };
+  var LS = 'kenji_hodinovka_v1';
+
+  // ---- Defaultní položky (orientační CZ) ----
+  var DEF = {
+    regime: 'pausal60',
+    zivot: [
+      {label:'nájem / hypotéka', value:15000, max:40000, step:500},
+      {label:'energie (voda, elektřina, plyn)', value:3500, max:15000, step:250},
+      {label:'jídlo a domácnost', value:8000, max:25000, step:250},
+      {label:'doprava / MHD', value:2500, max:12000, step:250},
+      {label:'drogerie a hygiena', value:1200, max:6000, step:100},
+      {label:'zábava, restaurace, koníčky', value:4000, max:20000, step:250},
+      {label:'pojištění a spoření', value:3000, max:20000, step:250},
+      {label:'oblečení', value:1000, max:8000, step:100}
+    ],
+    podnikani: [
+      {label:'technika (obnova / amortizace)', value:4000, max:25000, step:500},
+      {label:'software a předplatné', value:1500, max:10000, step:250},
+      {label:'auto (provoz + amortizace)', value:4000, max:20000, step:250},
+      {label:'pronájem ateliéru / prostor', value:0, max:30000, step:500},
+      {label:'marketing a reklama', value:1500, max:20000, step:250},
+      {label:'web, hosting, nástroje', value:500, max:6000, step:100}
+    ],
+    zisk: [{label:'rezerva / zisk navíc', value:15000, max:60000, step:1000}],
+    hours: 80
+  };
+
+  var S = load() || JSON.parse(JSON.stringify(DEF));
+  var chart = null;
+
+  function load(){ try { return JSON.parse(localStorage.getItem(LS)); } catch(e){ return null; } }
+  function save(){ try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e){} }
+  function fmt(n){ return Math.round(n).toLocaleString('cs') + ' Kč'; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function sum(arr){ return arr.reduce(function(a,b){return a+(+b.value||0);},0); }
+
+  // ---- Render seznamů ----
+  function renderList(key){
+    var el = document.getElementById('list-'+key);
+    el.innerHTML = '';
+    S[key].forEach(function(item, i){
+      var row = document.createElement('div');
+      row.className = 'cost-row';
+      row.innerHTML =
+        '<div class="cost-head">'+
+          '<input class="cost-label" value="'+esc(item.label)+'" data-key="'+key+'" data-i="'+i+'" aria-label="Název položky">'+
+          '<span class="cost-val" id="v-'+key+'-'+i+'">'+fmt(item.value)+'</span>'+
+          (key!=='zisk' ? '<button class="cost-del" data-key="'+key+'" data-i="'+i+'" title="Odebrat">×</button>' : '')+
+        '</div>'+
+        '<input type="range" min="0" max="'+item.max+'" step="'+item.step+'" value="'+item.value+'" data-key="'+key+'" data-i="'+i+'">';
+      el.appendChild(row);
+    });
+    updateSubtotals();
+  }
+  function updateSubtotals(){
+    document.getElementById('sub-zivot').textContent = fmt(sum(S.zivot));
+    document.getElementById('sub-podnikani').textContent = fmt(sum(S.podnikani));
+  }
+
+  // ---- Daňový engine ----
+  function calc(){
+    var L = sum(S.zivot), B = sum(S.podnikani), P = sum(S.zisk), H = S.hours, net = L + P;
+    var REV, dan=0, soc=0, zdrav=0, odvody=0, band=-1;
+
+    if (S.regime === 'pausaldan'){
+      // pevná částka kryje daň i odvody; pásmo podle ročního obratu
+      for (var bi=0; bi<C.pdBands.length; bi++){
+        var amt = C.pdBands[bi].amount;
+        var rev = net + B + amt;
+        if (rev*12 <= C.pdBands[bi].limit || bi === C.pdBands.length-1){ REV = rev; odvody = amt; band = bi; break; }
+      }
+    } else {
+      // paušál 60 %: daňový základ = 40 % příjmů; gross-up přes binární hledání
+      var lo=0, hi=5000000;
+      for (var it=0; it<60; it++){
+        var mid=(lo+hi)/2, DZ=C.pausalVydaj? mid*(1-C.pausalVydaj):mid;
+        var d=Math.max(0, C.danRate*DZ - C.sleva);
+        var s=Math.max(C.socMin, C.socRate*C.socBase*DZ);
+        var z=Math.max(C.zdravMin, C.zdravRate*C.zdravBase*DZ);
+        var take = mid - B - d - s - z;
+        if (take < net) lo=mid; else hi=mid;
+      }
+      REV=hi; var DZf=REV*(1-C.pausalVydaj);
+      dan=Math.max(0, C.danRate*DZf - C.sleva);
+      soc=Math.max(C.socMin, C.socRate*C.socBase*DZf);
+      zdrav=Math.max(C.zdravMin, C.zdravRate*C.zdravBase*DZf);
+      odvody = dan+soc+zdrav;
+    }
+    var hourly = REV / H;
+    return { L:L, B:B, P:P, H:H, net:net, REV:REV, odvody:odvody, dan:dan, soc:soc, zdrav:zdrav, band:band, hourly:hourly };
+  }
+
+  // ---- Výsledek (členové) ----
+  function renderResult(r){
+    var rec = Math.ceil(r.hourly/50)*50;          // doporučená sazba zaokrouhlená nahoru
+    var daily = Math.round(r.hourly*8);
+    var box = document.getElementById('calc-result');
+    box.innerHTML =
+      '<div class="hero-rate">'+
+        '<div class="rr-lbl">Tvoje minimální hodinovka</div>'+
+        '<div class="rr-big">'+Math.round(r.hourly).toLocaleString('cs')+' Kč/h</div>'+
+        '<div class="rr-sub">Pod tuhle sazbu se ti práce nevyplatí. Pro jistotu si říkej radši <b style="color:var(--orange)">'+rec.toLocaleString('cs')+' Kč/h</b>.</div>'+
+      '</div>'+
+      '<div class="metrics-row">'+
+        '<div class="metric-card"><div class="metric-lbl">Denní sazba (8 h)</div><div class="metric-val">'+fmt(daily)+'</div></div>'+
+        '<div class="metric-card"><div class="metric-lbl">Musíš vyfakturovat / měs</div><div class="metric-val">'+fmt(r.REV)+'</div></div>'+
+        '<div class="metric-card"><div class="metric-lbl">Daně a odvody / měs</div><div class="metric-val">'+fmt(r.odvody)+'</div></div>'+
+      '</div>'+
+      '<div class="chart-wrapper">'+
+        '<div class="chart-title">Kam jde každá vyfakturovaná koruna</div>'+
+        '<div class="chart-canvas-wrap"><canvas id="breakdownChart"></canvas></div>'+
+      '</div>'+
+      '<div id="calc-insights"></div>'+
+      '<p class="disclaimer">Orientační výpočet podle pravidel pro OSVČ (hlavní činnost) v ČR 2026. Nenahrazuje účetní — u DPH, vedlejší činnosti nebo skutečných výdajů se čísla liší.</p>'+
+      '<button class="restart-btn" id="calc-reset">↺ Spočítat znovu od nuly</button>';
+
+    // graf
+    var ctx = document.getElementById('breakdownChart').getContext('2d');
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type:'doughnut',
+      data:{ labels:['Život','Podnikání','Daně a odvody','Rezerva / zisk'],
+        datasets:[{ data:[r.L, r.B, r.odvody, r.P],
+          backgroundColor:['rgba(255,107,26,0.85)','rgba(255,107,26,0.55)','rgba(255,255,255,0.18)','rgba(52,211,153,0.65)'],
+          borderColor:'#141414', borderWidth:3 }]},
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#9a9a9a', font:{size:12}, boxWidth:12, padding:14, usePointStyle:true } },
+          tooltip:{ backgroundColor:'#1f1f1f', borderColor:'rgba(255,107,26,0.3)', borderWidth:1, titleColor:'#f5f5f5', bodyColor:'#9a9a9a', padding:10,
+            callbacks:{ label:function(c){ var t=c.dataset.data.reduce(function(a,b){return a+b;},0); return ' '+Math.round(c.parsed).toLocaleString('cs')+' Kč ('+Math.round(c.parsed/t*100)+' %)'; } } } } }
+    });
+
+    // insighty
+    var ins = [], billPct = Math.round(r.H/160*100);
+    if (r.H >= 120) ins.push({t:'warn', h:'Počítáš s '+r.H+' fakturovatelnými hodinami', d:'To je hodně — odpovídá to ~'+billPct+' % běžného pracovního měsíce. Většina tvůrců reálně vyfakturuje 60–90 h. Když to nadhodnotíš, vyjde ti nižší sazba, než reálně potřebuješ.'});
+    else ins.push({t:'ok', h:'Zdravý poměr fakturovatelných hodin', d:'Počítáš s '+r.H+' h měsíčně (~'+billPct+' % pracovního měsíce). To je realistické — zbytek času jde do akvizice a editace, a ten se ti vrací právě přes tuhle sazbu.'});
+    ins.push({t:'ok', h:'Aby ti to vyšlo, potřebuješ '+fmt(r.REV)+' měsíčně', d:'To je '+fmt(r.REV*12)+' ročně v tržbách. Rozpočítej si to na typické zakázky: kolik jich měsíčně zvládneš a za kolik je musíš prodat.'});
+    if (S.regime === 'pausaldan' && r.band >= 0) ins.push({t:'ok', h:'Paušální daň — '+(r.band+1)+'. pásmo ('+fmt(C.pdBands[r.band].amount)+'/měs)', d:'Při tomhle obratu spadáš do '+(r.band+1)+'. pásma. Pevná částka kryje daň z příjmu i sociální a zdravotní. Hlídej si limit obratu pro vstup do režimu (2 mil. Kč/rok).'});
+    if (S.regime === 'pausal60') ins.push({t:'ok', h:'Daně počítáme přes paušál 60 %', d:'Z příjmů odečteme 60 % paušál, z 40 % se počítá daň 15 % (po slevě na poplatníka) a odvody. Pokud máš reálně vyšší výdaje než 60 %, vyplatí se ti je uplatnit skutečně — pak budou daně nižší.'});
+    var insEl = document.getElementById('calc-insights');
+    insEl.innerHTML = '';
+    ins.forEach(function(o){ insEl.innerHTML += '<div class="insight '+o.t+'"><div class="insight-bullet"></div><div class="insight-txt"><b>'+esc(o.h)+'</b><br>'+esc(o.d)+'</div></div>'; });
+
+    document.getElementById('calc-reset').addEventListener('click', resetAll);
+    box.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  // ---- Zámek (nečlenové) ----
+  function renderLock(){
+    var box = document.getElementById('calc-result');
+    box.innerHTML =
+      '<div class="paywall">'+
+        '<div class="paywall-lock">🔒</div>'+
+        '<h2 class="paywall-title">Tvoje hodinovka je pro členy</h2>'+
+        '<p class="paywall-text">Všechno máš vyplněné — konkrétní hodinovku, denní sazbu i rozpad odemkneš jako člen. Je součástí plného přístupu do databáze i Kenji Academy.</p>'+
+        '<div class="paywall-actions">'+
+          '<a class="paywall-cta" href="#" data-checkout-product="databaze">Chci plný přístup</a>'+
+          '<span class="paywall-note">Databáze 1 497 Kč · nebo kompletní <a href="academy.html">Kenji Academy</a></span>'+
+        '</div>'+
+      '</div>';
+    box.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function isMember(){ try { return !!(window.KenjiAuth && window.KenjiAuth.isMember()); } catch(e){ return false; } }
+
+  function doCalc(){
+    save();
+    var r = calc();
+    if (isMember()) renderResult(r); else renderLock();
+  }
+
+  function resetAll(){
+    S = JSON.parse(JSON.stringify(DEF));
+    save(); buildAll();
+    document.getElementById('calc-result').innerHTML = '';
+    if (chart){ chart.destroy(); chart=null; }
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  // ---- Regime ----
+  function setRegime(reg){
+    S.regime = reg;
+    document.querySelectorAll('.regime-tab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-regime')===reg); });
+    document.getElementById('regime-note').textContent = reg==='pausaldan'
+      ? 'Pevná měsíční částka, která kryje daň z příjmu i sociální a zdravotní pojištění. Jednodušší, vhodné pro neplátce DPH s obratem do 2 mil. Kč/rok.'
+      : 'Z příjmů uplatníš 60% výdajový paušál, z 40 % se počítá daň 15 % (po slevě) a odvody. Nejběžnější režim pro tvůrce na živnost volnou.';
+    save();
+  }
+
+  // ---- Eventy (delegované) ----
+  function bind(){
+    document.querySelectorAll('.regime-tab').forEach(function(b){ b.addEventListener('click', function(){ setRegime(b.getAttribute('data-regime')); }); });
+
+    ['list-zivot','list-podnikani','list-zisk'].forEach(function(id){
+      var el = document.getElementById(id);
+      el.addEventListener('input', function(e){
+        var t = e.target;
+        if (t.type === 'range'){
+          var k=t.getAttribute('data-key'), i=+t.getAttribute('data-i');
+          S[k][i].value = +t.value;
+          document.getElementById('v-'+k+'-'+i).textContent = fmt(+t.value);
+          updateSubtotals(); save();
+        } else if (t.classList.contains('cost-label')){
+          var k2=t.getAttribute('data-key'), i2=+t.getAttribute('data-i');
+          S[k2][i2].label = t.value; save();
+        }
+      });
+      el.addEventListener('click', function(e){
+        var d = e.target.closest('.cost-del'); if(!d) return;
+        var k=d.getAttribute('data-key'), i=+d.getAttribute('data-i');
+        S[k].splice(i,1); renderList(k); save();
+      });
+    });
+
+    document.querySelectorAll('.add-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        var k=b.getAttribute('data-target');
+        S[k].push({label:'nová položka', value:0, max: k==='podnikani'?20000:15000, step:250});
+        renderList(k); save();
+      });
+    });
+
+    var hs = document.getElementById('hours-slider');
+    hs.value = S.hours;
+    document.getElementById('hours-val').textContent = S.hours + ' h';
+    hs.addEventListener('input', function(){ S.hours = +hs.value; document.getElementById('hours-val').textContent = S.hours+' h'; save(); });
+
+    document.getElementById('calc-btn').addEventListener('click', doCalc);
+  }
+
+  function buildAll(){
+    renderList('zivot'); renderList('podnikani'); renderList('zisk');
+    document.getElementById('hours-slider').value = S.hours;
+    document.getElementById('hours-val').textContent = S.hours + ' h';
+    setRegime(S.regime);
+  }
+
+  buildAll();
+  bind();
+})();
+</script>
+</body>
+</html>

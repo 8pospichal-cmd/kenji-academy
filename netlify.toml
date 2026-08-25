@@ -1,0 +1,61 @@
+# Pretty URLs — odstraní .html z adresního řádku
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/academy"
+  to = "/academy.html"
+  status = 200
+
+[[redirects]]
+  from = "/platba-uspesna"
+  to = "/platba-uspesna.html"
+  status = 200
+
+[[redirects]]
+  from = "/platba-zrusena"
+  to = "/platba-zrusena.html"
+  status = 200
+
+[[redirects]]
+  from = "/clanky/:slug"
+  to = "/clanky/:slug.html"
+  status = 200
+
+[[redirects]]
+  from = "/certifikat"
+  to = "/odmena"
+  status = 301
+
+[[redirects]]
+  from = "/certifikat.html"
+  to = "/odmena.html"
+  status = 301
+
+# Favicon — prohlížeč si /favicon.ico žádá automaticky; servíruj SVG (jinak 404).
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/assets/favicon.svg"
+  status = 200
+
+# 404 fallback
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+
+# Sdílené CSS a JS mají jednotný ?v= parametr v HTML, takže se napříč stránkami
+# stáhnou jen jednou. Týdenní browser cache zároveň bezpečně pokryje obrázky,
+# které nemají vždy verzi v URL; nový deploy zůstává na CDN okamžitě aktuální.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

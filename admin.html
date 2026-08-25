@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administrace | Kenji Academy</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta name="theme-color" content="#090909">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=20260824-buymodal-v1">
+<link rel="stylesheet" href="assets/admin.css?v=20260823-admin-v2">
+</head>
+<body class="admin-body">
+<header class="admin-topbar">
+  <a class="admin-brand" href="index.html"><span>KENJI</span> ADMIN</a>
+  <span class="admin-env" id="admin-env" hidden>Lokální náhled</span>
+  <div class="admin-top-spacer"></div>
+  <a class="admin-back" href="nastaveni.html">Zpět do Academy</a>
+</header>
+
+<div class="admin-shell">
+  <nav class="admin-nav" aria-label="Administrace">
+    <button class="active" type="button" data-admin-view="overview">Přehled</button>
+    <button type="button" data-admin-view="people">Lidé</button>
+    <button type="button" data-admin-view="tools">Nástroje</button>
+    <button type="button" data-admin-view="content">Obsah</button>
+    <button type="button" data-admin-view="coupons">Kupóny</button>
+  </nav>
+  <main class="admin-main" id="admin-root" aria-live="polite">
+    <div class="admin-loading">Ověřuji administrátorský přístup…</div>
+  </main>
+</div>
+
+<dialog class="admin-dialog" id="admin-dialog"><div id="admin-dialog-content"></div></dialog>
+
+<script src="assets/articles.js?v=20260824-value-v1"></script>
+<script src="assets/auth.js?v=20260824-ai-retry-v1"></script>
+<script src="assets/admin.js?v=20260823-admin-v2"></script>
+</body>
+</html>

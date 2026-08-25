@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tajná odměna za kvíz | Kenji Knihovna</title>
+<meta name="description" content="Odemkni pracovní listy k 90denní výzvě za zvládnutí všech čtyř levelů Kenji kvízu.">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="robots" content="noindex">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=20260819-culture">
+</head>
+<body>
+
+<header class="top-header no-print">
+  <button class="menu-toggle" aria-label="Otevřít menu">☰</button>
+  <a href="index.html" class="brand">
+    <div class="brand-name">KENJI ACADEMY</div>
+  </a>
+  <div class="header-spacer"></div>
+  <div class="header-actions">
+    <span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar no-print" id="sidebar"></aside>
+
+  <main class="main">
+    <div class="main-inner">
+      <div class="breadcrumbs no-print">
+        <a href="index.html">Databáze</a>
+        <span class="separator">/</span>
+        <a href="kviz.html">Kvíz</a>
+        <span class="separator">/</span>
+        <span class="current">Odměna</span>
+      </div>
+
+      <div id="reward-app"></div>
+    </div>
+  </main>
+</div>
+
+<script src="assets/articles.js?v=20260822-guided"></script>
+<script src="assets/nav.js?v=20260822-guided"></script>
+<script src="assets/auth.js?v=20260819-ux"></script>
+<script src="assets/quiz.js"></script>
+<script>
+// ============================================
+// KENJI KVÍZ — ODMĚNA
+// ============================================
+(function () {
+  const QUIZ = window.KENJI_QUIZ;
+  const app = document.getElementById('reward-app');
+  if (!QUIZ || !app) return;
+  const KEY = 'kenji_quiz_v1';
+  const REWARD_PDF = 'assets/90VYZVA-LISTY.pdf';
+
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function state() { const s = load(); s.passed = s.passed || []; s.best = s.best || {}; return s; }
+  const allPassed = () => QUIZ.levels.every((l) => (state().passed || []).includes(l.id));
+
+  // ---------- není hotovo ----------
+  if (!allPassed()) {
+    const done = QUIZ.levels.filter((l) => (state().passed || []).includes(l.id)).length;
+    app.innerHTML = `
+      <div class="reward-locked">
+        <div class="cl-icon">🔒</div>
+        <h1>Tajná odměna zatím zamčená</h1>
+        <p>Abys odemkl pracovní listy k 90denní výzvě, musíš zvládnout <strong>všechny čtyři levely</strong> kvízu.
+        Zatím máš hotovo <strong>${done}/${QUIZ.levels.length}</strong>.</p>
+        <a class="ql-btn" href="kviz.html">← Zpět ke kvízu</a>
+      </div>`;
+    return;
+  }
+
+  // ---------- hotovo: odměna ----------
+  app.innerHTML = `
+    <section class="reward-hero">
+      <div class="reward-kicker">ODMĚNA ODEMČENÁ</div>
+      <h1>Pracovní listy k <span>90denní výzvě</span></h1>
+      <p>Zvládl jsi všechny čtyři levely. Tohle není diplom do šuplíku. Tohle je praktický PDF workbook, který tě provede budováním podnikání, cash flow a získáváním nových klientů krok za krokem.</p>
+      <div class="reward-actions">
+        <a class="ql-btn reward-primary" href="${REWARD_PDF}" download>Stáhnout pracovní listy →</a>
+        <a class="ql-btn ghost" href="kviz.html">← Zpět ke kvízu</a>
+      </div>
+    </section>
+
+    <div class="reward-grid">
+      <div class="reward-card">
+        <div class="reward-card-icon">📄</div>
+        <h2>Co dostaneš</h2>
+        <p>PDF pracovní listy k 90denní výzvě. Místo teorie konkrétní kroky, které tě donutí řešit nabídku, prodej, cash flow a akvizici.</p>
+      </div>
+      <div class="reward-card">
+        <div class="reward-card-icon">💸</div>
+        <h2>Proč to má hodnotu</h2>
+        <p>Je to postup, který tě vede k rychlejšímu vybudování funkčního podnikání: víc klientů, lepší systém a jasnější plán na další týdny.</p>
+      </div>
+      <div class="reward-card">
+        <div class="reward-card-icon">🔥</div>
+        <h2>Jak to použít</h2>
+        <p>Neproklikej to. Vytiskni si to nebo si to otevři v tabletu a vyplňuj. Výsledek bude tak dobrý, jak poctivě do toho půjdeš.</p>
+      </div>
+    </div>
+
+    <div class="reward-academy">
+      <div>
+        <div class="reward-academy-kicker">CHCEŠ CELÝ SYSTÉM?</div>
+        <h2>90denní výzva je nejsilnější, když ji projdeš s vedením.</h2>
+        <p>V Kenji Academy máš k tomu komunitu, videa, webináře a podporu. Pracovní listy jsou start. Academy je prostředí, kde to dotáhneš.</p>
+      </div>
+      <a class="ql-btn" href="academy.html">Zjistit více →</a>
+    </div>`;
+})();
+</script>
+<script src="assets/script.js"></script>
+</body>
+</html>

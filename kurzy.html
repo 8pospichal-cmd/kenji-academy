@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kurzy — Kenji Academy | Kenji Academy</title>
+<meta name="description" content="Videokurzy Kenji Academy: základy a technika, focení jako byznys, svatební masterclass, 90denní výzva a Kenji v akci. Pro členy.">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=20260824-buymodal-v1">
+</head>
+<body>
+
+<header class="top-header">
+  <button class="menu-toggle" aria-label="Otevřít menu">☰</button>
+  <a href="index.html" class="brand"><div class="brand-name">KENJI ACADEMY</div></a>
+  <div class="header-spacer"></div>
+  <div class="header-actions"><span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span></div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main">
+    <div class="main-inner">
+
+      <section class="article-hero">
+        <div class="article-hero-label">KENJI ACADEMY • KURZY</div>
+        <h1>Videokurzy<br><span class="highlight">Kenji Academy.</span></h1>
+        <p class="article-hero-sub">Kompletní cesta od první fotky až k platícím klientům. Pět kurzů, desítky lekcí z praxe — technika, byznys, svatby i zákulisí. Součást plného členství.</p>
+      </section>
+
+      <div class="courses-grid" id="courses-grid" data-tour="course-grid"></div>
+
+    </div>
+  </main>
+</div>
+
+<script src="assets/articles.js?v=20260824-value-v1"></script>
+<script src="assets/courses.js?v=20260824-ai-retry-v1"></script>
+<script src="assets/nav.js?v=20260824-buymodal-v1"></script>
+<script src="assets/auth.js?v=20260824-ai-retry-v1"></script>
+<script src="assets/script.js?v=20260824-ai-retry-v1"></script>
+
+<script>
+(function(){
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  var canWatchCourses = false;
+  try { canWatchCourses = !!(window.KenjiAuth && window.KenjiAuth.can && window.KenjiAuth.can('courses')); } catch(e){}
+  var grid = document.getElementById('courses-grid');
+  var html = '';
+  (window.KENJI_COURSES || []).forEach(function(c){
+    var total = window.kenjiCourseLessonCount(c), done = 0;
+    try { var st = JSON.parse(localStorage.getItem('kenji_course_'+c.slug)) || {}; done = Object.keys(st).filter(function(k){return st[k];}).length; } catch(e){}
+    var pct = total ? Math.round(done/total*100) : 0;
+    var thumb = c.thumb
+      ? '<div class="course-thumb" style="background-image:url(\''+esc(c.thumb)+'\')"></div>'
+      : '<div class="course-thumb ct-fallback"><span class="ct-title">'+esc(c.title)+'</span><span class="ct-brand">kenji academy</span></div>';
+    html += ''+
+      '<a class="course-card" href="kurz.html?slug='+encodeURIComponent(c.slug)+'">'+
+        thumb +
+        (canWatchCourses ? '' : '<span class="course-lock-badge">🔒 Academy</span>') +
+        '<div class="course-info">'+
+          '<div class="ci-head"><span class="ci-avatar">'+c.icon+'</span><h3 class="course-title">'+esc(c.title)+'</h3></div>'+
+          '<p class="course-desc">'+esc(c.desc)+'</p>'+
+          '<div class="ci-foot">'+
+            '<div class="ci-plabel">Dokončeno '+done+'/'+total+' lekcí</div>'+
+            '<div class="ci-bar"><span style="width:'+pct+'%"></span></div>'+
+          '</div>'+
+        '</div>'+
+      '</a>';
+  });
+  grid.innerHTML = html;
+})();
+</script>
+</body>
+</html>

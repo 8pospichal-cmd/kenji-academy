@@ -1,0 +1,15 @@
+KENJIACADEMY MEDIA EXPORT
+
+Postu: 84
+Obrazku celkem: 104
+Uspesne: 104
+Chyby: 0
+Format: WebP
+Quality: 82%
+Max rozmer: 1600px
+Puvodni velikost: 13.18 MB
+WebP velikost: 11.24 MB
+Uspora: 14.7%
+
+CHYBY:
+Zadne

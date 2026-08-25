@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kenji Academy — celá tvoje cesta fotografa v 1 platformě</title>
+<meta name="description" content="Kurzy, komunita, nástroje a byznys know-how pro fotografy a tvůrce — všechno na jednom místě. Začni 100% zdarma, bez karty.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kenji Academy — vše pro tvůrce na jednom místě">
+<meta property="og:description" content="Kurzy, komunita a byznys know-how pro fotografy. Začni zdarma.">
+<meta property="og:image" content="assets/og-image.svg">
+<meta name="theme-color" content="#ffffff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --o: #ff6b1a; --o-d: #e85d0c; --o-soft: #fff1e8;
+    --ink: #14110e; --muted: #6b6560; --line: #ece8e3; --bg: #ffffff; --bg2: #faf8f5;
+    --shadow: 0 18px 44px -22px rgba(30,20,10,.28);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+
+  /* announcement */
+  .abar { background: linear-gradient(90deg, var(--o), var(--o-d)); color: #fff; text-align: center; font-size: 13.5px; font-weight: 600; padding: 10px 16px; }
+  .abar a { text-decoration: underline; }
+
+  /* header */
+  .hdr { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.86); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  .hdr-in { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+  .logo { font-weight: 900; font-size: 20px; letter-spacing: -.02em; }
+  .logo b { color: var(--o); }
+  .hdr-r { display: flex; align-items: center; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; border-radius: 12px; padding: 12px 22px; font-size: 15px; cursor: pointer; transition: transform .15s, box-shadow .15s, background .15s; border: none; }
+  .btn-o { background: linear-gradient(180deg, #ff9a3d, var(--o) 60%, var(--o-d)); color: #fff; box-shadow: 0 12px 26px -10px rgba(255,107,26,.6); }
+  .btn-o:hover { transform: translateY(-2px); box-shadow: 0 18px 32px -10px rgba(255,107,26,.7); }
+  .btn-ghost { background: #fff; border: 1px solid var(--line); color: var(--ink); }
+  .btn-ghost:hover { border-color: #d9d3cc; }
+  .btn-lg { padding: 16px 30px; font-size: 16.5px; }
+  .link-quiet { font-weight: 700; font-size: 14.5px; color: var(--muted); padding: 8px 6px; }
+
+  /* hero */
+  .hero { padding: 54px 0 40px; background: radial-gradient(1000px 460px at 50% -10%, var(--o-soft), transparent 70%); text-align: center; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 100px; padding: 6px 14px 6px 8px; box-shadow: var(--shadow); font-size: 13px; color: var(--muted); font-weight: 600; }
+  .pill img { height: 26px; }
+  .pill .st { color: #ffb300; letter-spacing: 1px; }
+  .h1 { font-size: clamp(34px, 6vw, 62px); font-weight: 900; line-height: 1.04; letter-spacing: -.02em; margin: 22px auto 16px; max-width: 16ch; }
+  .h1 span { color: var(--o); }
+  .sub { font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); max-width: 620px; margin: 0 auto 26px; line-height: 1.55; }
+  .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .trust { margin-top: 16px; font-size: 13.5px; color: var(--muted); }
+  .trust b { color: var(--ink); }
+
+  /* hero visual */
+  .visual { position: relative; width: min(520px, 100%); margin: 44px auto 0; }
+  .visual-card { border-radius: 26px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 40px 80px -30px rgba(30,20,10,.4); aspect-ratio: 16/11; background: var(--bg2); }
+  .visual-card img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
+  .chip { position: absolute; display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 100px; padding: 9px 14px; font-size: 13px; font-weight: 700; box-shadow: var(--shadow); animation: fl 4s ease-in-out infinite; }
+  .chip-1 { top: 12%; left: -6%; } .chip-2 { top: 40%; right: -7%; animation-delay: .8s; }
+  .chip-3 { bottom: 10%; left: -4%; animation-delay: 1.6s; } .chip-4 { bottom: 24%; right: -5%; animation-delay: 2.4s; }
+  @keyframes fl { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+
+  /* section basics */
+  section { padding: 60px 0; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 800; color: var(--o); text-align: center; }
+  .h2 { font-size: clamp(28px, 4.4vw, 44px); font-weight: 900; letter-spacing: -.02em; line-height: 1.08; text-align: center; margin: 12px auto 14px; max-width: 20ch; }
+  .h2 span { color: var(--o); }
+  .lead { text-align: center; color: var(--muted); font-size: 16px; max-width: 620px; margin: 0 auto 40px; line-height: 1.6; }
+
+  /* checklist */
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 34px; max-width: 760px; margin: 0 auto; }
+  .check { display: flex; align-items: center; gap: 12px; font-size: 15.5px; font-weight: 600; }
+  .check i { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--o-soft); color: var(--o-d); display: grid; place-items: center; font-style: normal; font-weight: 900; font-size: 13px; }
+
+  /* results band */
+  .band { background: linear-gradient(180deg, var(--bg2), #fff); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; }
+  .band .big { font-size: clamp(26px, 4vw, 40px); font-weight: 900; letter-spacing: -.02em; }
+  .band .big span { color: var(--o); }
+
+  /* steps */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 1000px; margin: 0 auto; }
+  .step { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 30px 26px; box-shadow: var(--shadow); }
+  .step .n { width: 46px; height: 46px; border-radius: 13px; background: linear-gradient(180deg, #ff9a3d, var(--o)); color: #fff; font-weight: 900; font-size: 20px; display: grid; place-items: center; margin-bottom: 16px; }
+  .step h3 { margin: 0 0 8px; font-size: 19px; font-weight: 800; }
+  .step p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+
+  /* features */
+  .feats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feat { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 26px 24px; transition: transform .15s, box-shadow .15s; }
+  .feat:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .feat .ic { font-size: 28px; margin-bottom: 12px; }
+  .feat h3 { margin: 0 0 7px; font-size: 17px; font-weight: 800; }
+  .feat p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+  /* reviews */
+  .revs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .rev { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 14px; }
+  .rev .st { color: #ffb300; letter-spacing: 2px; font-size: 14px; }
+  .rev p { margin: 0; font-size: 14.5px; line-height: 1.6; flex: 1; }
+  .rev .who { display: flex; align-items: center; gap: 11px; }
+  .rev .av { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--o), var(--o-d)); color: #fff; font-weight: 800; display: grid; place-items: center; font-size: 14px; }
+  .rev .who b { display: block; font-size: 14px; }
+  .rev .who small { color: var(--muted); font-size: 12px; }
+
+  /* benefit blocks */
+  .benefit { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; max-width: 980px; margin: 0 auto; }
+  .benefit + .benefit { margin-top: 60px; }
+  .benefit.flip .b-media { order: 2; }
+  .b-media { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); aspect-ratio: 4/3; box-shadow: var(--shadow); }
+  .b-media img { width: 100%; height: 100%; object-fit: cover; }
+  .benefit h3 { font-size: clamp(22px, 3vw, 30px); font-weight: 900; letter-spacing: -.01em; margin: 0 0 12px; }
+  .benefit p { color: var(--muted); font-size: 16px; line-height: 1.6; margin: 0; }
+
+  /* final */
+  .final { text-align: center; }
+  .final-card { background: linear-gradient(180deg, var(--o-soft), #fff); border: 1px solid #ffdcc4; border-radius: 26px; padding: 54px 30px; max-width: 760px; margin: 0 auto; box-shadow: var(--shadow); }
+  .final-card h2 { font-size: clamp(28px, 4.4vw, 44px); font-weight: 900; letter-spacing: -.02em; margin: 8px 0 12px; }
+  .final-card p { color: var(--muted); font-size: 17px; max-width: 500px; margin: 0 auto 24px; line-height: 1.6; }
+  .final .note { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+  /* footer */
+  .ft { border-top: 1px solid var(--line); padding: 30px 0; }
+  .ft-in { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .ft-in nav { display: flex; gap: 18px; flex-wrap: wrap; }
+
+  /* highlight (čistá fotka + citace, à la Flixy) */
+  .highlight { display: grid; grid-template-columns: .82fr 1.18fr; gap: 48px; align-items: center; max-width: 1000px; margin: 0 auto; }
+  .hl-media { position: relative; }
+  .hl-media::before { content: ''; position: absolute; inset: 6% -8% -10% 8%; background: radial-gradient(circle, #ffe0c9, transparent 68%); border-radius: 50%; z-index: 0; }
+  .hl-media img { position: relative; z-index: 1; width: 100%; aspect-ratio: 4/5; object-fit: cover; object-position: center 20%; border-radius: 22px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .hl-copy h3 { font-size: clamp(26px, 3.4vw, 38px); font-weight: 900; letter-spacing: -.02em; margin: 0 0 18px; }
+  .hl-quote { font-size: 18px; line-height: 1.7; color: var(--ink); margin: 0 0 22px; }
+  .hl-who { display: flex; align-items: center; gap: 11px; }
+  .hl-who .av { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--o), var(--o-d)); color: #fff; font-weight: 800; display: grid; place-items: center; }
+  .hl-who b { display: block; font-size: 14px; } .hl-who small { color: var(--muted); font-size: 12px; }
+  .hl-stars { margin-left: auto; color: #ffb300; letter-spacing: 2px; font-size: 15px; }
+
+  /* strip band (horizontální pruh funkcí) */
+  .strip { background: linear-gradient(180deg, #f3eee8, #faf8f5); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 0; }
+  .strip-in { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 0; flex-wrap: wrap; }
+  .strip-item { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; color: var(--ink); white-space: nowrap; }
+  .strip-item .si { font-size: 18px; }
+
+  /* uses — detailní bloky (styl „využívá pro:") */
+  .uses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px 34px; max-width: 1040px; margin: 0 auto; }
+  .use { text-align: left; }
+  .use .kick { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--o); margin-bottom: 8px; }
+  .use h3 { margin: 0 0 8px; font-size: 19px; font-weight: 800; letter-spacing: -.01em; line-height: 1.25; }
+  .use p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+
+  @media (max-width: 820px) {
+    .steps, .feats, .revs, .uses-grid { grid-template-columns: 1fr 1fr; }
+    .benefit { grid-template-columns: 1fr; gap: 22px; }
+    .benefit.flip .b-media { order: 0; }
+    .strip-in { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; }
+  }
+  @media (max-width: 560px) {
+    .uses-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .link-quiet { display: none; }
+    .checks, .steps, .feats, .revs { grid-template-columns: 1fr; }
+    .hero-cta .btn { width: 100%; }
+    .chip { font-size: 11.5px; padding: 7px 11px; }
+    .chip-1, .chip-3 { left: -2%; } .chip-2, .chip-4 { right: -2%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="abar">🎁 Vstup do Kenji Academy je teď <strong>100% ZDARMA</strong> — začni ještě dnes <a href="index.html">→</a></div>
+
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a href="index.html" class="logo">kenji<b>academy</b></a>
+    <div class="hdr-r">
+      <a class="link-quiet" href="index.html">Přihlásit</a>
+      <a class="btn btn-o" href="index.html">Začni zdarma</a>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <span class="pill"><img src="assets/academy/members.webp" alt="Členové"> <span class="st">★★★★★</span> 150+ tvůrců</span>
+    <h1 class="h1">Celá tvoje cesta fotografa <span>v 1 platformě.</span></h1>
+    <p class="sub">🇨🇿 Kurzy, komunita, nástroje a reálné byznys know-how — všechno přehledně na jednom místě.</p>
+    <div class="hero-cta">
+      <a class="btn btn-o btn-lg" href="index.html">Začni 100% ZDARMA →</a>
+      <a class="btn btn-ghost btn-lg" href="#jak">Jak to funguje</a>
+    </div>
+    <div class="trust">✓ Bez zadávání karty · <b>za pár vteřin jsi uvnitř</b></div>
+
+    <div class="visual">
+      <div class="visual-card"><img src="assets/kenji-portret.webp" alt="Kenji, zakladatel Kenji Academy"></div>
+      <span class="chip chip-1">🎬 5 videokurzů</span>
+      <span class="chip chip-2">✦ Kenji AI 24/7</span>
+      <span class="chip chip-3">💬 Komunita 110+</span>
+      <span class="chip chip-4">📚 75+ článků</span>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section>
+  <div class="wrap">
+    <p class="lead" style="margin-bottom:28px;">Ať začínáš od nuly, nebo už fotíš — <strong style="color:var(--ink)">Kenji Academy tě posune:</strong></p>
+    <div class="checks">
+      <div class="check"><i>✓</i> Naučit se techniku i editaci</div>
+      <div class="check"><i>✓</i> Získat první platící klienty</div>
+      <div class="check"><i>✓</i> Nacenit se a přestat prodělávat</div>
+      <div class="check"><i>✓</i> Postavit si osobní značku</div>
+      <div class="check"><i>✓</i> Být v komunitě, co tě táhne</div>
+      <div class="check"><i>✓</i> Mít pořádek v právu i daních</div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS BAND -->
+<section class="band">
+  <div class="wrap">
+    <div class="big">🏆 Už <span>150+ tvůrců</span> roste s Kenji Academy</div>
+    <p class="lead" style="margin:14px auto 0;">Komunita fotografů a tvůrců, kteří to s podnikáním myslí vážně — a navzájem se táhnou nahoru.</p>
+  </div>
+</section>
+
+<!-- STRIP BAND -->
+<div class="strip">
+  <div class="wrap strip-in">
+    <span class="strip-item"><span class="si">📚</span> Kurzy &amp; technika</span>
+    <span class="strip-item"><span class="si">💰</span> Byznys &amp; klienti</span>
+    <span class="strip-item"><span class="si">💬</span> Komunita &amp; feedback</span>
+    <span class="strip-item"><span class="si">✦</span> Kenji AI 24/7</span>
+    <span class="strip-item"><span class="si">🧮</span> Nástroje &amp; audit</span>
+  </div>
+</div>
+
+<!-- 3 KROKY -->
+<section id="jak">
+  <div class="wrap">
+    <p class="eyebrow">Jak to funguje</p>
+    <h2 class="h2">Začni ve <span>3 krocích.</span></h2>
+    <p class="lead">Žádná složitost. Během pár minut jsi uvnitř a můžeš začít růst.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Zaregistruj se zdarma</h3><p>Za pár vteřin jsi uvnitř — stačí e-mail. Bez karty, bez závazku.</p></div>
+      <div class="step"><div class="n">2</div><h3>Projdi si obsah a nástroje</h3><p>Databáze, kurzy, Kenji AI i kalkulačka hodinovky — hned k dispozici.</p></div>
+      <div class="step"><div class="n">3</div><h3>Rosti s komunitou</h3><p>Sdílej práci, ptej se, získej feedback a posouvej se s ostatními tvůrci.</p></div>
+    </div>
+    <div style="text-align:center; margin-top:34px;"><a class="btn btn-o btn-lg" href="index.html">Začni zdarma →</a></div>
+  </div>
+</section>
+
+<!-- K ČEMU TI KENJI ACADEMY JE (detailní bloky) -->
+<section style="background:var(--bg2); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <p class="eyebrow">Co všechno tu zvládneš</p>
+    <h2 class="h2">Už 150+ tvůrců roste <span>s Kenji Academy.</span></h2>
+    <p class="lead">Ať jsi úplný začátečník, nebo už fotíš — najdeš tu vše, co potřebuješ k růstu:</p>
+    <div class="uses-grid">
+      <div class="use">
+        <div class="kick">Technika &amp; editace</div>
+        <h3>Nauč se fotit i upravovat 📸</h3>
+        <p>Od úplných základů — expozice, světlo, kompozice — po color grading v Lightroomu a Photoshopu. Vše vysvětlené po lopatě a z praxe.</p>
+      </div>
+      <div class="use">
+        <div class="kick">Byznys &amp; klienti</div>
+        <h3>Získej první platící klienty 💰</h3>
+        <p>Cenotvorba, akvizice, marketing i portfolio. Přesný systém, jak z focení udělat reálný příjem — ne jen nákladný koníček.</p>
+      </div>
+      <div class="use">
+        <div class="kick">Komunita</div>
+        <h3>Buď mezi tvůrci, co tě táhnou 💬</h3>
+        <p>Feed, feedback na tvoje fotky, second shooting a lidi, co ti reálně poradí a domluví spolupráci. Nejsi na to sám.</p>
+      </div>
+      <div class="use">
+        <div class="kick">Kenji AI</div>
+        <h3>Poraď se kdykoliv s AI 24/7 ✦</h3>
+        <p>Vlastní asistent na focení i byznys. Zeptáš se na cokoliv — od nastavení foťáku po cenu zakázky — a dostaneš odpověď po lopatě.</p>
+      </div>
+      <div class="use">
+        <div class="kick">Nástroje</div>
+        <h3>Spočítej si reálnou cenu 🧮</h3>
+        <p>Kalkulačka hodinovky a byznys audit. Zjistíš, kolik si máš doopravdy říct a kde ti utíkají peníze.</p>
+      </div>
+      <div class="use">
+        <div class="kick">Právo &amp; daně</div>
+        <h3>Podnikej legálně a bez stresu ⚖️</h3>
+        <p>Šablony smluv i ceníků a lidské návody na daně a fakturaci. Ať máš v papírech konečně pořádek.</p>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:40px;"><a class="btn btn-o btn-lg" href="index.html">Začni zdarma →</a></div>
+  </div>
+</section>
+
+<!-- RECENZE -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Zkušenosti členů</p>
+    <h2 class="h2">Nechci, abys mi věřil <span>jen na slovo.</span></h2>
+    <p class="lead"><strong style="color:#ffb300">★★★★★ 4,65</strong> · 150+ hodnocení od členů</p>
+    <div class="revs">
+      <div class="rev"><div class="st">★★★★★</div><p>Ze začátku jsem byl skeptickej, kurzů je spousta. Ale díky KA jsem zjistil, že dělám věci špatně 😁 Skvělý vhled pod pokličku profíka a komunita, co se navzájem podporuje.</p><div class="who"><span class="av">TP</span><span><b>Tomino Photo</b><small>člen Kenji Academy</small></span></div></div>
+      <div class="rev"><div class="st">★★★★★</div><p>Chtěla bych strašně poděkovat za tuhle komunitu — plnou skvělých lidí, podpory a webinářů. Je to tu našlapané informacemi a pořád přibývá další obsah.</p><div class="who"><span class="av">JH</span><span><b>Jana Hamadová</b><small>členka Kenji Academy</small></span></div></div>
+      <div class="rev"><div class="st">★★★★★</div><p>Jednoznačně největší přínos, co se know-how týče. KA neřeší jen focení, ale i byznys, finance i právo. Palec nahoru 👍 rozhodně doporučuju.</p><div class="who"><span class="av">MK</span><span><b>Matěj Kubíček</b><small>člen Kenji Academy</small></span></div></div>
+      <div class="rev"><div class="st">★★★★★</div><p>Že jsem se mohl připojit ke Kenjimu, je pro mě dar z nebes. Našel jsem tu rady a triky, o kterých jsem neměl tušení. Doporučuju každýmu, kdo to myslí vážně.</p><div class="who"><span class="av">TŠ</span><span><b>Tomáš Šreiber</b><small>člen Kenji Academy</small></span></div></div>
+      <div class="rev"><div class="st">★★★★★</div><p>KA není jen sada videí. Je to promyšlený projekt, za kterým je vidět srdce 🧡. Diskuse, AI pomocník, webináře i fotosrazy. Vlastně — je to rodina.</p><div class="who"><span class="av">PD</span><span><b>Petr Dvorský</b><small>člen Kenji Academy</small></span></div></div>
+      <div class="rev"><div class="st">★★★★★</div><p>Nečekal jsem moc, ale mýlil jsem se. Kromě rad mi to dodalo i jiskru pustit se do toho naplno. Skvělá komunita je třešnička na dortu. Díky!</p><div class="who"><span class="av">PŠ</span><span><b>Petr Šimík</b><small>člen Kenji Academy</small></span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HIGHLIGHT (čistá fotka + citace) -->
+<section style="background:var(--bg2); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="highlight">
+      <div class="hl-media"><img src="assets/Kenji.webp" alt="Kenji, zakladatel Kenji Academy"></div>
+      <div class="hl-copy">
+        <h3>Od praktika, ne teoretika.</h3>
+        <p class="hl-quote">„Kenji Academy není jen další sada videí. Je to promyšlený projekt, za kterým je vidět srdce 🧡. Najdeš tu diskuse, rozhovory se specialisty, AI pomocníka, webináře i fotosrazy. Vlastně — je to rodina."</p>
+        <div class="hl-who">
+          <span class="av">PD</span>
+          <span><b>Petr Dvorský</b><small>člen Kenji Academy</small></span>
+          <span class="hl-stars">★★★★★</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section class="final">
+  <div class="wrap">
+    <div class="final-card">
+      <p class="eyebrow">Tvoje cesta začíná tady</p>
+      <h2>Začni tvořit byznys ze svého focení.</h2>
+      <p>Přidej se ke komunitě tvůrců, kteří to myslí vážně. Vstup je zdarma — zbytek objevíš, až budeš uvnitř.</p>
+      <a class="btn btn-o btn-lg" href="index.html">Začni 100% ZDARMA →</a>
+      <div class="note">Bez karty · za pár vteřin uvnitř · 110+ aktivních tvůrců</div>
+    </div>
+  </div>
+</section>
+
+<footer class="ft">
+  <div class="wrap ft-in">
+    <span>© <span id="yr"></span> Kenji s.r.o.</span>
+    <nav>
+      <a href="obchodni-podminky.html">Obchodní podmínky</a>
+      <a href="zasady-ochrany-udaju.html">Ochrana osobních údajů</a>
+      <a href="cookies.html">Cookies</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="assets/script.js"></script>
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

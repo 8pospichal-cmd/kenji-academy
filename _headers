@@ -1,0 +1,13 @@
+# Netlify cache hlavičky — zrychlení opakovaných návštěv a přechodů mezi stránkami.
+# CSS/JS mají v odkazech ?v= (cache-busting), takže dlouhá cache je bezpečná.
+
+/assets/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+
+/clanky/*
+  Cache-Control: public, max-age=3600
+
+# HTML vždy znovu ověřit, ať se nový deploy hned projeví
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff

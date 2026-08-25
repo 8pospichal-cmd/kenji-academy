@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kenji Kvíz — otestuj se a odemkni tajnou odměnu | Kenji Academy</title>
+<meta name="description" content="Čtyři levely, čtyři pásky. Otestuj, jestli ti znalosti z databáze fakt sedí — a odemkni pracovní listy k 90denní výzvě.">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kenji Kvíz — otestuj se a odemkni tajnou odměnu">
+<meta property="og:description" content="Čtyři pásky, otázky napříč celou databází. Zvládneš všechny a odemkneš pracovní listy k 90denní výzvě.">
+<meta property="og:image" content="assets/og-image.svg">
+<meta property="og:locale" content="cs_CZ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kenji Kvíz — otestuj se a odemkni tajnou odměnu">
+<meta name="twitter:description" content="Čtyři pásky, otázky napříč celou databází. Dáš černý pásek a odemkneš odměnu?">
+<meta name="twitter:image" content="assets/og-image.svg">
+<meta name="theme-color" content="#0a0a0a">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=20260824-buymodal-v1">
+</head>
+<body>
+
+<header class="top-header">
+  <button class="menu-toggle" aria-label="Otevřít menu">☰</button>
+  <a href="index.html" class="brand">
+    <div class="brand-name">KENJI ACADEMY</div>
+  </a>
+  <div class="header-spacer"></div>
+  <div class="header-actions">
+    <span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main">
+    <div class="main-inner">
+
+      <div class="breadcrumbs">
+        <a href="index.html">Databáze</a>
+        <span class="separator">/</span>
+        <span class="current">Kvíz</span>
+      </div>
+
+      <section class="article-hero">
+        <div class="article-hero-label">EXCLUSIVE • KENJI KVÍZ</div>
+        <h1>Otestuj se.<br>Odemkni <span class="highlight">tajnou odměnu.</span></h1>
+        <p class="article-hero-sub">Čtyři levely, čtyři pásky. Otázky tahané napříč celou databází — a nejsou zadarmo. Zvládneš všechny čtyři a odemkneš pracovní listy k 90denní výzvě. Praktický plán pro víc klientů, lepší cash flow a rychlejší růst.</p>
+      </section>
+
+      <!-- Sem engine vykreslí výběr levelů / běžící kvíz / výsledek -->
+      <div id="quiz-app" class="quiz-app"></div>
+
+      <div class="signoff">
+        <div class="signoff-mark">— KENJI</div>
+        <p class="signoff-text">Žádný kecy. Jen praxe.</p>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="assets/articles.js?v=20260824-value-v1"></script>
+<script src="assets/nav.js?v=20260824-buymodal-v1"></script>
+<script src="assets/auth.js?v=20260824-ai-retry-v1"></script>
+<script src="assets/quiz.js?v=20260824-ai-retry-v1"></script>
+<script>
+// ============================================
+// KENJI KVÍZ — ENGINE (běh kvízu, ukládání postupu)
+// ============================================
+// Postup hráče: localStorage 'kenji_quiz_v1'
+//   { passed: ['zaklady',...], best: {zaklady:12,...}, name:'' }
+// 15 otázek/level, na postup 12/15 (80 %) — čteno z KENJI_QUIZ dynamicky.
+// ►► Až bude Supabase login, sem přijde sync postupu k uživateli
+//    (stejně jako u čtení článků v nav.js).
+// ============================================
+(function () {
+  const QUIZ = window.KENJI_QUIZ;
+  const ARTICLES = window.KENJI_ARTICLES || [];
+  const app = document.getElementById('quiz-app');
+  if (!QUIZ || !app) return;
+
+  const PASS = QUIZ.passRatio || 0.9;
+  const KEY = 'kenji_quiz_v1';
+
+  // ---------- postup ----------
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
+  function state() {
+    const s = load();
+    s.passed = Array.isArray(s.passed) ? s.passed : [];
+    s.best = s.best || {};
+    return s;
+  }
+  function isPassed(id) { return state().passed.includes(id); }
+  function isUnlocked(level) {
+    if (level.order <= 1) return true;
+    const prev = QUIZ.levels.find((l) => l.order === level.order - 1);
+    return prev ? isPassed(prev.id) : true;
+  }
+  function allPassed() { return QUIZ.levels.every((l) => isPassed(l.id)); }
+
+  function markPassed(id, score) {
+    const s = state();
+    if (!s.passed.includes(id)) s.passed.push(id);
+    s.best[id] = Math.max(s.best[id] || 0, score);
+    save(s);
+    if (window.KenjiProgress) window.KenjiProgress.push(); // sync na server
+  }
+
+  // ---------- utils ----------
+  const esc = (str) => String(str).replace(/[&<>"]/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function artUrl(slug) {
+    const a = ARTICLES.find((x) => x.slug === slug);
+    return a ? a.url : null;
+  }
+  function artTitle(slug) {
+    const a = ARTICLES.find((x) => x.slug === slug);
+    return a ? a.title : '';
+  }
+
+  // ========================================================
+  //  VIEW 1 — VÝBĚR LEVELŮ
+  // ========================================================
+  function renderHub() {
+    const s = state();
+    const passedCount = QUIZ.levels.filter((l) => isPassed(l.id)).length;
+    const total = QUIZ.levels.length;
+    const need = Math.round((QUIZ.questionsPerLevel || 10) * PASS);
+
+    let cards = '';
+    QUIZ.levels.forEach((level) => {
+      const passed = isPassed(level.id);
+      const unlocked = isUnlocked(level);
+      const best = s.best[level.id];
+      let badge, btn, cls = 'quiz-level-card';
+      if (passed) {
+        cls += ' is-done';
+        badge = `<span class="ql-status done">✓ Hotovo${best ? ` · ${best}/${QUIZ.questionsPerLevel}` : ''}</span>`;
+        btn = `<button class="ql-btn ghost" data-start="${level.id}">Zkusit znovu</button>`;
+      } else if (unlocked) {
+        badge = `<span class="ql-status open">Odemčeno</span>`;
+        btn = `<button class="ql-btn" data-start="${level.id}">Spustit level →</button>`;
+      } else {
+        cls += ' is-locked';
+        const prev = QUIZ.levels.find((l) => l.order === level.order - 1);
+        badge = `<span class="ql-status locked">🔒 Zamčeno</span>`;
+        btn = `<div class="ql-locknote">Nejdřív zvládni „${esc(prev ? prev.name : '')}"</div>`;
+      }
+      cards += `
+        <div class="${cls}">
+          <div class="ql-top">
+            <div class="ql-icon">${level.icon}</div>
+            <div class="ql-belt">${esc(level.belt)}</div>
+          </div>
+          <h3 class="ql-name">${esc(level.name)}</h3>
+          <p class="ql-desc">${esc(level.desc)}</p>
+          <div class="ql-foot">
+            ${badge}
+            ${btn}
+          </div>
+        </div>`;
+    });
+
+    const rewardReady = allPassed();
+    const rewardBlock = `
+      <div class="quiz-reward-cta${rewardReady ? ' ready' : ''}">
+        <div class="qcc-icon">${rewardReady ? '🎁' : '🔒'}</div>
+        <div class="qcc-text">
+          <div class="qcc-title">${rewardReady ? 'Máš to! Tajná odměna je odemčená.' : 'Tajná odměna za dokončení'}</div>
+          <p>${rewardReady
+            ? 'Zvládl jsi všechny čtyři pásky. Teď máš přístup k pracovním listům k 90denní výzvě — praktickému plánu pro růst tvého podnikání.'
+            : `Zvládni všechny čtyři levely (${passedCount}/${total} hotovo) a odemknou se ti pracovní listy k 90denní výzvě.`}</p>
+        </div>
+        ${rewardReady
+          ? `<a class="qcc-btn" href="odmena.html">Odemknout odměnu →</a>`
+          : `<div class="qcc-progress"><span style="width:${Math.round(passedCount/total*100)}%"></span></div>`}
+      </div>`;
+
+    app.innerHTML = `
+      <div class="quiz-rules">
+        <span><strong>${QUIZ.questionsPerLevel}</strong> otázek v levelu</span>
+        <span class="qr-dot"></span>
+        <span>na postup potřebuješ <strong>${need}/${QUIZ.questionsPerLevel}</strong></span>
+        <span class="qr-dot"></span>
+        <span>levely se odemykají postupně</span>
+      </div>
+      <div class="quiz-grid">${cards}</div>
+      ${rewardBlock}`;
+
+    app.querySelectorAll('[data-start]').forEach((b) => {
+      b.addEventListener('click', () => startQuiz(b.getAttribute('data-start')));
+    });
+  }
+
+  // ========================================================
+  //  VIEW 2 — BĚH KVÍZU
+  // ========================================================
+  let run = null; // { level, qs, idx, score, answered }
+
+  function startQuiz(levelId) {
+    const level = QUIZ.levels.find((l) => l.id === levelId);
+    if (!level) return;
+    const qs = shuffle(level.questions).map((q) => {
+      const opts = shuffle(q.options.map((text, i) => ({ text, correct: i === q.correct })));
+      return { q: q.q, opts, explain: q.explain, slug: q.slug };
+    });
+    run = { level, qs, idx: 0, score: 0, answered: false };
+    if (window.KenjiAuth && window.KenjiAuth.track) {
+      window.KenjiAuth.track('quiz_started', 'quiz', { level: level.id });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const { level, qs, idx, score } = run;
+    const q = qs[idx];
+    const num = idx + 1;
+    const pct = Math.round((idx) / qs.length * 100);
+
+    app.innerHTML = `
+      <div class="quiz-runner">
+        <div class="qrun-head">
+          <button class="qrun-quit" id="quiz-quit">← Zpět na levely</button>
+          <div class="qrun-belt">${level.icon} ${esc(level.belt)}</div>
+          <div class="qrun-count">Otázka ${num}/${qs.length}</div>
+        </div>
+        <div class="qrun-bar"><span style="width:${pct}%"></span></div>
+
+        <div class="qrun-question">${esc(q.q)}</div>
+
+        <div class="qrun-options" id="quiz-options">
+          ${q.opts.map((o, i) => `
+            <button class="qrun-opt" data-i="${i}">
+              <span class="qo-letter">${String.fromCharCode(65 + i)}</span>
+              <span class="qo-text">${esc(o.text)}</span>
+            </button>`).join('')}
+        </div>
+
+        <div class="qrun-feedback" id="quiz-feedback" hidden></div>
+
+        <div class="qrun-footer">
+          <div class="qrun-score">Skóre: <strong>${score}</strong></div>
+          <button class="qrun-next" id="quiz-next" hidden></button>
+        </div>
+      </div>`;
+
+    run.answered = false;
+
+    document.getElementById('quiz-quit').addEventListener('click', () => {
+      if (confirm('Fakt chceš odejít? Postup v tomhle levelu se ztratí.')) { run = null; renderHub(); }
+    });
+    document.querySelectorAll('#quiz-options .qrun-opt').forEach((btn) => {
+      btn.addEventListener('click', () => answer(parseInt(btn.getAttribute('data-i'), 10)));
+    });
+  }
+
+  function answer(i) {
+    if (run.answered) return;
+    run.answered = true;
+    const q = run.qs[run.idx];
+    const chosen = q.opts[i];
+    const correctIdx = q.opts.findIndex((o) => o.correct);
+    if (chosen.correct) run.score++;
+
+    document.querySelectorAll('#quiz-options .qrun-opt').forEach((btn, bi) => {
+      btn.classList.add('locked');
+      if (bi === correctIdx) btn.classList.add('correct');
+      if (bi === i && !chosen.correct) btn.classList.add('wrong');
+    });
+
+    const fb = document.getElementById('quiz-feedback');
+    const url = artUrl(q.slug);
+    fb.className = 'qrun-feedback ' + (chosen.correct ? 'good' : 'bad');
+    fb.innerHTML = `
+      <div class="qfb-head">${chosen.correct ? '✅ Správně' : '❌ Vedle'}</div>
+      <p>${esc(q.explain)}</p>
+      ${url ? `<a class="qfb-link" href="${url}">📖 Dočíst v článku: ${esc(artTitle(q.slug))}</a>` : ''}`;
+    fb.hidden = false;
+
+    const next = document.getElementById('quiz-next');
+    const last = run.idx === run.qs.length - 1;
+    next.textContent = last ? 'Zobrazit výsledek →' : 'Další otázka →';
+    next.hidden = false;
+    next.addEventListener('click', () => {
+      if (last) { renderResult(); }
+      else { run.idx++; renderQuestion(); }
+    });
+    fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ========================================================
+  //  VIEW 3 — VÝSLEDEK
+  // ========================================================
+  function renderResult() {
+    const { level, qs, score } = run;
+    const need = Math.round(qs.length * PASS);
+    const passed = score >= need;
+    if (passed) markPassed(level.id, score);
+    if (window.KenjiAuth && window.KenjiAuth.recordTool) {
+      window.KenjiAuth.recordTool('quiz', {
+        level: level.id,
+        level_name: level.name,
+        score: score,
+        total: qs.length,
+        passed: passed
+      });
+    }
+
+    const nextLevel = QUIZ.levels.find((l) => l.order === level.order + 1);
+    const rewardReady = allPassed();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    let actions = `<button class="ql-btn ghost" data-retry="${level.id}">Zkusit znovu</button>
+                   <button class="ql-btn ghost" id="quiz-back">Zpět na levely</button>`;
+    if (passed && rewardReady) {
+      actions = `<a class="ql-btn" href="odmena.html">🎁 Odemknout odměnu →</a>
+                 <button class="ql-btn ghost" id="quiz-back">Zpět na levely</button>`;
+    } else if (passed && nextLevel) {
+      actions = `<button class="ql-btn" data-start="${nextLevel.id}">Další level: ${esc(nextLevel.name)} →</button>
+                 <button class="ql-btn ghost" id="quiz-back">Zpět na levely</button>`;
+    }
+
+    app.innerHTML = `
+      <div class="quiz-result ${passed ? 'pass' : 'fail'}">
+        <div class="qres-icon">${passed ? level.icon : '💪'}</div>
+        <div class="qres-score">${score}<span>/${qs.length}</span></div>
+        <h2 class="qres-title">${passed
+          ? `Máš ${esc(level.belt)}!`
+          : 'Ještě to nedáváš'}</h2>
+        <p class="qres-msg">${passed
+          ? (rewardReady
+              ? 'A je to — poslední pásek padl. Zvládl jsi všechny čtyři levely. Teď si vyzvedni pracovní listy k 90denní výzvě.'
+              : `Zvládl jsi to na ${score}/${qs.length}. Level je hotový a další se právě odemkl.`)
+          : `Potřebuješ aspoň ${need}/${qs.length}. Mrkni na vysvětlení u otázek, dočti si články a zkus to znovu — otázky se zamíchají.`}</p>
+        <div class="qres-actions">${actions}</div>
+      </div>`;
+
+    const back = document.getElementById('quiz-back');
+    if (back) back.addEventListener('click', () => { run = null; renderHub(); });
+    app.querySelectorAll('[data-retry]').forEach((b) =>
+      b.addEventListener('click', () => startQuiz(b.getAttribute('data-retry'))));
+    app.querySelectorAll('[data-start]').forEach((b) =>
+      b.addEventListener('click', () => startQuiz(b.getAttribute('data-start'))));
+  }
+
+  // ---------- start ----------
+  renderHub();
+})();
+</script>
+<script src="assets/script.js?v=20260824-ai-retry-v1"></script>
+</body>
+</html>

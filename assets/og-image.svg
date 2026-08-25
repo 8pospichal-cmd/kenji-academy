@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d0d0d"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="80%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="rgba(255,107,26,0.25)"/>
+      <stop offset="100%" stop-color="rgba(255,107,26,0)"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="10%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="rgba(42,111,255,0.15)"/>
+      <stop offset="100%" stop-color="rgba(42,111,255,0)"/>
+    </radialGradient>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b1a"/>
+      <stop offset="100%" stop-color="#ff4500"/>
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#ffe4d1"/>
+      <stop offset="100%" stop-color="#ff6b1a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <!-- Logo box -->
+  <rect x="80" y="80" width="80" height="80" rx="18" fill="url(#logoGrad)"/>
+  <text x="120" y="138" font-family="Bebas Neue, Impact, sans-serif" font-size="52" font-weight="700" fill="#fff" text-anchor="middle">K</text>
+
+  <!-- Brand name -->
+  <text x="185" y="115" font-family="Bebas Neue, Impact, sans-serif" font-size="32" fill="#f5f5f5" letter-spacing="2">KENJI</text>
+  <text x="294" y="115" font-family="Bebas Neue, Impact, sans-serif" font-size="32" fill="#ff6b1a" letter-spacing="2">•</text>
+  <text x="316" y="115" font-family="Bebas Neue, Impact, sans-serif" font-size="32" fill="#f5f5f5" letter-spacing="2">KNIHOVNA</text>
+  <text x="185" y="148" font-family="JetBrains Mono, monospace" font-size="14" fill="#9a9a9a" letter-spacing="3">EXCLUSIVE • MEMBERS ONLY</text>
+
+  <!-- Main headline -->
+  <text x="80" y="320" font-family="Bebas Neue, Impact, sans-serif" font-size="88" font-weight="700" fill="#f5f5f5" letter-spacing="-1">Vědomostní</text>
+  <text x="80" y="410" font-family="Bebas Neue, Impact, sans-serif" font-size="88" font-weight="700" fill="#f5f5f5" letter-spacing="-1">báze pro</text>
+  <text x="80" y="500" font-family="Bebas Neue, Impact, sans-serif" font-size="88" font-weight="700" fill="url(#titleGrad)" letter-spacing="-1">fotografy.</text>
+
+  <!-- Tagline -->
+  <text x="80" y="560" font-family="Inter, sans-serif" font-size="22" fill="#9a9a9a">Praktické know-how. Žádné kecy. Jen praxe.</text>
+
+  <!-- Accent line -->
+  <rect x="80" y="585" width="60" height="4" fill="#ff6b1a" rx="2"/>
+</svg>

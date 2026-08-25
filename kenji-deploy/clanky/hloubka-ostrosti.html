@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hloubka ostrosti — jak rozmazat pozadí (a kdy ne) | Kenji Knihovna</title>
+<meta name="description" content="Co je hloubka ostrosti, tři faktory, co ji řídí, bokeh a kdy chceš ostré všechno. Lidsky vysvětlené, ať máš pozadí přesně tak, jak chceš.">
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hloubka ostrosti — jak rozmazat pozadí (a kdy ne)">
+<meta property="og:description" content="Tři faktory, co řídí ostrost, bokeh a kdy chceš ostré všechno.">
+<meta property="og:image" content="../assets/og-image.svg">
+<meta property="og:locale" content="cs_CZ">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hloubka ostrosti — jak rozmazat pozadí (a kdy ne)">
+<meta name="twitter:description" content="Tři faktory, co řídí ostrost, bokeh a kdy chceš ostré všechno.">
+<meta name="twitter:image" content="../assets/og-image.svg">
+
+<meta name="theme-color" content="#0a0a0a">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/styles.css?v=20260819-culture">
+</head>
+<body>
+
+<!-- TOP HEADER -->
+<header class="top-header">
+  <button class="menu-toggle" aria-label="Otevřít menu">☰</button>
+  <a href="../index.html" class="brand">
+    <div class="brand-name">KENJI ACADEMY</div>
+  </a>
+  <div class="header-spacer"></div>
+  <div class="header-actions">
+    <span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+
+  <!-- SIDEBAR — generuje se z manifestu (assets/nav.js?v=20260819-light) -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-inner">
+
+      <!-- BREADCRUMBS -->
+      <div class="breadcrumbs">
+        <a href="../index.html">Databáze</a>
+        <span class="separator">/</span>
+        <a href="../index.html#cat-zacatecnik">Začátečník</a>
+        <span class="separator">/</span>
+        <span class="current">Hloubka ostrosti</span>
+      </div>
+
+      <!-- META -->
+      <div class="article-meta">
+        <div class="article-meta-item">📖 6 min čtení</div>
+        <span class="article-meta-dot"></span>
+        <div class="article-meta-item">🎓 Začátečník</div>
+        <span class="article-meta-dot"></span>
+        <div class="article-meta-item">— Kenji</div>
+      </div>
+
+      <!-- HERO -->
+      <section class="article-hero">
+        <div class="article-hero-label">ZÁKLADY • ZAČÁTEČNÍK</div>
+        <h1>Hloubka ostrosti:<br>jak rozmazat pozadí<br><span class="highlight">(a kdy to nedělat).</span></h1>
+        <p class="article-hero-sub">To krásné měkké pozadí za portrétem, kvůli kterému fotka vypadá draze — to je hloubka ostrosti. Není to kouzlo ani drahý objektiv. Jsou to tři faktory, co máš plně pod kontrolou.</p>
+      </section>
+
+      <!-- CO JE DOF -->
+      <section class="article-intro" id="co-je-dof">
+        <p><strong>Hloubka ostrosti je ta část fotky, která je ostrá — od nejbližšího ostrého bodu po ten nejvzdálenější.</strong></p>
+        <p>Někdy chceš, aby byl ostrý jen člověk a všechno za ním se rozplynulo do měkka — tomu se říká <strong>mělká hloubka ostrosti</strong>. Jindy chceš mít ostré všechno od kytky v popředí po hory na horizontu — to je <strong>velká hloubka ostrosti</strong>.</p>
+        <p>Dobrá zpráva: rozhoduješ o tom ty. A řídíš to třema věcma, z nichž dvě už znáš z předchozích článků — clonou a ohniskem. Třetí je vzdálenost. Pojďme na ně.</p>
+
+        <div class="quote-box">
+          „Rozmazané pozadí není o tom, jak drahý máš objektiv. Je o tom, jestli víš, na které tři páky sáhnout."
+        </div>
+      </section>
+
+      <!-- FAKTORY -->
+      <h2 class="section-title" id="faktory">Tři faktory, co řídí hloubku ostrosti</h2>
+
+      <p style="font-size: 16px; color: var(--text-dim); margin-bottom: 16px;">Když chceš víc rozmazat pozadí, zatáhneš za jednu (nebo víc) z těchhle pák. Když chceš mít ostré všechno, uděláš opak:</p>
+
+      <div class="numbered-cards">
+        <article class="numbered-card">
+          <div class="numbered-card-header">
+            <div class="numbered-card-num">01</div>
+            <div class="numbered-card-title-wrap">
+              <div class="numbered-card-kicker">Clona · největší páka</div>
+              <div class="numbered-card-title">Otevřená clona = mělčí ostrost</div>
+            </div>
+          </div>
+          <div class="card-block diagnosis">
+            <div class="block-label diagnosis-label"><span class="dot"></span>Jak to funguje</div>
+            <p>Čím <strong>otevřenější clona</strong> (nižší f-číslo, např. f/1.8), tím <strong>mělčí</strong> hloubka ostrosti a tím víc se pozadí rozplyne. Zavřená clona (f/8–f/16) udrží ostré skoro všechno. Tohle je tvoje hlavní páka — pamatuješ z článku o expozici? Tady ji využiješ naplno.</p>
+          </div>
+          <div class="example-box">
+            <span class="tag">PRAKTICKY</span>
+            <p>Chceš rozmazat pozadí? <strong>Jdi na nejnižší f-číslo, co objektiv umí.</strong> Chceš ostré všechno? Zavři na f/8–f/11.</p>
+          </div>
+        </article>
+
+        <article class="numbered-card">
+          <div class="numbered-card-header">
+            <div class="numbered-card-num">02</div>
+            <div class="numbered-card-title-wrap">
+              <div class="numbered-card-kicker">Ohnisko</div>
+              <div class="numbered-card-title">Delší ohnisko = mělčí ostrost</div>
+            </div>
+          </div>
+          <div class="card-block diagnosis">
+            <div class="block-label diagnosis-label"><span class="dot"></span>Jak to funguje</div>
+            <p>Delší ohnisko (85 mm, 135 mm, 200 mm) díky kompresi <strong>víc rozmaže pozadí</strong> než širák — i při stejné cloně. Proto portrét na 135 mm má máslové pozadí, zatímco na 24 mm je pozadí pořád docela čitelné. Tohle navazuje přímo na článek o ohnisku.</p>
+          </div>
+        </article>
+
+        <article class="numbered-card">
+          <div class="numbered-card-header">
+            <div class="numbered-card-num">03</div>
+            <div class="numbered-card-title-wrap">
+              <div class="numbered-card-kicker">Vzdálenost</div>
+              <div class="numbered-card-title">Blíž k objektu = mělčí ostrost</div>
+            </div>
+          </div>
+          <div class="card-block diagnosis">
+            <div class="block-label diagnosis-label"><span class="dot"></span>Jak to funguje</div>
+            <p>Čím <strong>blíž jsi k objektu</strong>, tím mělčí hloubka ostrosti. A čím <strong>dál je pozadí za objektem</strong>, tím víc se rozmaže. Proto když chceš silný bokeh: přijdi blíž k modelovi a odsuň ho od zdi. Dvě vteřiny práce, obrovský rozdíl.</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <div class="callout-title">Skládej je dohromady</div>
+          <p>Tyhle tři se <strong>sčítají</strong>. Maximální rozmazání pozadí? Otevřená clona <strong>+</strong> delší ohnisko <strong>+</strong> blízko k modelovi <strong>+</strong> pozadí daleko za ním. Naopak ostré všechno (krajina)? Zavřená clona, kratší ohnisko, větší odstup. Žádné kouzlo — jen sčítání tří efektů.</p>
+        </div>
+      </div>
+
+      <!-- MĚLKÁ VS VELKÁ -->
+      <h2 class="section-title" id="melka-velka">Mělká vs velká — kdy chceš co</h2>
+
+      <p style="font-size: 16px; color: var(--text-dim); margin-bottom: 16px;">Mělká hloubka není vždycky lepší, i když to tak na Instagramu může vypadat. Každá se hodí na něco jiného:</p>
+
+      <div class="compare-grid">
+        <div class="compare-card">
+          <div class="compare-card-head">MĚLKÁ</div>
+          <div class="compare-card-sub">f/1.8–f/2.8</div>
+          <h4>Ostrý objekt, rozmazané pozadí</h4>
+          <ul>
+            <li>Portréty — oddělíš člověka od pozadí</li>
+            <li>Produkt, detail, jídlo</li>
+            <li>Schováš rušivé nebo ošklivé pozadí</li>
+            <li>Dodá fotce „drahý" vzhled</li>
+          </ul>
+        </div>
+
+        <div class="compare-card">
+          <div class="compare-card-head">VELKÁ</div>
+          <div class="compare-card-sub">f/8–f/16</div>
+          <h4>Ostré od popředí po horizont</h4>
+          <ul>
+            <li>Krajina — všechno čitelné a ostré</li>
+            <li>Architektura a interiéry</li>
+            <li>Skupinové fotky (ať jsou ostří všichni)</li>
+            <li>Reportáž, kde se děje víc věcí naráz</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-content">
+          <div class="callout-title">Pozor: moc otevřená clona se vymstí</div>
+          <p>U portrétu na f/1.4 je hloubka ostrosti tak mělká, že může být <strong>ostré jen jedno oko a nos už rozmazaný</strong>. U skupiny na f/1.8 ti zaostří jen první řada a zbytek je v rozplizu. Klidně přivři na <strong>f/2.8–f/4</strong> — pořád krásné pozadí, ale člověk je celý ostrý. Víc bokehu neznamená lepší fotku.</p>
+        </div>
+      </div>
+
+      <!-- BOKEH -->
+      <h2 class="section-title" id="bokeh">Bokeh — to měkké kouzlo za modelem</h2>
+
+      <p style="font-size: 16px; color: var(--text-dim); margin-bottom: 16px;"><strong style="color: var(--text);">Bokeh</strong> je ten estetický vzhled rozmazaných částí fotky — hlavně světýlek, co se mění v měkké kruhy. Není to to samé jako hloubka ostrosti; hloubka říká <em>kolik</em> je ostré, bokeh říká, <em>jak hezky</em> vypadá to neostré.</p>
+
+      <div class="example-box">
+        <span class="tag">PRAKTICKY</span>
+        <p>Nejhezčí bokeh dostaneš, když máš <strong>za modelem světelné body</strong> — pouliční lampy, světýlka, slunce prosvítající listím. Otevři clonu, dej delší ohnisko, odsuň model od těch světel. Promění se v měkké zářící koule. Tohle je ten „filmový" vzhled.</p>
+      </div>
+
+      <!-- PRAKTICKY -->
+      <h2 class="section-title" id="prakticky">Jak na to v praxi</h2>
+
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-content">
+          <div class="callout-title">Co si z toho odnést</div>
+          <p>Hloubku ostrosti řídí tři páky: <strong>clona (hlavní), ohnisko a vzdálenost</strong> — a sčítají se. Chceš rozmazat pozadí? Otevřená clona + delší ohnisko + blíž k modelovi + pozadí daleko. Chceš ostré všechno? Přesný opak. A nepřežeň to s clonou — <strong>f/2.8 s celým ostrým obličejem bije f/1.4 s ostrým jen jedním okem.</strong></p>
+        </div>
+      </div>
+
+      <!-- CLOSING -->
+      <section class="closing">
+        <h2>Závěrem</h2>
+        <p>Rozmazané pozadí není výsada drahé výbavy. Je to <strong>rozhodnutí</strong> — otevři clonu, prodluž ohnisko, přijď blíž. Tři páky, co se sčítají, a ty je teď znáš.</p>
+        <p>Postav si někoho dva metry před zeď, vyfoť ho na f/8 a pak na nejnižší clonu, co máš. Pak ho odsuň od zdi a zopakuj. <strong>Uvidíš na vlastní oči, jak se pozadí mění — a navždy to pochopíš.</strong></p>
+        <p style="margin-top: 20px; color: var(--text); font-size: 18px;">Bokeh je nástroj, ne cíl. Používej ho, když dává smysl.</p>
+      </section>
+
+      <!-- FOOTER NAV -->
+      <nav class="article-footer-nav">
+        <a href="white-balance.html" class="footer-nav-link">
+          <div class="label">← Předchozí</div>
+          <div class="title">White balance</div>
+        </a>
+        <a href="raw-vs-jpeg.html" class="footer-nav-link next">
+          <div class="label">Další →</div>
+          <div class="title">RAW vs JPEG</div>
+        </a>
+      </nav>
+
+      <!-- SIGNOFF -->
+      <div class="signoff">
+        <div class="signoff-mark">— KENJI</div>
+        <p class="signoff-text">Žádný kecy. Jen praxe.</p>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- TOC pro tento článek (čte assets/nav.js?v=20260819-light) -->
+<script>
+window.KENJI_TOC = [
+  { id: 'co-je-dof',    label: 'Co je hloubka ostrosti' },
+  { id: 'faktory',      label: 'Tři faktory' },
+  { id: 'melka-velka',  label: 'Mělká vs velká' },
+  { id: 'bokeh',        label: 'Bokeh' },
+  { id: 'prakticky',    label: 'Jak na to v praxi' }
+];
+</script>
+<script src="../assets/articles.js?v=20260822-guided"></script>
+<script src="../assets/nav.js?v=20260822-guided"></script>
+<script src="../assets/auth.js?v=20260819-ux"></script>
+<script src="../assets/script.js"></script>
+</body>
+</html>

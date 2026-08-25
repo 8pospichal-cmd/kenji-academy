@@ -1,0 +1,54 @@
+# Pretty URLs — odstraní .html z adresního řádku
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/academy"
+  to = "/academy.html"
+  status = 200
+
+[[redirects]]
+  from = "/platba-uspesna"
+  to = "/platba-uspesna.html"
+  status = 200
+
+[[redirects]]
+  from = "/platba-zrusena"
+  to = "/platba-zrusena.html"
+  status = 200
+
+[[redirects]]
+  from = "/clanky/:slug"
+  to = "/clanky/:slug.html"
+  status = 200
+
+[[redirects]]
+  from = "/certifikat"
+  to = "/odmena"
+  status = 301
+
+[[redirects]]
+  from = "/certifikat.html"
+  to = "/odmena.html"
+  status = 301
+
+# 404 fallback
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+
+# Cache — během aktivního vývoje vše revaliduj, ať se každý update hned projeví.
+# (Až bude web stabilní, lze obrázky/fonty vrátit na immutable + verzovat JS přes ?v=.)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

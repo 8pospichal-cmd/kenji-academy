@@ -1,0 +1,17 @@
+# Závislosti (Netlify si je nainstaluje sám z package.json)
+node_modules/
+
+# Systémové smetí
+.DS_Store
+*.log
+
+# Tajné proměnné (nikdy do gitu!)
+.env
+.env.*
+
+# Netlify lokální
+.netlify/
+
+# Dočasné soubory
+scratchpad/
+*.tmp

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 — Tahle stránka nejde najít | Kenji Knihovna</title>
+<meta name="description" content="Tahle stránka neexistuje.">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta name="theme-color" content="#0a0a0a">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=20260819-culture">
+
+<style>
+  body.page-404 {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .page-404-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+  }
+  .err-content {
+    max-width: 560px;
+  }
+  .err-code {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(120px, 22vw, 220px);
+    line-height: 0.9;
+    margin-bottom: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #ffe4d1 30%, #ff9550 70%, var(--orange) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    filter: drop-shadow(0 0 32px rgba(255, 107, 26, 0.4));
+    letter-spacing: -2px;
+  }
+  .err-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 4vw, 42px);
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+  }
+  .err-text {
+    font-size: 16px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+  .err-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: var(--orange);
+    color: #fff;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 20px rgba(255, 107, 26, 0.3);
+  }
+  .err-cta:hover {
+    background: #ff8533;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(255, 107, 26, 0.4);
+  }
+  .err-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    padding: 6px 12px;
+    background: rgba(255, 107, 26, 0.1);
+    border: 1px solid rgba(255, 107, 26, 0.3);
+    border-radius: 100px;
+  }
+</style>
+</head>
+<body class="page-404">
+
+<!-- TOP HEADER -->
+<header class="top-header">
+  <a href="/" class="brand">
+    <div class="brand-mark">K</div>
+    <div class="brand-name">KENJI<span>•</span>KNIHOVNA</div>
+  </a>
+  <div class="header-spacer"></div>
+  <div class="header-actions">
+    <span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span>
+  </div>
+</header>
+
+<main class="page-404-main">
+  <div class="err-content">
+    <div class="err-tag">CHYBA 404</div>
+    <div class="err-code">404</div>
+    <h1 class="err-title">Tahle stránka nejde najít</h1>
+    <p class="err-text">Buď byla smazaná, přesunutá, nebo jsi zadal špatnou adresu. Žádný drama. Vrať se na hlavní stránku a najdi, co potřebuješ.</p>
+    <a href="/" class="err-cta">
+      <span>←</span>
+      <span>Zpět do knihovny</span>
+    </a>
+  </div>
+</main>
+
+</body>
+</html>

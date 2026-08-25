@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skin tones — jak nikdy nezkazit pleť v editaci | Kenji Knihovna</title>
+<meta name="description" content="Proč fotkám zoranžoví nebo zežloutne pleť a jak ji srovnat: white balance, HSL a konzistence. Praktický postup, ať máš věrné skin tones a spokojené klienty.">
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Skin tones — jak nikdy nezkazit pleť v editaci">
+<meta property="og:description" content="White balance, HSL a konzistence. Ať máš věrné skin tones a spokojené klienty.">
+<meta property="og:image" content="../assets/og-image.svg">
+<meta property="og:locale" content="cs_CZ">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Skin tones — jak nikdy nezkazit pleť v editaci">
+<meta name="twitter:description" content="White balance, HSL a konzistence. Ať máš věrné skin tones.">
+<meta name="twitter:image" content="../assets/og-image.svg">
+
+<meta name="theme-color" content="#0a0a0a">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/styles.css?v=20260819-culture">
+</head>
+<body>
+
+<!-- TOP HEADER -->
+<header class="top-header">
+  <button class="menu-toggle" aria-label="Otevřít menu">☰</button>
+  <a href="../index.html" class="brand">
+    <div class="brand-name">KENJI ACADEMY</div>
+  </a>
+  <div class="header-spacer"></div>
+  <div class="header-actions">
+    <span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+
+  <!-- SIDEBAR — generuje se z manifestu (assets/nav.js?v=20260819-light) -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-inner">
+
+      <!-- BREADCRUMBS -->
+      <div class="breadcrumbs">
+        <a href="../index.html">Databáze</a>
+        <span class="separator">/</span>
+        <a href="../index.html#cat-editace">Nástroje a AI</a>
+        <span class="separator">/</span>
+        <span class="current">Skin tones</span>
+      </div>
+
+      <!-- META -->
+      <div class="article-meta">
+        <div class="article-meta-item">📖 7 min čtení</div>
+        <span class="article-meta-dot"></span>
+        <div class="article-meta-item">🎨 Nástroje a AI</div>
+        <span class="article-meta-dot"></span>
+        <div class="article-meta-item">— Kenji</div>
+      </div>
+
+      <!-- HERO -->
+      <section class="article-hero">
+        <div class="article-hero-label">EXCLUSIVE • EDITACE</div>
+        <h1>Skin tones:<br>jak nikdy nezkazit<br><span class="highlight">pleť v editaci.</span></h1>
+        <p class="article-hero-sub">Pleť je nejnáročnější barva v celé fotce — každý člověk podvědomě ví, jak má vypadat, a okamžitě pozná, když nesedí. Oranžová, zsinalá, přepálená. Pojďme se naučit, jak ji udržet věrnou a krásnou.</p>
+      </section>
+
+      <!-- INTRO -->
+      <section class="article-intro" id="uvod">
+        <p><strong>Proč zrovna pleť?</strong> Protože ji znáš nazpaměť. Můžeš přepálit oblohu nebo posunout barvu trávy a nikdo nemrkne. Ale jakmile má model oranžový nebo zelenkavý obličej, každý to vidí — i klient, co o fotografii nic neví. <strong>A na portrétu a svatbě je pleť to první, co lidi hodnotí.</strong></p>
+        <p>Dobrá zpráva: nezkazit pleť není o talentu, ale o pořadí kroků a pár pravidlech. Většina problémů začíná už u <a href="white-balance.html">white balance</a> — a fotíš-li <a href="raw-vs-jpeg.html">RAW</a>, máš obrovský prostor to doladit. Pojďme na to.</p>
+
+        <div class="quote-box">
+          „Oblohu ti odpustí každý. Oranžový obličej nevěsty ti neodpustí nikdo — hlavně ne ona."
+        </div>
+      </section>
+
+      <!-- POSTUP -->
+      <h2 class="section-title" id="postup">Postup, jak na věrnou pleť</h2>
+
+      <p style="font-size: 16px; color: var(--text-dim); margin-bottom: 16px;">Drž tohle pořadí. Většina lidí kazí pleť tím, že skáče rovnou na sytost — a začíná na špatném konci:</p>
+
+      <div class="numbered-cards">
+        <article class="numbered-card">
+          <div class="numbered-card-header">
+            <div class="numbered-card-num">01</div>
+            <div class="numbered-card-title-wrap">
+              <div class="numbered-card-kicker">Nejdřív white balance</div>
+              <div class="numbered-card-title">Srovnej teplotu, než řešíš cokoliv</div>
+            </div>
+          </div>
+          <div class="card-block diagnosis">
+            <div class="block-label diagnosis-label"><span class="dot"></span>Jak</div>
+            <p>Špatná <a href="white-balance.html">teplota barev</a> je příčina č. 1 divné pleti. Moc teplá = oranžová, moc studená = do modra/zsinalá. Srovnej WB jako úplně první krok — nastav teplotu i odstín (tint) tak, aby pleť vypadala přirozeně. Teprve pak pokračuj. Tip: bílá nebo neutrálně šedá plocha v záběru ti pomůže trefit WB přesně.</p>
+          </div>
+        </article>
+
+        <article class="numbered-card">
+          <div class="numbered-card-header">
+            <div class="numbered-card-num">02</div>
+            <div class="numbered-card-title-wrap">
+              <div class="numbered-card-kicker">HSL — jemné doladění</div>
+              <div class="numbered-card-title">Pracuj s oranžovou a červenou</div>
+            </div>
+          </div>
+          <div class="card-block diagnosis">
+            <div class="block-label diagnosis-label"><span class="dot"></span>Jak</div>
+            <p>Pleť tvoří hlavně <strong>oranžová a červená</strong> v panelu HSL (Hue/Saturation/Luminance). Drobným posunem <strong>odstínu (Hue)</strong> oranžové doladíš, jestli je pleť víc do žluta nebo do červena. <strong>Jasem (Luminance)</strong> pleť rozjasníš, aniž bys ji přesytil. Malé pohyby — pár bodů stačí, tohle není páka na dno.</p>
+          </div>
+        </article>
+
+        <article class="numbered-card">
+          <div class="numbered-card-header">
+            <div class="numbered-card-num">03</div>
+            <div class="numbered-card-title-wrap">
+              <div class="numbered-card-kicker">Sytost s rozumem</div>
+              <div class="numbered-card-title">Pleť spíš odsytit než přesytit</div>
+            </div>
+          </div>
+          <div class="card-block diagnosis">
+            <div class="block-label diagnosis-label"><span class="dot"></span>Jak</div>
+            <p>Největší prohřešek: vytáhnout celkovou sytost (Saturation) nahoru, až je pleť jak z plakátu. Dělej opak — když je pleť křiklavá, <strong>lehce stáhni sytost oranžové</strong> v HSL. Místo globální sytosti používej <strong>Vibrance</strong> (chytře pozvedne tlumené barvy a šetří pleť). Méně je víc.</p>
+          </div>
+        </article>
+      </div>
+
+      <!-- KONZISTENCE -->
+      <h2 class="section-title" id="konzistence">Konzistence napříč celou zakázkou</h2>
+
+      <div class="callout tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <div class="callout-title">Sjednoť pleť přes celou sérii</div>
+          <p>Nevěsta nesmí mít na fotce 1 jinou barvu pleti než na fotce 50. Když máš jednu fotku hotovou a sedí, <strong>zkopíruj nastavení na ostatní</strong> ze stejného světla (v Lightroomu Sync / kopírovat–vložit úpravy). Pak jen dolaď kousky, kde se změnilo světlo. Tahle jedna věc dělá rozdíl mezi „amatérskou galerií" a profesionální, sjednocenou sadou — a je v ní hodně tvého času, tak ji nepodceň (viz <a href="top-nastroje.html">nástroje</a>).</p>
+        </div>
+      </div>
+
+      <!-- ČASTÉ CHYBY -->
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-content">
+          <div class="callout-title">Tři chyby, co zabíjí pleť</div>
+          <p><strong>1) Přepálená sytost</strong> — pleť svítí jak neon. Stáhni oranžovou sytost, používej Vibrance. <strong>2) Ujetý white balance</strong> — celá fotka (i pleť) je oranžová nebo modrá; vždy řeš WB jako první. <strong>3) Přehnaný „teal &amp; orange" filtr</strong> — populární filmový look, co ale z pleti udělá oranžovou gumu. Trendy presety vypadají skvěle na krajině, ale pleť ti rozhodí. U portrétu jeď decentně.</p>
+        </div>
+      </div>
+
+      <!-- BYZNYS -->
+      <h2 class="section-title" id="byznys">Proč ti věrná pleť vydělává</h2>
+
+      <p style="font-size: 16px; color: var(--text-dim); margin-bottom: 16px;">Tady je ta hodnota. <strong style="color: var(--text);">U portrétu a svatby klient nehodnotí kompozici ani ostrost — hodnotí, jak vypadá on a jeho blízcí.</strong> A to z 90 % stojí na pleti. Krásná, věrná pleť = „ty fotky jsou nádherné" = nadšený klient.</p>
+
+      <p style="font-size: 16px; color: var(--text-dim); margin-bottom: 16px;">A nadšený klient je <strong style="color: var(--text);">opakovaný klient a zdroj doporučení</strong> — což je v portrétu a svatbě nejlevnější marketing vůbec. Naopak jediná galerie s oranžovými obličeji ti může zničit pověst rychleji než cokoliv jiného. Pleť je detail, co rozhoduje o celém dojmu.</p>
+
+      <div class="callout success">
+        <div class="callout-icon">✅</div>
+        <div class="callout-content">
+          <div class="callout-title">Co si z toho odnést</div>
+          <p>Pořadí je král: <strong>1) white balance</strong> (příčina většiny problémů), <strong>2) HSL</strong> — dolaď odstín a jas oranžové/červené malými pohyby, <strong>3) sytost</strong> — pleť spíš odsyť, používej Vibrance místo Saturation. <strong>Sjednoť pleť přes celou sérii.</strong> Vyhni se přepálené sytosti, ujetému WB a agresivním filtrům. Věrná pleť = spokojený klient = doporučení a opakované zakázky. U portrétu je pleť to nejdůležitější, co odevzdáš.</p>
+        </div>
+      </div>
+
+      <!-- CLOSING -->
+      <section class="closing">
+        <h2>Závěrem</h2>
+        <p>Skin tones nejsou raketová věda — jsou to tři kroky ve správném pořadí a cit pro míru. White balance, HSL, sytost s rozumem. Drž se toho a tvoje portréty budou vypadat draze a přirozeně, ne jak z laciného filtru.</p>
+        <p>A pamatuj: u lidí platí „méně je víc". Nejlepší úprava pleti je ta, které si nikdo nevšimne — protože vypadá prostě správně.</p>
+        <p style="margin-top: 20px; color: var(--text); font-size: 18px;">Věrná pleť neprodává sebe. Prodává spokojenost klienta — a ta ti vrací zakázky.</p>
+      </section>
+
+      <!-- FOOTER NAV -->
+      <nav class="article-footer-nav">
+        <a href="top-nastroje.html" class="footer-nav-link">
+          <div class="label">← Předchozí</div>
+          <div class="title">TOP nástroje pro tvůrce</div>
+        </a>
+        <a href="ai-pro-tvurce.html" class="footer-nav-link next">
+          <div class="label">Další →</div>
+          <div class="title">AI pro tvůrce</div>
+        </a>
+      </nav>
+
+      <!-- SIGNOFF -->
+      <div class="signoff">
+        <div class="signoff-mark">— KENJI</div>
+        <p class="signoff-text">Žádný kecy. Jen praxe.</p>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- TOC pro tento článek (čte assets/nav.js?v=20260819-light) -->
+<script>
+window.KENJI_TOC = [
+  { id: 'uvod',         label: 'Proč je pleť těžká' },
+  { id: 'postup',       label: 'Postup na věrnou pleť' },
+  { id: 'konzistence',  label: 'Konzistence série' },
+  { id: 'byznys',       label: 'Proč pleť vydělává' }
+];
+</script>
+<script src="../assets/articles.js?v=20260822-guided"></script>
+<script src="../assets/nav.js?v=20260822-guided"></script>
+<script src="../assets/auth.js?v=20260819-ux"></script>
+<script src="../assets/script.js"></script>
+</body>
+</html>

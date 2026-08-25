@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Byznys audit pro tvůrce — zjisti, kolik ztrácíš | Kenji Knihovna</title>
+<meta name="description" content="Free audit pro tvůrce — fotografy, kameramany i UGC. Za 2 minuty zjistíš, kolik reálně ztrácíš každý měsíc a co řešit jako první. Bez kecu, jen čísla.">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Byznys audit pro tvůrce — zjisti, kolik ztrácíš">
+<meta property="og:description" content="Za 2 minuty konkrétní čísla a audit tvého byznysu. Free, pro fotografy, kameramany i UGC tvůrce.">
+<meta property="og:image" content="assets/og-image.svg">
+<meta property="og:locale" content="cs_CZ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Byznys audit pro tvůrce">
+<meta name="twitter:description" content="Za 2 minuty zjistíš, kolik reálně ztrácíš každý měsíc. Free.">
+<meta name="twitter:image" content="assets/og-image.svg">
+<meta name="theme-color" content="#0a0a0a">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=20260819-culture">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* ============================================
+   AUDIT PRO TVŮRCE — scopnuto pod .audit-app
+   (rebrand do Kenji designu, fonty Bebas + Inter)
+   ============================================ */
+.audit-app {
+  --a-orange: var(--orange);
+  --a-orange-dim: rgba(255,107,26,.12);
+  --a-orange-glow: rgba(255,107,26,.22);
+  --a-surface: var(--bg-card);
+  --a-surface2: var(--bg-elevated);
+  --a-border: var(--border);
+  --a-border-hot: rgba(255,107,26,.4);
+  --a-text: var(--text);
+  --a-muted: var(--text-dim);
+  --a-dim: var(--text-mute);
+  --a-green: #34d399;
+  --a-red: #ff5e5e;
+  --a-rad: 14px; --a-rad-sm: 10px;
+  max-width: 760px; margin: 0 auto;
+}
+.audit-app * { box-sizing: border-box; }
+
+/* progress */
+.audit-app .prog-label { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--a-dim); text-transform:uppercase; letter-spacing:.1em; margin-bottom:8px; }
+.audit-app .prog-track { height:3px; background:var(--a-surface2); border-radius:2px; margin-bottom:2.5rem; }
+.audit-app .prog-fill { height:100%; background:var(--a-orange); border-radius:2px; transition:width .45s cubic-bezier(.4,0,.2,1); box-shadow:0 0 10px var(--a-orange-glow); }
+
+/* steps */
+.audit-app .step, .audit-app .gate-page, .audit-app .result-page { display:none; }
+.audit-app .step.active, .audit-app .gate-page.active, .audit-app .result-page.active { display:block; animation:audfu .3s ease; }
+@keyframes audfu { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+
+.audit-app .step-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,5.5vw,46px); line-height:1.05; letter-spacing:-.5px; margin-bottom:12px; }
+.audit-app .step-title .hl { color:var(--a-orange); }
+.audit-app .step-sub { font-size:15px; color:var(--a-muted); line-height:1.7; margin-bottom:2rem; max-width:540px; }
+
+/* inputs */
+.audit-app .field-wrap { margin-bottom:1.25rem; }
+.audit-app .field-label { font-size:11px; font-weight:600; color:var(--a-muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; display:block; }
+.audit-app .text-input { width:100%; background:var(--a-surface); border:1px solid var(--a-border); border-radius:var(--a-rad-sm); padding:14px 16px; font-family:'Inter',sans-serif; font-size:16px; color:var(--a-text); outline:none; transition:border-color .2s, box-shadow .2s; }
+.audit-app .text-input:focus { border-color:var(--a-orange); box-shadow:0 0 0 3px var(--a-orange-dim); }
+.audit-app .text-input::placeholder { color:var(--a-dim); }
+
+/* obor + card grids */
+.audit-app .obor-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:2rem; }
+@media(max-width:600px){ .audit-app .obor-grid{ grid-template-columns:repeat(3,1fr);} }
+@media(max-width:400px){ .audit-app .obor-grid{ grid-template-columns:repeat(2,1fr);} }
+.audit-app .card-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:2rem; }
+.audit-app .opt-card { background:var(--a-surface); border:1px solid var(--a-border); border-radius:var(--a-rad); padding:14px; cursor:pointer; transition:border-color .15s, background .15s; user-select:none; position:relative; }
+.audit-app .opt-card:hover { border-color:rgba(255,107,26,.35); background:var(--a-surface2); }
+.audit-app .opt-card.selected { border-color:var(--a-orange); background:var(--a-surface2); }
+.audit-app .opt-icon { font-size:18px; margin-bottom:6px; display:block; }
+.audit-app .opt-label { font-weight:700; font-size:13px; color:var(--a-text); margin-bottom:3px; line-height:1.3; }
+.audit-app .opt-desc { font-size:11.5px; color:var(--a-muted); line-height:1.45; }
+
+/* checks */
+.audit-app .check-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:2rem; }
+@media(max-width:520px){ .audit-app .check-grid{ grid-template-columns:1fr;} }
+.audit-app .check-item { display:flex; align-items:center; gap:12px; padding:13px 15px; background:var(--a-surface); border:1px solid var(--a-border); border-radius:var(--a-rad-sm); cursor:pointer; transition:all .15s; user-select:none; }
+.audit-app .check-item:hover { border-color:rgba(255,107,26,.35); }
+.audit-app .check-item.selected { border-color:var(--a-orange); background:var(--a-surface2); }
+.audit-app .chk { width:20px; height:20px; border-radius:5px; border:1.5px solid var(--a-border); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
+.audit-app .check-item.selected .chk { background:var(--a-orange); border-color:var(--a-orange); }
+.audit-app .chkm { color:#fff; font-size:11px; font-weight:700; display:none; }
+.audit-app .check-item.selected .chkm { display:block; }
+.audit-app .check-txt { font-size:13.5px; color:var(--a-text); line-height:1.4; }
+.audit-app .multi-hint { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--a-orange); background:var(--a-orange-dim); border:1px solid var(--a-border-hot); padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:1rem; text-transform:uppercase; letter-spacing:.05em; }
+
+/* sliders */
+.audit-app .slider-group { margin-bottom:2rem; }
+.audit-app .slider-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; gap:12px; }
+.audit-app .slider-name { font-size:14px; color:var(--a-muted); }
+.audit-app .slider-value { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--a-orange); letter-spacing:0; }
+.audit-app .slider-unit { font-size:13px; color:var(--a-dim); }
+.audit-app input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:3px; background:var(--a-surface2); border-radius:2px; outline:none; cursor:pointer; }
+.audit-app input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--a-orange); cursor:pointer; box-shadow:0 0 0 4px var(--a-orange-dim); transition:box-shadow .15s; }
+.audit-app input[type=range]::-webkit-slider-thumb:hover { box-shadow:0 0 0 7px var(--a-orange-dim); }
+.audit-app .slider-hints { display:flex; justify-content:space-between; font-size:11px; color:var(--a-dim); margin-top:6px; }
+
+/* buttons */
+.audit-app .btn-row { display:flex; gap:10px; margin-top:1rem; }
+.audit-app .btn-primary { flex:1; padding:16px 24px; background:linear-gradient(135deg,var(--orange) 0%,#ff4500 100%); color:#fff; border:none; border-radius:var(--a-rad-sm); font-family:'Inter',sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:filter .15s, transform .15s; }
+.audit-app .btn-primary:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.audit-app .btn-back { padding:16px 20px; background:transparent; border:1px solid var(--a-border); border-radius:var(--a-rad-sm); font-size:15px; color:var(--a-muted); cursor:pointer; font-family:'Inter',sans-serif; transition:border-color .15s; }
+.audit-app .btn-back:hover { border-color:var(--a-dim); color:var(--a-text); }
+
+/* gate */
+.audit-app .gate-eyebrow, .audit-app .result-eyebrow { font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--a-orange); margin-bottom:.75rem; }
+.audit-app .gate-card { background:var(--a-surface); border:1px solid var(--a-border-hot); border-radius:var(--a-rad); padding:2rem; position:relative; overflow:hidden; }
+.audit-app .gate-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--a-orange),transparent); }
+.audit-app .gate-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(26px,4vw,36px); line-height:1.05; margin-bottom:.5rem; }
+.audit-app .gate-sub { font-size:14px; color:var(--a-muted); margin-bottom:1.75rem; line-height:1.6; }
+.audit-app .gate-fields { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.25rem; }
+@media(max-width:500px){ .audit-app .gate-fields{ grid-template-columns:1fr;} }
+.audit-app .gate-note { font-size:12px; color:var(--a-dim); margin-bottom:1.5rem; }
+.audit-app .gate-preview { background:var(--a-surface2); border-radius:var(--a-rad-sm); padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; gap:1.5rem; flex-wrap:wrap; }
+.audit-app .gp-item { font-size:12px; color:var(--a-muted); line-height:1.5; }
+.audit-app .gp-val { font-family:'Bebas Neue',sans-serif; font-weight:400; font-size:20px; color:var(--a-orange); display:block; }
+
+/* result */
+.audit-app .result-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,5vw,48px); line-height:1.02; letter-spacing:-.5px; margin-bottom:1rem; }
+.audit-app .result-intro { font-size:15px; color:var(--a-muted); line-height:1.7; margin-bottom:2rem; max-width:580px; }
+.audit-app .metrics-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:2rem; }
+@media(max-width:560px){ .audit-app .metrics-row{ grid-template-columns:1fr 1fr;} }
+.audit-app .metric-card { background:var(--a-surface); border:1px solid var(--a-border); border-radius:var(--a-rad); padding:16px; }
+.audit-app .metric-card.hot { border-color:var(--a-border-hot); position:relative; overflow:hidden; }
+.audit-app .metric-card.hot::before { content:''; position:absolute; inset:0; background:var(--a-orange-dim); pointer-events:none; }
+.audit-app .metric-lbl { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--a-dim); margin-bottom:8px; font-weight:600; }
+.audit-app .metric-val { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--a-text); line-height:.95; }
+.audit-app .metric-card.hot .metric-val { color:var(--a-orange); }
+.audit-app .metric-sub { font-size:11px; color:var(--a-dim); margin-top:6px; line-height:1.4; }
+
+.audit-app .sec-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.5px; color:var(--a-text); margin:2.5rem 0 1rem; display:flex; align-items:center; gap:12px; }
+.audit-app .sec-title::after { content:''; flex:1; height:1px; background:var(--a-border); }
+
+.audit-app .audit-item { display:flex; gap:14px; padding:16px; border-radius:var(--a-rad-sm); margin-bottom:8px; border:1px solid var(--a-border); background:var(--a-surface); }
+.audit-app .audit-item.bad { border-color:rgba(255,94,94,.25); background:rgba(255,94,94,.05); }
+.audit-app .audit-item.warn { border-color:rgba(251,191,36,.22); background:rgba(251,191,36,.04); }
+.audit-app .audit-item.ok { border-color:rgba(52,211,153,.22); background:rgba(52,211,153,.04); }
+.audit-app .audit-bullet { width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+.audit-app .bad .audit-bullet { background:var(--a-red); }
+.audit-app .warn .audit-bullet { background:#FBBF24; }
+.audit-app .ok .audit-bullet { background:var(--a-green); }
+.audit-app .audit-title { font-size:14.5px; font-weight:600; color:var(--a-text); margin-bottom:4px; }
+.audit-app .audit-desc { font-size:13.5px; color:var(--a-muted); line-height:1.6; }
+
+/* chart */
+.audit-app .chart-wrapper { background:var(--a-surface); border:1px solid var(--a-border); border-radius:var(--a-rad); padding:1.5rem; margin-bottom:.75rem; }
+.audit-app .chart-title { font-weight:700; font-size:15px; color:var(--a-text); margin-bottom:4px; }
+.audit-app .chart-subtitle { font-size:12px; color:var(--a-dim); margin-bottom:1.25rem; }
+.audit-app .chart-controls { display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap; }
+.audit-app .chart-tab { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500; background:transparent; border:1px solid var(--a-border); color:var(--a-muted); cursor:pointer; transition:all .15s; font-family:'Inter',sans-serif; }
+.audit-app .chart-tab.active { background:var(--a-orange); border-color:var(--a-orange); color:#fff; }
+.audit-app .chart-tab:hover:not(.active) { border-color:var(--a-dim); color:var(--a-text); }
+.audit-app .chart-canvas-wrap { position:relative; height:260px; }
+.audit-app .sim-sliders { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem; }
+@media(max-width:500px){ .audit-app .sim-sliders{ grid-template-columns:1fr;} }
+.audit-app .sim-label { font-size:12px; color:var(--a-muted); margin-bottom:6px; display:flex; justify-content:space-between; }
+.audit-app .sim-val { color:var(--a-orange); font-weight:600; }
+.audit-app .insight-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:1rem; }
+.audit-app .insight-pill { background:var(--a-surface2); border:1px solid var(--a-border); border-radius:var(--a-rad-sm); padding:12px; text-align:center; }
+.audit-app .insight-pill .big { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--a-orange); display:block; }
+.audit-app .insight-pill .small { font-size:11px; color:var(--a-dim); margin-top:4px; display:block; }
+
+/* cta */
+.audit-app .cta-box { background:var(--a-surface); border:1px solid var(--a-border-hot); border-radius:var(--a-rad); padding:2rem; margin-top:2.5rem; position:relative; overflow:hidden; }
+.audit-app .cta-box::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--a-orange),transparent); }
+.audit-app .cta-eyebrow { font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--a-orange); margin-bottom:.75rem; }
+.audit-app .cta-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:.3px; margin-bottom:.75rem; line-height:1.05; }
+.audit-app .cta-body { font-size:14px; color:var(--a-muted); line-height:1.7; margin-bottom:1.5rem; }
+.audit-app .cta-features { display:flex; gap:1.25rem; margin-bottom:1.75rem; flex-wrap:wrap; }
+.audit-app .cta-feat { font-size:13px; color:var(--a-muted); display:flex; align-items:center; gap:6px; }
+.audit-app .cta-feat::before { content:'✓'; color:var(--a-green); font-weight:700; font-size:12px; }
+.audit-app .cta-btn { display:flex; width:100%; padding:18px 24px; background:linear-gradient(135deg,var(--orange) 0%,#ff4500 100%); color:#fff; border:none; border-radius:var(--a-rad-sm); font-weight:700; font-size:16px; cursor:pointer; text-align:center; text-decoration:none; transition:filter .15s, transform .15s; align-items:center; justify-content:center; gap:8px; }
+.audit-app .cta-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.audit-app .cta-price { text-align:center; font-size:12px; color:var(--a-dim); margin-top:10px; }
+.audit-app .restart-btn { display:block; margin:2rem auto 0; background:transparent; border:1px solid var(--a-border); border-radius:var(--a-rad-sm); padding:10px 20px; font-size:13px; color:var(--a-dim); cursor:pointer; font-family:'Inter',sans-serif; transition:all .15s; }
+.audit-app .restart-btn:hover { border-color:var(--a-dim); color:var(--a-muted); }
+</style>
+</head>
+<body>
+
+<header class="top-header">
+  <button class="menu-toggle" aria-label="Otevřít menu">☰</button>
+  <a href="index.html" class="brand">
+    <div class="brand-name">KENJI ACADEMY</div>
+  </a>
+  <div class="header-spacer"></div>
+  <div class="header-actions">
+    <span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main">
+    <div class="main-inner">
+
+      <div class="breadcrumbs">
+        <a href="index.html">Databáze</a>
+        <span class="separator">/</span>
+        <span class="current">Audit pro tvůrce</span>
+      </div>
+
+      <div class="audit-app">
+
+        <!-- WIZARD -->
+        <div id="wizard">
+          <div class="prog-label" id="prog-label">Krok 1 z 6</div>
+          <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:16%"></div></div>
+
+          <!-- STEP 0 -->
+          <div class="step active" id="step-0">
+            <h1 class="step-title">Zjisti, kolik reálně <span class="hl">ztrácíš každý měsíc.</span></h1>
+            <p class="step-sub">2 minuty. Žádné kecy. Dostaneš konkrétní čísla a audit svého byznysu — ať fotíš, točíš nebo děláš obsah pro značky.</p>
+            <div class="field-wrap">
+              <label class="field-label">Tvoje jméno</label>
+              <input class="text-input" id="inp-name" placeholder="Jak ti říkají?" autocomplete="off">
+            </div>
+            <label class="field-label" style="margin-bottom:12px">Čemu se věnuješ? <span style="color:var(--text-mute);font-size:11px;text-transform:none;letter-spacing:0">(můžeš vybrat víc)</span></label>
+            <div class="multi-hint">Víc možností</div>
+            <div class="obor-grid" id="obor-grid">
+              <div class="opt-card" data-obor="svatby"><span class="opt-icon">💍</span><div class="opt-label">Svatby</div></div>
+              <div class="opt-card" data-obor="portréty"><span class="opt-icon">👤</span><div class="opt-label">Portréty</div></div>
+              <div class="opt-card" data-obor="firemni"><span class="opt-icon">🏢</span><div class="opt-label">Firemní foto</div></div>
+              <div class="opt-card" data-obor="nemovitosti"><span class="opt-icon">🏠</span><div class="opt-label">Nemovitosti</div></div>
+              <div class="opt-card" data-obor="eventy"><span class="opt-icon">🎉</span><div class="opt-label">Eventy</div></div>
+              <div class="opt-card" data-obor="produkty"><span class="opt-icon">📦</span><div class="opt-label">Produkty</div></div>
+              <div class="opt-card" data-obor="ugc"><span class="opt-icon">🤳</span><div class="opt-label">UGC / značky</div></div>
+              <div class="opt-card" data-obor="video-reklama"><span class="opt-icon">🎬</span><div class="opt-label">Video reklama</div></div>
+              <div class="opt-card" data-obor="reels"><span class="opt-icon">📱</span><div class="opt-label">Reels / Social</div></div>
+              <div class="opt-card" data-obor="dokumentarni"><span class="opt-icon">🎥</span><div class="opt-label">Dokument / Film</div></div>
+              <div class="opt-card" data-obor="drone"><span class="opt-icon">🚁</span><div class="opt-label">Dron</div></div>
+              <div class="opt-card" data-obor="sport"><span class="opt-icon">⚡</span><div class="opt-label">Sport / Akce</div></div>
+              <div class="opt-card" data-obor="general"><span class="opt-icon">📸</span><div class="opt-label">Všechno trochu</div></div>
+            </div>
+            <div class="btn-row"><button class="btn-primary" onclick="nextStep(0)">Začít audit →</button></div>
+          </div>
+
+          <!-- STEP 1 -->
+          <div class="step" id="step-1">
+            <h1 class="step-title">Kde teď <span class="hl">stojíš?</span></h1>
+            <p class="step-sub">Čím přesnější, tím lepší výsledky. Tady nás nezajímá image — zajímá nás realita.</p>
+            <div class="card-grid" id="level-grid">
+              <div class="opt-card" data-level="zacatecnik"><div class="opt-label">Začátečník</div><div class="opt-desc">Tvořím pro radost nebo mám první pokusy o placené zakázky</div></div>
+              <div class="opt-card" data-level="rozjizdi"><div class="opt-label">Rozjíždím to</div><div class="opt-desc">Mám první zakázky, ale příjem není stabilní</div></div>
+              <div class="opt-card" data-level="aktivni"><div class="opt-label">Tvořím aktivně</div><div class="opt-desc">Pravidelné zakázky, 20–80K měsíčně, chci víc</div></div>
+              <div class="opt-card" data-level="profik"><div class="opt-label">Jsem profík</div><div class="opt-desc">Tvořím naplno, hledám jak škálovat nebo optimalizovat</div></div>
+            </div>
+            <div class="btn-row"><button class="btn-back" onclick="prevStep(1)">← Zpět</button><button class="btn-primary" onclick="nextStep(1)">Pokračovat →</button></div>
+          </div>
+
+          <!-- STEP 2 -->
+          <div class="step" id="step-2">
+            <h1 class="step-title">Tvoje <span class="hl">čísla.</span></h1>
+            <p class="step-sub">Taháme z tebe realitu, ne co by sis přál. Bez toho výsledky nedávají smysl.</p>
+            <div class="slider-group">
+              <div class="slider-header"><span class="slider-name">Průměrná cena zakázky / spolupráce</span><span class="slider-value" id="cena-val">8 000 <span class="slider-unit">Kč</span></span></div>
+              <input type="range" min="500" max="100000" step="500" value="8000" id="cena-slider" oninput="onSlider()">
+              <div class="slider-hints"><span>500 Kč</span><span>100 000 Kč</span></div>
+            </div>
+            <div class="slider-group">
+              <div class="slider-header"><span class="slider-name">Zakázek za měsíc</span><span class="slider-value" id="zakazky-val">3 <span class="slider-unit">zakázky</span></span></div>
+              <input type="range" min="0" max="25" step="1" value="3" id="zakazky-slider" oninput="onSlider()">
+              <div class="slider-hints"><span>0</span><span>25+</span></div>
+            </div>
+            <div class="slider-group">
+              <div class="slider-header"><span class="slider-name">Hodin práce za týden (tvorba + editace + komunikace)</span><span class="slider-value" id="hodiny-val">15 <span class="slider-unit">h</span></span></div>
+              <input type="range" min="1" max="60" step="1" value="15" id="hodiny-slider" oninput="onSlider()">
+              <div class="slider-hints"><span>1 h</span><span>60 h</span></div>
+            </div>
+            <div class="btn-row"><button class="btn-back" onclick="prevStep(2)">← Zpět</button><button class="btn-primary" onclick="nextStep(2)">Pokračovat →</button></div>
+          </div>
+
+          <!-- STEP 3 -->
+          <div class="step" id="step-3">
+            <h1 class="step-title">Co tě <span class="hl">brzdí?</span></h1>
+            <p class="step-sub">Vyber vše, co tě pálí. Čím víc vyplníš, tím konkrétnější audit dostaneš.</p>
+            <div class="multi-hint">Víc možností najednou</div>
+            <div class="check-grid" id="problems-grid">
+              <div class="check-item" data-p="akv"><div class="chk"><span class="chkm">✓</span></div><span class="check-txt">Málo klientů a zakázek</span></div>
+              <div class="check-item" data-p="cena"><div class="chk"><span class="chkm">✓</span></div><span class="check-txt">Nevím, kolik si říct</span></div>
+              <div class="check-item" data-p="brand"><div class="chk"><span class="chkm">✓</span></div><span class="check-txt">Slabý brand nebo Instagram</span></div>
+              <div class="check-item" data-p="editace"><div class="chk"><span class="chkm">✓</span></div><span class="check-txt">Editace / postpro trvá věčnost</span></div>
+              <div class="check-item" data-p="pravo"><div class="chk"><span class="chkm">✓</span></div><span class="check-txt">Smlouvy a právo</span></div>
+              <div class="check-item" data-p="konzistence"><div class="chk"><span class="chkm">✓</span></div><span class="check-txt">Nemám konzistentní styl</span></div>
+              <div class="check-item" data-p="klient"><div class="chk"><span class="chkm">✓</span></div><span class="check-txt">Neumím pracovat s klientem</span></div>
+              <div class="check-item" data-p="plan"><div class="chk"><span class="chkm">✓</span></div><span class="check-txt">Nemám jasný plán růstu</span></div>
+            </div>
+            <div class="btn-row"><button class="btn-back" onclick="prevStep(3)">← Zpět</button><button class="btn-primary" onclick="nextStep(3)">Pokračovat →</button></div>
+          </div>
+
+          <!-- STEP 4 -->
+          <div class="step" id="step-4">
+            <h1 class="step-title">Kde chceš být <span class="hl">za rok?</span></h1>
+            <p class="step-sub">Tohle ovlivní, jak agresivně nastavíme doporučení.</p>
+            <div class="card-grid" id="goal-grid">
+              <div class="opt-card" data-goal="hobby"><div class="opt-label">Lepší koníček</div><div class="opt-desc">Tvořit líp, ale bez nutnosti živit se tím</div></div>
+              <div class="opt-card" data-goal="prijem"><div class="opt-label">Přivýdělek 10–30K</div><div class="opt-desc">Solidní druhý příjem vedle zaměstnání</div></div>
+              <div class="opt-card" data-goal="prechod"><div class="opt-label">Full-time</div><div class="opt-desc">Do roka žít jenom z tvorby</div></div>
+              <div class="opt-card" data-goal="skala"><div class="opt-label">Škálovat nad 100K+</div><div class="opt-desc">Tým, vyšší ceny, víc zakázek nebo pasivní příjmy</div></div>
+            </div>
+            <div class="btn-row"><button class="btn-back" onclick="prevStep(4)">← Zpět</button><button class="btn-primary" onclick="nextStep(4)">Pokračovat →</button></div>
+          </div>
+
+          <!-- STEP 5 -->
+          <div class="step" id="step-5">
+            <h1 class="step-title">Co tě <span class="hl">drží zpátky?</span></h1>
+            <p class="step-sub">Jedno hlavní. Buď upřímný — tohle je klíčová část auditu.</p>
+            <div class="card-grid" id="brake-grid">
+              <div class="opt-card" data-brake="info"><div class="opt-label">Nevím, co přesně dělat</div><div class="opt-desc">Chybí mi postup a systém</div></div>
+              <div class="opt-card" data-brake="cas"><div class="opt-label">Nestíhám</div><div class="opt-desc">Dělám všechno sám, čas mizí</div></div>
+              <div class="opt-card" data-brake="odvaha"><div class="opt-label">Nevěřím si dost</div><div class="opt-desc">Bojím se zvednout ceny nebo oslovit klienty</div></div>
+              <div class="opt-card" data-brake="penize"><div class="opt-label">Tvorba málo vydělává</div><div class="opt-desc">Nemám na reinvestici do růstu</div></div>
+            </div>
+            <div class="btn-row"><button class="btn-back" onclick="prevStep(5)">← Zpět</button><button class="btn-primary" onclick="goToGate()">Zobrazit výsledky →</button></div>
+          </div>
+        </div>
+
+        <!-- GATE PAGE -->
+        <div class="gate-page" id="gate-page">
+          <div class="gate-eyebrow">Ještě jeden krok</div>
+          <div class="gate-card">
+            <h2 class="gate-title">Tvůj audit je připravený.<br>Kam ho máme poslat?</h2>
+            <p class="gate-sub">Zadej svůj e-mail a Instagram — výsledky se ti odemknou okamžitě. Žádný spam, jen tvůj osobní audit.</p>
+            <div class="gate-preview" id="gate-preview"></div>
+            <div class="gate-fields">
+              <div class="field-wrap" style="margin-bottom:0">
+                <label class="field-label">E-mail</label>
+                <input class="text-input" id="inp-email" type="email" placeholder="tvuj@email.cz" autocomplete="email">
+              </div>
+              <div class="field-wrap" style="margin-bottom:0">
+                <label class="field-label">Instagram (nepovinné)</label>
+                <input class="text-input" id="inp-ig" type="text" placeholder="@tvojeprofil">
+              </div>
+            </div>
+            <p class="gate-note">Tvoje data jsou v bezpečí. Neposíláme spam, neprodáváme kontakty.</p>
+            <button class="btn-primary" style="width:100%" onclick="submitGate()">Odemknout výsledky →</button>
+          </div>
+        </div>
+
+        <!-- RESULT PAGE -->
+        <div class="result-page" id="result-page">
+          <div class="result-eyebrow">Tvůj byznys audit pro tvůrce</div>
+          <h1 class="result-title" id="r-title">—</h1>
+          <p class="result-intro" id="r-intro"></p>
+
+          <div class="metrics-row">
+            <div class="metric-card"><div class="metric-lbl">Výdělek teď / měsíc</div><div class="metric-val" id="r-current">—</div><div class="metric-sub">na základě tvých hodnot</div></div>
+            <div class="metric-card hot"><div class="metric-lbl">Reálný potenciál / měsíc</div><div class="metric-val" id="r-potential">—</div><div class="metric-sub">dosažitelné do 12 měsíců</div></div>
+            <div class="metric-card"><div class="metric-lbl">Ztraceno ročně</div><div class="metric-val" id="r-gap">—</div><div class="metric-sub">kvůli podceněné ceně + objemu</div></div>
+            <div class="metric-card"><div class="metric-lbl">Hodinovka teď</div><div class="metric-val" id="r-hourly">—</div><div class="metric-sub" id="r-hourly-note"></div></div>
+          </div>
+
+          <div class="sec-title">Simulátor růstu</div>
+          <div class="chart-wrapper">
+            <div class="chart-title">Co se stane, když nasadíš správný systém</div>
+            <div class="chart-subtitle">Prvních pár měsíců investuješ do systému a sklízíš málo — pak se to začne nabalovat. Pohybuj slidery a sleduj, jak se ti rok rozjede.</div>
+            <div class="chart-controls">
+              <button class="chart-tab active" onclick="switchChart('growth',this)">Roční křivka</button>
+              <button class="chart-tab" onclick="switchChart('breakdown',this)">Rozpad příjmu</button>
+              <button class="chart-tab" onclick="switchChart('compare',this)">Teď vs. potenciál</button>
+            </div>
+            <div class="sim-sliders">
+              <div><div class="sim-label">Cena zakázky <span class="sim-val" id="sim-cena-lbl">—</span></div><input type="range" id="sim-cena" min="500" max="100000" step="500" oninput="updateSim()"></div>
+              <div><div class="sim-label">Zakázek / měsíc <span class="sim-val" id="sim-zak-lbl">—</span></div><input type="range" id="sim-zak" min="0" max="25" step="1" oninput="updateSim()"></div>
+              <div><div class="sim-label">Konverzní % z poptávek <span class="sim-val" id="sim-konv-lbl">30 %</span></div><input type="range" id="sim-konv" min="5" max="95" step="5" value="30" oninput="updateSim()"></div>
+              <div><div class="sim-label">Zdražení po 3 měsících <span class="sim-val" id="sim-raise-lbl">+20 %</span></div><input type="range" id="sim-raise" min="0" max="100" step="5" value="20" oninput="updateSim()"></div>
+            </div>
+            <div class="chart-canvas-wrap"><canvas id="mainChart"></canvas></div>
+            <div class="insight-row">
+              <div class="insight-pill"><span class="big" id="ins-rok">—</span><span class="small">Roční výdělek</span></div>
+              <div class="insight-pill"><span class="big" id="ins-rozdil">—</span><span class="small">Rozdíl oproti teď</span></div>
+              <div class="insight-pill"><span class="big" id="ins-poptavky">—</span><span class="small">Poptávek potřebuješ / měsíc</span></div>
+            </div>
+          </div>
+
+          <div class="sec-title">Kde ztrácíš</div>
+          <div id="audit-items"></div>
+          <div class="sec-title">Co řešit jako první</div>
+          <div id="recommendations"></div>
+
+          <div class="cta-box">
+            <div class="cta-eyebrow">KENJI ACADEMY</div>
+            <h2 class="cta-title" id="cta-title">Přestaň ztrácet peníze, které už teď můžeš mít.</h2>
+            <p class="cta-body" id="cta-body"></p>
+            <div class="cta-features">
+              <span class="cta-feat">Cenotvorba od nuly</span>
+              <span class="cta-feat">Akvizice klientů</span>
+              <span class="cta-feat">Editace &amp; workflow</span>
+              <span class="cta-feat">Smlouvy a právo</span>
+              <span class="cta-feat">Byznys a brand</span>
+            </div>
+            <a href="https://app.kenjiacademy.cz/" class="cta-btn" target="_blank" rel="noopener">Chci přestat tápat → kenjiacademy.cz ↗</a>
+            <p class="cta-price">Jednorázová platba · Doživotní přístup · 24 997 Kč</p>
+          </div>
+          <button class="restart-btn" onclick="restart()">← Začít znovu</button>
+        </div>
+
+      </div><!-- /audit-app -->
+
+    </div>
+  </main>
+</div>
+
+<script src="assets/articles.js?v=20260822-guided"></script>
+<script src="assets/nav.js?v=20260822-guided"></script>
+<script src="assets/auth.js?v=20260819-ux"></script>
+<script src="assets/script.js"></script>
+<script>
+// ============================================
+// AUDIT PRO TVŮRCE — logika (port z kenji-audit.html, rebrand + tvůrce/UGC)
+// Leady: gate posílá data na Google Apps Script (Danielova sběrná roura).
+// ============================================
+var S = { name:'', obory:[], level:'', cena:8000, zakazky:3, hodiny:15, problems:[], goal:'', brake:'', email:'', ig:'' };
+var currentStep = 0, totalSteps = 6, chartInst = null, currentChartType = 'growth';
+var OR = '#ff6b1a'; // brand orange pro grafy
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function fmt(n){ if(n>=1000000) return (Math.round(n/100000)/10)+' mil. Kč'; if(n>=1000) return Math.round(n/1000)+' K'; return Math.round(n)+' Kč'; }
+function fmtFull(n){ return Math.round(n).toLocaleString('cs')+' Kč'; }
+
+function updateProgress(step){
+  var pct = Math.round(((step+1)/totalSteps)*100);
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-label').textContent = 'Krok '+(step+1)+' z '+totalSteps;
+}
+
+document.getElementById('obor-grid').querySelectorAll('[data-obor]').forEach(function(c){
+  c.addEventListener('click',function(){
+    c.classList.toggle('selected');
+    var v=c.getAttribute('data-obor'), i=S.obory.indexOf(v);
+    if(i>-1) S.obory.splice(i,1); else S.obory.push(v);
+  });
+});
+function setupSingle(gridId,key){
+  document.getElementById(gridId).querySelectorAll('[data-'+key+']').forEach(function(c){
+    c.addEventListener('click',function(){
+      document.getElementById(gridId).querySelectorAll('[data-'+key+']').forEach(function(x){x.classList.remove('selected');});
+      c.classList.add('selected');
+      S[key]=c.getAttribute('data-'+key);
+    });
+  });
+}
+setupSingle('level-grid','level'); setupSingle('goal-grid','goal'); setupSingle('brake-grid','brake');
+document.getElementById('problems-grid').querySelectorAll('[data-p]').forEach(function(c){
+  c.addEventListener('click',function(){
+    c.classList.toggle('selected');
+    var v=c.getAttribute('data-p'), i=S.problems.indexOf(v);
+    if(i>-1) S.problems.splice(i,1); else S.problems.push(v);
+  });
+});
+function onSlider(){
+  S.cena=parseInt(document.getElementById('cena-slider').value);
+  S.zakazky=parseInt(document.getElementById('zakazky-slider').value);
+  S.hodiny=parseInt(document.getElementById('hodiny-slider').value);
+  document.getElementById('cena-val').innerHTML=fmtFull(S.cena)+' <span class="slider-unit">Kč</span>';
+  document.getElementById('zakazky-val').innerHTML=S.zakazky+' <span class="slider-unit">zakázky</span>';
+  document.getElementById('hodiny-val').innerHTML=S.hodiny+' <span class="slider-unit">h</span>';
+}
+function nextStep(from){
+  if(from===0){
+    var n=document.getElementById('inp-name').value.trim();
+    if(!n){ document.getElementById('inp-name').focus(); document.getElementById('inp-name').style.borderColor='var(--orange)'; return; }
+    S.name=n;
+    if(S.obory.length===0){ alert('Vyber aspoň jeden obor'); return; }
+  }
+  if(from===1 && !S.level){ alert('Vyber svoji úroveň'); return; }
+  if(from===4 && !S.goal){ alert('Vyber svůj cíl'); return; }
+  document.getElementById('step-'+from).classList.remove('active');
+  currentStep=from+1;
+  document.getElementById('step-'+currentStep).classList.add('active');
+  updateProgress(currentStep);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function prevStep(from){
+  document.getElementById('step-'+from).classList.remove('active');
+  currentStep=from-1;
+  document.getElementById('step-'+currentStep).classList.add('active');
+  updateProgress(currentStep);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goToGate(){
+  if(!S.brake){ alert('Vyber co tě drží zpátky'); return; }
+  document.getElementById('wizard').style.display='none';
+  document.getElementById('gate-page').classList.add('active');
+  var current=S.cena*S.zakazky, potential=calcPotential(current), gap=(potential-current)*12;
+  document.getElementById('gate-preview').innerHTML=
+    '<div class="gp-item">Výdělek teď<span class="gp-val">'+fmtFull(current)+'</span></div>'+
+    '<div class="gp-item">Potenciál<span class="gp-val">'+fmtFull(potential)+'</span></div>'+
+    '<div class="gp-item">Ztraceno ročně<span class="gp-val">'+fmtFull(gap)+'</span></div>';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function submitGate(){
+  var email=document.getElementById('inp-email').value.trim();
+  if(!email || !email.includes('@')){ document.getElementById('inp-email').style.borderColor='var(--orange)'; document.getElementById('inp-email').focus(); return; }
+  S.email=email; S.ig=document.getElementById('inp-ig').value.trim();
+  var current=S.cena*S.zakazky, potential=calcPotential(current), gap=(potential-current)*12;
+  var payload={ name:S.name, email:S.email, ig:S.ig, obory:S.obory.join(', '), level:S.level, cena:S.cena, zakazky:S.zakazky, hodiny:S.hodiny, problems:S.problems.join(', '), goal:S.goal, brake:S.brake, current:current, potential:potential, gap:gap };
+  var params=Object.keys(payload).map(function(k){ return encodeURIComponent(k)+'='+encodeURIComponent(payload[k]); }).join('&');
+  // ►► Danielova sběrná roura leadů (Google Apps Script) — zachováno
+  var url='https://script.google.com/macros/s/AKfycbwlaRvp3lFPadcf5bwHu9kjGOk4y-y8LzPyVzQUmeof8Vq2s3IBPNzwDtZ0tAn_L7Y/exec?'+params;
+  var s=document.createElement('script'); s.src=url; document.body.appendChild(s);
+  setTimeout(function(){ if(s.parentNode) document.body.removeChild(s); },3000);
+  document.getElementById('gate-page').classList.remove('active');
+  showResult();
+}
+function calcPotential(current){
+  var m=1;
+  if(S.level==='zacatecnik') m=3.5; else if(S.level==='rozjizdi') m=2.4; else if(S.level==='aktivni') m=1.7; else if(S.level==='profik') m=1.4;
+  if(S.goal==='skala') m=Math.max(m,2.2); if(S.goal==='prechod') m=Math.max(m,1.9);
+  return Math.round(current*m/1000)*1000;
+}
+function buildGrowthData(baseCena,baseZak,raisePct,months){
+  // Realistická J-křivka: pár měsíců investuješ (placato), pak se to začne nabalovat (snowball).
+  var floor=S.cena*S.zakazky;                          // kde jsi teď (start)
+  var ceiling=baseCena*(1+raisePct/100)*baseZak;        // kam tě dostane scénář (cíl za 12 měs.)
+  if(ceiling<floor) ceiling=floor;
+  var grind=3;                                          // 1.–3. měsíc: makáš, výsledky ještě nejdou
+  var d=[];
+  for(var i=0;i<months;i++){
+    var v;
+    if(i<grind){
+      v=floor;                                          // investiční fáze — držíš se na současné úrovni
+    } else {
+      var t=(i-grind)/(months-1-grind);                 // 0..1 přes zbytek roku
+      var k=7, x0=0.5;                                  // strmost a inflexní bod S-křivky
+      var L=function(x){return 1/(1+Math.exp(-k*(x-x0)));};
+      var frac=(L(t)-L(0))/(L(1)-L(0));                 // normalizace na 0..1
+      v=floor+(ceiling-floor)*frac;                     // postupné, zrychlující se nabalování
+    }
+    d.push(Math.round(v));
+  }
+  return d;
+}
+function buildCurrentData(months){ var d=[],base=S.cena*S.zakazky; for(var i=0;i<months;i++) d.push(Math.round(base)); return d; }
+function switchChart(type,btn){ currentChartType=type; document.querySelectorAll('.audit-app .chart-tab').forEach(function(b){b.classList.remove('active');}); btn.classList.add('active'); updateSim(); }
+function updateSim(){
+  var simCena=parseInt(document.getElementById('sim-cena').value), simZak=parseInt(document.getElementById('sim-zak').value),
+      simKonv=parseInt(document.getElementById('sim-konv').value), simRaise=parseInt(document.getElementById('sim-raise').value);
+  document.getElementById('sim-cena-lbl').textContent=fmtFull(simCena);
+  document.getElementById('sim-zak-lbl').textContent=simZak;
+  document.getElementById('sim-konv-lbl').textContent=simKonv+' %';
+  document.getElementById('sim-raise-lbl').textContent='+'+simRaise+' %';
+  var months=12, labels=['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+  var curData=buildCurrentData(months), simData=buildGrowthData(simCena,simZak,simRaise,months);
+  var simRocni=simData.reduce(function(a,b){return a+b;},0), curRocni=curData.reduce(function(a,b){return a+b;},0), rozdil=simRocni-curRocni;
+  var poptavkyNeed=simKonv>0?Math.ceil(simZak/(simKonv/100)):'∞';
+  document.getElementById('ins-rok').textContent=fmt(simRocni);
+  document.getElementById('ins-rozdil').textContent=(rozdil>=0?'+':'')+fmt(rozdil);
+  document.getElementById('ins-poptavky').textContent=poptavkyNeed;
+  if(chartInst) chartInst.destroy();
+  var ctx=document.getElementById('mainChart').getContext('2d');
+  var og=ctx.createLinearGradient(0,0,0,260); og.addColorStop(0,'rgba(255,107,26,0.22)'); og.addColorStop(1,'rgba(255,107,26,0)');
+  var gg=ctx.createLinearGradient(0,0,0,260); gg.addColorStop(0,'rgba(255,255,255,0.06)'); gg.addColorStop(1,'rgba(255,255,255,0)');
+  var common={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#9a9a9a',font:{size:11},boxWidth:10,padding:14,usePointStyle:true}},tooltip:{backgroundColor:'#1f1f1f',borderColor:'rgba(255,107,26,0.3)',borderWidth:1,titleColor:'#f5f5f5',bodyColor:'#9a9a9a',padding:10,callbacks:{label:function(c){return ' '+Math.round(c.parsed.y).toLocaleString('cs')+' Kč';}}}},scales:{x:{ticks:{color:'#666',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#666',font:{size:10},callback:function(v){return fmt(v);}},grid:{color:'rgba(255,255,255,0.04)'}}}};
+  var cfg;
+  if(currentChartType==='growth'){
+    cfg={type:'line',data:{labels:labels,datasets:[{label:'Se systémem a postupem',data:simData,borderColor:OR,backgroundColor:og,borderWidth:2,fill:true,tension:0.4,pointBackgroundColor:OR,pointRadius:3,pointHoverRadius:5},{label:'Když nic nezměníš',data:curData,borderColor:'rgba(255,255,255,0.15)',backgroundColor:gg,borderWidth:1.5,borderDash:[5,5],fill:true,tension:0,pointRadius:0}]},options:common};
+  } else if(currentChartType==='breakdown'){
+    var avg=simData[11];
+    cfg={type:'bar',data:{labels:['Ze zvýšení ceny','Z více zakázek','Z lepší konverze'],datasets:[{label:'Zdroj příjmu',data:[Math.round(avg*0.55),Math.round(avg*0.30),Math.round(avg*0.15)],backgroundColor:['rgba(255,107,26,0.8)','rgba(255,107,26,0.5)','rgba(255,107,26,0.25)'],borderColor:OR,borderWidth:1,borderRadius:5}]},options:{...common,plugins:{...common.plugins,legend:{display:false}}}};
+  } else {
+    cfg={type:'bar',data:{labels:labels,datasets:[{label:'Aktuální výdělek',data:curData,backgroundColor:'rgba(255,255,255,0.07)',borderColor:'rgba(255,255,255,0.15)',borderWidth:1,borderRadius:3},{label:'S potenciálem',data:simData,backgroundColor:'rgba(255,107,26,0.55)',borderColor:OR,borderWidth:1,borderRadius:3}]},options:common};
+  }
+  chartInst=new Chart(ctx,cfg);
+}
+function showResult(){
+  document.getElementById('result-page').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  var current=S.cena*S.zakazky, potential=calcPotential(current), gap=(potential-current)*12, hoursMonth=S.hodiny*4, hourly=hoursMonth>0?Math.round(current/hoursMonth):0;
+  document.getElementById('r-title').innerHTML='Ahoj <span style="color:var(--orange)">'+esc(S.name)+'</span>, tady jsou tvoje čísla.';
+  document.getElementById('r-current').textContent=fmtFull(current);
+  document.getElementById('r-potential').textContent=fmtFull(potential);
+  document.getElementById('r-gap').textContent=fmtFull(gap);
+  document.getElementById('r-hourly').textContent=fmtFull(hourly)+'/h';
+  document.getElementById('r-hourly-note').textContent=hourly<500?'Silně podhodnoceno':hourly<1500?'Pod tržním průměrem':'Slušná sazba — fokus na objem';
+  var intros={
+    zacatecnik:'Jsi na začátku — a to je výhoda. Tvůrci, kteří se naučí správné základy hned, ušetří rok pokus-omyl a dostanou se k prvním placeným zakázkám 3× rychleji.',
+    rozjizdi:'Základ máš, ale někde se zaseklo. Nejčastěji je to kombinace podceněné ceny, slabé akvizice a absence systému. Všechno opravitelné — a rychleji, než si myslíš.',
+    aktivni:'Tvoříš, vydělávat umíš — ale cítíš, že to může být víc. Pravděpodobně ztrácíš na ceně, akvizici nebo editaci. Tohle jsou věci, kde se rozdíl měří v desítkách tisíc ročně.',
+    profik:'Na dobré úrovni. Na tvé pozici se výdělek škáluje přes brand, vyšší pricing segment nebo přidání pasivních zdrojů příjmu. Tvořit víc není odpověď — vydělávat víc za méně zakázek ano.'
+  };
+  document.getElementById('r-intro').textContent=intros[S.level]||intros['aktivni'];
+
+  var items=[];
+  var akvDesc={
+    zacatecnik:'Pro začínajícího tvůrce je akvizice klientů největší výzva. Bez jasného systému — jak oslovit, přesvědčit a udržet klienta — se budeš spoléhat na náhodu.',
+    rozjizdi:'Zakázky máš, ale nestabilně. Akvizice fungující na náhodě je časovaná bomba. Potřebuješ systém: Instagram, reference, Google profil, follow-up, spolupráce.',
+    aktivni:'Na tvé úrovni je akvizice buď přes IG, reference nebo web. Pokud příjem stagnuje, problém je téměř vždy v tom, že nepřibývají nové poptávky. Tohle je priorita #1.',
+    profik:'Profíci škálují přes brand — ne přes cold outreach. Silný Instagram, video obsah a jasné USP přivedou vyšší kvalitu klientů, kteří se nehádají o cenu.'
+  };
+  items.push({type:'bad',title:'Akvizice klientů — tvoje největší páka',desc:akvDesc[S.level]||akvDesc['aktivni']});
+
+  var isSvatby=S.obory.indexOf('svatby')>-1;
+  var isVideo=S.obory.indexOf('video-reklama')>-1||S.obory.indexOf('reels')>-1||S.obory.indexOf('dokumentarni')>-1;
+  var isUGC=S.obory.indexOf('ugc')>-1||S.obory.indexOf('reels')>-1;
+  if(isSvatby && S.cena<20000) items.push({type:'warn',title:'Cena pod tržním průměrem pro svatby',desc:'Zkušení svatební fotografové v ČR berou 20–40K za den. Zvýšení ceny o 30 % ti při stejném počtu zakázek přinese tisíce měsíčně navíc — bez jediné extra zakázky.'});
+  else if(isUGC && S.cena<5000) items.push({type:'warn',title:'UGC se masivně podhodnocuje',desc:'Tvůrci UGC často berou pár stovek za video, přitom značky za balíček 3–5 videí běžně platí 8–20K. Účtuješ za výsledek (obsah pro kampaň), ne za hodinu natáčení — a to je úplně jiná cena.'});
+  else if(isVideo && S.cena<15000) items.push({type:'warn',title:'Video je podhodnocené',desc:'Kameramani pro firmy, reklamu nebo eventy si běžně říkají 15–50K za zakázku. Tvoje současná cena je pod tržním průměrem — a klienti si to ani nevšimnou, protože nevědí, co je normální.'});
+  else if(S.cena<3000) items.push({type:'bad',title:'Cena nepokrývá ani tvůj čas',desc:'Pod 3 000 Kč za zakázku nepokrýváš čas strávený tvorbou, editací a komunikací. To není byznys, to je charita.'});
+
+  if(S.problems.indexOf('brand')>-1) items.push({type:'warn',title:'Slabý brand = levnější klienti',desc:'Klienti tě ověřují na Instagramu ještě předtím, než napíšou. Bez konzistentního a profesionálního feedu jsi neviditelný nebo vypadáš lacino — a tomu odpovídá i to, co jsou ochotni zaplatit.'});
+  if(S.problems.indexOf('cena')>-1) items.push({type:'warn',title:'Nejasná cenotvorba',desc:'Pokud nevíš kolik si říct, vždycky říkáš míň, než bys mohl. Správná cena vychází z trhu, tvého brand levelu a toho co nabízíš — ne z toho, čeho se bojíš.'});
+  if(S.problems.indexOf('pravo')>-1) items.push({type:'warn',title:'Absence smluv = otevřená vrátka k průseru',desc:'Jeden klient bez smlouvy, jeden spor o autorská práva nebo neuhrazená faktura — a přijdeš o víc, než za rok vyděláš. Smlouvy jsou hygiena, ne luxus.'});
+  if(S.problems.indexOf('klient')>-1) items.push({type:'warn',title:'Komunikace s klientem ovlivňuje cenu',desc:'Tvůrce, který umí správně komunikovat, dostane víc doporučení, míň reklamací a víc povolení říct si vyšší cenu. Soft skills v prodeji nejsou soft — jsou kritické.'});
+
+  var auditEl=document.getElementById('audit-items'); auditEl.innerHTML='';
+  items.forEach(function(it){ auditEl.innerHTML+='<div class="audit-item '+it.type+'"><div class="audit-bullet"></div><div><div class="audit-title">'+it.title+'</div><div class="audit-desc">'+it.desc+'</div></div></div>'; });
+
+  var recs=[];
+  recs.push({title:'1. Postav systém akvizice',desc:'Reference + Instagram content + Google Firma. Tohle je základ, bez kterého vše ostatní nedává smysl. Každý měsíc bez systému = každý měsíc zakázky na náhodu.'});
+  if(S.cena<15000||S.problems.indexOf('cena')>-1) recs.push({title:'2. Přestaň hádat cenu — spočítej ji',desc:'Kolik stojí tvůj čas, editace, vybavení, komunikace? Cena není číslo, které se zdá OK — je to kalkulace a pozice na trhu.'});
+  if(S.problems.indexOf('brand')>-1||S.level==='zacatecnik'||S.level==='rozjizdi') recs.push({title:'3. Konzistentní Instagram = pasivní akvizice',desc:'Tvůrce s jasným stylem na IG dostává poptávky, které přicházejí samy. To je rozdíl mezi reaktivním hledáním zakázek a tím, že si tě klienti sami najdou.'});
+  if(S.goal==='skala'||S.goal==='prechod') recs.push({title:'4. Nastav byznys infrastrukturu',desc:'Smlouvy, fakturace, automatické follow-upy, CRM. Bez toho nebuduješ byznys — budeš mít jen práci na sebe.'});
+  if(S.problems.indexOf('pravo')>-1) recs.push({title:'5. Smlouvy a autorská práva',desc:'Autorská práva, licencování, podmínky platby — tohle musíš mít ošetřené před každou zakázkou. Ne až po průseru.'});
+
+  var recEl=document.getElementById('recommendations'); recEl.innerHTML='';
+  recs.forEach(function(r){ recEl.innerHTML+='<div class="audit-item ok"><div class="audit-bullet"></div><div><div class="audit-title">'+r.title+'</div><div class="audit-desc">'+r.desc+'</div></div></div>'; });
+
+  var ctaBodies={
+    zacatecnik:'Kenji prošel přesně tím, čím procházíš ty — od začátků po 2,5 milionu ročně z focení. V akademii dostaneš přímý postup bez teorie a pokus-omyl.',
+    rozjizdi:'Kenji Academy tě provede fází, kde jsi teď: jak získat stabilní zakázky, jak nastavit cenu a jak přestat záviset na náhodě.',
+    aktivni:'Na tvé úrovni jde o optimalizaci — cena, akvizice, brand. Kenji Academy má obsah přesně pro tvůrce, kteří tvoří, ale chtějí vydělávat proporcionálně ke svému talentu.',
+    profik:'Kenji Academy je pro tvůrce, kteří chtějí škálovat — vyšší ceny, silnější brand, systém místo chaosu a případně i pasivní příjmy z digitálních produktů.'
+  };
+  document.getElementById('cta-body').textContent=ctaBodies[S.level]||ctaBodies['aktivni'];
+
+  document.getElementById('sim-cena').value=S.cena;
+  document.getElementById('sim-zak').value=S.zakazky;
+  document.getElementById('sim-raise').value=20;
+  document.getElementById('sim-konv').value=30;
+  updateSim();
+}
+function restart(){
+  S={name:'',obory:[],level:'',cena:8000,zakazky:3,hodiny:15,problems:[],goal:'',brake:'',email:'',ig:''};
+  document.querySelectorAll('.audit-app .opt-card').forEach(function(c){c.classList.remove('selected');});
+  document.querySelectorAll('.audit-app .check-item').forEach(function(c){c.classList.remove('selected');});
+  document.getElementById('inp-name').value=''; document.getElementById('inp-email').value=''; document.getElementById('inp-ig').value='';
+  document.getElementById('cena-slider').value=8000; document.getElementById('zakazky-slider').value=3; document.getElementById('hodiny-slider').value=15;
+  onSlider();
+  document.getElementById('result-page').classList.remove('active');
+  document.getElementById('gate-page').classList.remove('active');
+  document.getElementById('wizard').style.display='block';
+  for(var i=1;i<totalSteps;i++) document.getElementById('step-'+i).classList.remove('active');
+  document.getElementById('step-0').classList.add('active');
+  currentStep=0; updateProgress(0);
+  if(chartInst){ chartInst.destroy(); chartInst=null; }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+updateProgress(0); onSlider();
+
+// Předvyplň e-mail + IG z přihlášeného uživatele (gate už je sebral) — míň tření
+(function prefillFromUser(){
+  try {
+    var u = window.KenjiAuth && window.KenjiAuth.getUser && window.KenjiAuth.getUser();
+    if (!u) return;
+    if (u.email) document.getElementById('inp-email').value = u.email;
+    if (u.instagram) document.getElementById('inp-ig').value = '@' + u.instagram;
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
