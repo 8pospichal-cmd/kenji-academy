@@ -1,3 +1,8 @@
+# SUPABASE_URL je veřejná adresa (patří do klientského kódu, chrání ji RLS) —
+# není to únik tajemství, tak ji vyjmi z Netlify secret scanu, ať build neselže.
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
+
 # Pretty URLs — odstraní .html z adresního řádku
 [functions]
   directory = "netlify/functions"
