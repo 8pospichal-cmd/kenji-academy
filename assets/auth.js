@@ -628,7 +628,7 @@
     // finální krok = konverze (odemčení)
     var unlock = academy
       ? '<div class="sp-final done"><span class="sp-check">✓</span><span class="sp-ico">🔓</span><span class="sp-tt"><span class="sp-t-title">Máš celou Academy</span><span class="sp-t-sub">Databáze, kurzy i prémiová komunita</span></span></div>'
-      : '<a class="sp-final' + (allDone ? ' hot' : '') + '" href="' + ROOT + 'pristup.html"><span class="sp-check">🔓</span><span class="sp-ico"></span><span class="sp-tt"><span class="sp-t-title">' + (database ? 'Odemkni Kenji Academy' : (allDone ? 'Jsi připravený růst naplno.' : 'Odemkni plný přístup')) + '</span><span class="sp-t-sub">' + (database ? 'Videokurzy a prémiová komunita' : (allDone ? 'Odemkni celou databázi i kurzy →' : 'Celá databáze, kurzy a prémiová komunita')) + '</span></span><span class="sp-arr">→</span></a>';
+      : '<a class="sp-final' + (allDone ? ' hot' : '') + '" href="' + ROOT + 'academy.html"><span class="sp-check">🔓</span><span class="sp-ico"></span><span class="sp-tt"><span class="sp-t-title">' + (database ? 'Odemkni Kenji Academy' : (allDone ? 'Jsi připravený růst naplno.' : 'Odemkni plný přístup')) + '</span><span class="sp-t-sub">' + (database ? 'Videokurzy a prémiová komunita' : (allDone ? 'Odemkni celou databázi i kurzy →' : 'Celá databáze, kurzy a prémiová komunita')) + '</span></span><span class="sp-arr">→</span></a>';
 
     var strategy = allDone
       ? (academy ? 'Jsi v obraze. Teď už jen makat. 💪' : 'Ochutnal jsi, co tu je. Teď se rozhodni, jak daleko to chceš dotáhnout.')
@@ -820,7 +820,7 @@
   // Na úvodní stránce označí kartu členství podle reálného tieru uživatele.
   // Běží pro VŠECHNY (i členy), proto je mimo applyGating.
   function markHomepagePlan() {
-    const onHome = currentFile === 'index.html' || currentFile === '' || currentFile === 'pristup.html';
+    const onHome = currentFile === 'index.html' || currentFile === '';
     if (!onHome) return;
     const grid = document.querySelector('.access-grid');
     if (!grid) return;
@@ -948,7 +948,7 @@
       <p class="paywall-text">Tohle je prémiový obsah ${escapeHtml(CONFIG.academyName)}. Čteš teď jen úvod — celý článek a zbytek databáze se odemknou členům.</p>
       <div class="paywall-actions">
         <a class="paywall-cta" href="#" data-checkout-product="databaze">Chci plný přístup</a>
-        <span class="paywall-note">Databáze 1 497 Kč · nebo kompletní <a href="pristup.html">Kenji Academy</a></span>
+        <span class="paywall-note">Databáze 1 497 Kč · nebo kompletní <a href="academy.html">Kenji Academy</a></span>
       </div>`;
     if (beforeEl) inner.insertBefore(box, beforeEl); else inner.appendChild(box);
   }

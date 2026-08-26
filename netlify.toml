@@ -37,6 +37,18 @@
   to = "/odmena.html"
   status = 301
 
+# Stará ceníková stránka /pristup je zrušená (nahradil ji nákupní modal) —
+# případné staré odkazy pošli natrvalo na prodejní stránku místo 404.
+[[redirects]]
+  from = "/pristup"
+  to = "/academy.html"
+  status = 301
+
+[[redirects]]
+  from = "/pristup.html"
+  to = "/academy.html"
+  status = 301
+
 # Favicon — prohlížeč si /favicon.ico žádá automaticky; servíruj SVG (jinak 404).
 [[redirects]]
   from = "/favicon.ico"

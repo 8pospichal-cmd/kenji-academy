@@ -797,7 +797,7 @@
     if (free) {
       const up = document.createElement('a');
       up.className = 'vl-freeupsell';
-      up.href = ROOT + 'pristup.html';
+      up.href = ROOT + 'academy.html';
       up.innerHTML = `<span>Tohle byla ochutnávka. Celý kurz <strong>${esc(v.course ? 'v Kenji Academy' : 'Academy')}</strong> + 20+ hodin videí a komunita.</span><span class="vl-freeupsell-cta">Zjistit víc →</span>`;
       a.insertAdjacentElement('afterend', up);
     }
@@ -1355,7 +1355,7 @@
   // Globální interceptor: každý „koupit / do Academy" spouštěč → místo skoku na
   // prodejní stránku otevři modal. Běží v capture fázi, ať předběhne checkout v script.js.
   document.addEventListener('click', function (e) {
-    if (currentFile === 'academy.html' || currentFile === 'pristup.html') return; // prodejní stránka: rovnou Stripe
+    if (currentFile === 'academy.html') return; // prodejní stránka: rovnou Stripe
     const t = e.target.closest('[data-checkout-product], a[href$="academy.html"], [data-upgrade]');
     if (!t) return;
     if (t.closest('.upg-modal')) return; // tlačítka uvnitř modalu → nech projít na Stripe (script.js)
