@@ -52,6 +52,7 @@
       '<input class="set-input" id="set-email" value="' + esc(email) + '" disabled>' +
       '<div class="set-bar"><span class="set-msg" id="set-msg"></span><button class="set-save" id="set-save">Uložit profil</button></div>' +
     '</div>' +
+    '<div id="set-focus"></div>' +
     '<div class="set-card set-guide">' +
       '<div class="set-guide-copy"><div class="set-card-title">Úvodní průvodce</div>' +
       '<p class="set-hint">Kenji ti znovu ukáže osobní plán, databázi, AI, kurzy a komunitu.</p></div>' +
@@ -185,6 +186,94 @@
     } catch (e) { console.warn('save_profile', e); msg('Uložení se nepovedlo — zkontroluj, že běží databáze.', true); }
     btn.disabled = false;
   });
+
+  // ---------- ZAMĚŘENÍ (obor / fáze / priorita) — pohání osobní plán a doporučení ----------
+  var BIZ_KEY = 'kenji_biz_v1';
+  var FOCUS_INDUSTRIES = [
+    { id: 'svatby', label: 'Svatební foto/video' }, { id: 'portret', label: 'Portrét / lidé' },
+    { id: 'produkt', label: 'Produktové / e-shop' }, { id: 'video', label: 'Video / film' },
+    { id: 'obsah', label: 'Obsah / sociální sítě' }, { id: 'event', label: 'Event / reportáž' },
+    { id: 'nemovitosti', label: 'Nemovitosti / interiéry' }, { id: 'jine', label: 'Něco jiného' }
+  ];
+  var FOCUS_EXPERIENCES = [
+    { id: 'start', label: 'Začínám' }, { id: 'practice', label: 'Tvořím pro sebe' },
+    { id: 'clients', label: 'Mám zakázky' }, { id: 'fulltime', label: 'Živím se tím' }
+  ];
+  var FOCUS_BLOCKERS = [
+    { id: 'klienti', label: 'Málo poptávek / klientů' }, { id: 'cena', label: 'Nízké ceny / neumím říct o víc' },
+    { id: 'portfolio', label: 'Slabé portfolio / positioning' }, { id: 'cas', label: 'Chaos / nemám systém' },
+    { id: 'zacatek', label: 'Úplný začátek, nevím kde začít' }
+  ];
+  function bizGet() { try { return JSON.parse(localStorage.getItem(BIZ_KEY) || '{}') || {}; } catch (e) { return {}; } }
+
+  function renderFocus() {
+    var host = document.getElementById('set-focus'); if (!host) return;
+    var b = bizGet();
+    var inds = Array.isArray(b.industries) ? b.industries.slice() : (b.industry ? [b.industry] : []);
+    function chips(list, sel, kind, multi) {
+      return list.map(function (x) {
+        var on = multi ? sel.indexOf(x.id) >= 0 : sel === x.id;
+        return '<button type="button" class="set-focus-chip' + (on ? ' on' : '') + '" data-focus="' + kind + '" data-id="' + x.id + '">' + esc(x.label) + '</button>';
+      }).join('');
+    }
+    var showOther = inds.indexOf('jine') >= 0;
+    host.innerHTML =
+      '<div class="set-card">' +
+        '<div class="set-card-title">Čemu se věnuješ</div>' +
+        '<p class="set-hint">Podle toho ti Kenji ladí osobní plán, doporučené články i odpovědi. Klidně vyber víc oborů.</p>' +
+        '<label class="set-label">Obor, kterému se věnuji</label>' +
+        '<div class="set-focus-chips" data-group="industries">' + chips(FOCUS_INDUSTRIES, inds, 'industries', true) + '</div>' +
+        '<div id="set-focus-other-wrap"' + (showOther ? '' : ' hidden') + '>' +
+          '<label class="set-label">Napiš svůj obor</label>' +
+          '<input class="set-input" id="set-focus-other" maxlength="80" placeholder="Např. dron, dokument, architektura…" value="' + esc(b.industryOther || '') + '">' +
+        '</div>' +
+        '<label class="set-label">Kde jsi teď</label>' +
+        '<div class="set-focus-chips" data-group="experience">' + chips(FOCUS_EXPERIENCES, b.experience || '', 'experience', false) + '</div>' +
+        '<label class="set-label">Co teď nejvíc řešíš</label>' +
+        '<div class="set-focus-chips" data-group="blocker">' + chips(FOCUS_BLOCKERS, b.blocker || '', 'blocker', false) + '</div>' +
+        '<div class="set-bar"><span class="set-msg" id="set-focus-msg"></span><button class="set-save" id="set-focus-save">Uložit zaměření</button></div>' +
+      '</div>';
+    wireFocus();
+  }
+
+  function wireFocus() {
+    var host = document.getElementById('set-focus'); if (!host) return;
+    var fmsg = document.getElementById('set-focus-msg');
+    host.querySelectorAll('.set-focus-chip').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var kind = btn.getAttribute('data-focus');
+        if (kind === 'industries') {
+          btn.classList.toggle('on');
+        } else {
+          // fáze/priorita = jedna volba
+          host.querySelectorAll('[data-focus="' + kind + '"]').forEach(function (o) { o.classList.remove('on'); });
+          btn.classList.add('on');
+        }
+        // „Něco jiného" → zobraz textové pole
+        var jine = host.querySelector('[data-focus="industries"][data-id="jine"]');
+        var wrap = document.getElementById('set-focus-other-wrap');
+        if (wrap) wrap.hidden = !(jine && jine.classList.contains('on'));
+      });
+    });
+    document.getElementById('set-focus-save').addEventListener('click', function () {
+      var btn = this; btn.disabled = true;
+      var b = bizGet();
+      b.industries = [].slice.call(host.querySelectorAll('[data-focus="industries"].on')).map(function (a) { return a.getAttribute('data-id'); });
+      b.industry = b.industries[0] || '';
+      var expOn = host.querySelector('[data-focus="experience"].on');
+      b.experience = expOn ? expOn.getAttribute('data-id') : '';
+      var blkOn = host.querySelector('[data-focus="blocker"].on');
+      b.blocker = blkOn ? blkOn.getAttribute('data-id') : '';
+      var otherEl = document.getElementById('set-focus-other');
+      b.industryOther = (b.industries.indexOf('jine') >= 0 && otherEl) ? otherEl.value.trim() : '';
+      try { localStorage.setItem(BIZ_KEY, JSON.stringify(b)); } catch (e) {}
+      try { if (A.saveProfile) A.saveProfile(b); } catch (e2) {}
+      if (fmsg) { fmsg.textContent = 'Uloženo ✓'; fmsg.style.color = 'var(--text-mute)'; }
+      btn.disabled = false;
+    });
+  }
+
+  renderFocus();
 
   // ---------- ADMIN PANEL ----------
   function renderAdmin() {

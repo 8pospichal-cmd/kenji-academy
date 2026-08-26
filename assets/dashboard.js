@@ -213,12 +213,16 @@
   function xpGet() { var x = jget(XP, null); if (!x || typeof x.xp !== 'number') x = { xp: 0, log: [] }; if (!Array.isArray(x.log)) x.log = []; return x; }
   function xpSet(x) { jset(XP, x); }
   function hasXpKey(x, key) { return x.log.some(function (e) { return e.k === key; }); }
+  function xpUid() { return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
   function addXp(amount, reason, onceKey) {
     var x = xpGet();
     if (onceKey && hasXpKey(x, onceKey)) return 0;
-    x.xp += amount; x.log.push({ k: onceKey || null, a: amount, r: reason, t: Date.now() });
+    // `u` = jedinečné id neklíčovaných odměn, ať se při synchronizaci účtu mezi zařízeními nezdvojí.
+    x.xp += amount; x.log.push({ k: onceKey || null, u: onceKey ? null : xpUid(), a: amount, r: reason, t: Date.now() });
     if (x.log.length > 300) x.log = x.log.slice(-300);
-    xpSet(x); return amount;
+    xpSet(x);
+    try { if (window.KenjiXP && window.KenjiXP.push) window.KenjiXP.push(); } catch (e) {}
+    return amount;
   }
   // Dorovnání XP z obsahu (čtení/kvíz se zaznamenává jinde) — jednorázově per položka
   function reconcileContentXp() {
@@ -861,18 +865,10 @@
   }
 
   // ---------- Start ----------
-  // Vstup z „Můj profil → Upravit zaměření pro AI": otevři kvíz zaměření a ukliď URL.
-  try {
-    var _pq = new URLSearchParams(location.search);
-    if (_pq.get('profil') === 'zamereni') {
-      editingProfile = true; onbStep = 1;
-      _pq.delete('profil');
-      history.replaceState({}, '', location.pathname + (_pq.toString() ? '?' + _pq.toString() : ''));
-    }
-  } catch (e) {}
   reconcileContentXp();
   render();
   document.addEventListener('kenji-auth-ready', render);
+  document.addEventListener('kenji-xp-synced', render);
   document.addEventListener('kenji:challenge-updated', render);
   document.addEventListener('kenji-auth-ready', loadWebinar, { once: true });
   setTimeout(loadWebinar, 1500);

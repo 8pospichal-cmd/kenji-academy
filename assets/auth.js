@@ -71,6 +71,20 @@
 
   function loadUser() { try { return JSON.parse(localStorage.getItem(USER_KEY)) || null; } catch (e) { return null; } }
   function saveUser(u) { try { u ? localStorage.setItem(USER_KEY, JSON.stringify(u)) : localStorage.removeItem(USER_KEY); } catch (e) {} }
+
+  // Přepnutí účtu ve stejném prohlížeči: zahoď stav předchozího uživatele (KP/XP, úkoly,
+  // průběh průvodce, přečtené, kvíz, AI, profil-cache, onboarding), ať nový člověk začíná
+  // úplně čistý — 0 KP / level 1, prázdné nastavení, onboarding se ukáže. Necháváme jen
+  // motiv, anonymní ID a samotný záznam uživatele (ten se přepíše hned poté).
+  function resetLocalUserState() {
+    var keep = {}; keep['kenji_theme'] = 1; keep[USER_KEY] = 1; keep[ANON_KEY] = 1;
+    try {
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('kenji_') === 0 && !keep[k]) localStorage.removeItem(k);
+      }
+    } catch (e) {}
+  }
   function updateUserProfile(fields) {
     if (!user) return;
     user = Object.assign({}, user, fields || {});
@@ -226,6 +240,65 @@
     }
   }
 
+  // ---------------- KENJI POINTS (KP/XP) local ⇄ server ----------------
+  // KP jsou vázané na účet (e-mail) a sčítají se napříč zařízeními. Log slouží k idempotenci
+  // klíčovaných odměn (read:*, quiz:*, activation:* …), ať se stejná odměna nepočítá dvakrát.
+  const XP_KEY = 'kenji_xp_v1';
+  function localXp() {
+    try { var x = JSON.parse(localStorage.getItem(XP_KEY) || 'null'); if (!x || typeof x.xp !== 'number') x = { xp: 0, log: [] }; if (!Array.isArray(x.log)) x.log = []; return x; }
+    catch (e) { return { xp: 0, log: [] }; }
+  }
+  // Sjednocení logů: klíčované položky podle klíče `k`, neklíčované podle vlastního id `u`,
+  // starší legacy položky podle (r,a,t). Ořez na posledních 300, ať localStorage neroste.
+  function unionXpLog(a, b) {
+    a = Array.isArray(a) ? a : []; b = Array.isArray(b) ? b : [];
+    var seen = {}, out = [];
+    [].concat(a, b).forEach(function (e) {
+      if (!e) return;
+      var id = e.k || e.u || (String(e.r) + '|' + e.a + '|' + e.t);
+      if (seen[id]) return; seen[id] = 1; out.push(e);
+    });
+    out.sort(function (x, y) { return (x.t || 0) - (y.t || 0); });
+    return out.slice(-300);
+  }
+  async function getXpRemote() {
+    if (!isLive || IS_LOCAL || !isLoggedIn()) return null;
+    const sb = await getSupabase(); if (!sb) return null;
+    const { data, error } = await sb.rpc('get_xp');
+    if (error) { console.warn('get_xp', error); return null; }
+    return data || null; // { xp, log } nebo null
+  }
+  async function saveXpRemote(xp, log) {
+    if (!isLive || IS_LOCAL || !isLoggedIn()) return;
+    const sb = await getSupabase(); if (!sb) return;
+    const { error } = await sb.rpc('save_xp', { p_xp: Math.max(0, xp | 0), p_log: log || [] });
+    if (error) console.warn('save_xp', error);
+  }
+  // Při přihlášení: zmerguj serverové a lokální KP (total = vyšší, log = sjednocení) a zapiš zpět.
+  async function reconcileXp() {
+    if (!isLive || IS_LOCAL || !isLoggedIn()) return;
+    const local = localXp();
+    const server = await getXpRemote();
+    const sXp = server && typeof server.xp === 'number' ? server.xp : 0;
+    const sLog = server && Array.isArray(server.log) ? server.log : [];
+    const mergedLog = unionXpLog(local.log, sLog);
+    const mergedXp = Math.max(local.xp || 0, sXp);
+    try { localStorage.setItem(XP_KEY, JSON.stringify({ xp: mergedXp, log: mergedLog })); } catch (e) {}
+    if (mergedXp !== sXp || mergedLog.length !== sLog.length) await saveXpRemote(mergedXp, mergedLog);
+  }
+  // Debounce push (volá dashboard po každém addXp). Čte vždy čerstvý stav v čase odeslání,
+  // ať se nepošle zastaralý objekt, když mezitím proběhne merge při přihlášení.
+  let _xpTimer = null;
+  function pushXp() {
+    if (!isLive || IS_LOCAL || !isLoggedIn()) return;
+    if (_xpTimer) clearTimeout(_xpTimer);
+    _xpTimer = setTimeout(function () {
+      var cur = localXp();
+      saveXpRemote(cur.xp || 0, cur.log || []);
+    }, 1200);
+  }
+  window.KenjiXP = { push: pushXp, reconcile: reconcileXp };
+
   // ---------------- PŘIHLÁŠENÍ E-MAILEM (Supabase Auth — magic link) ----------------
   // Pošle na e-mail přihlašovací odkaz. Po kliknutí se uživatel vrátí s tokeny
   // v URL, Supabase je zpracuje a naběhne session (viz getInitialSession).
@@ -262,7 +335,12 @@
     if (!validEmail(vEmail)) return false;
     const meta = (session.user && session.user.user_metadata) || {};
     const name = meta.full_name || meta.name || '';
-    const prevIg = (user && user.instagram) || '';
+    // Jiný účet než minule → čistý start (0 KP, prázdné nastavení, onboarding se ukáže).
+    const prev = loadUser();
+    const prevEmail = prev ? normEmail(prev.email) : '';
+    const switched = !!(prevEmail && prevEmail !== vEmail);
+    if (switched) resetLocalUserState();
+    const prevIg = switched ? '' : ((prev && prev.instagram) || '');
     const server = await registerLead(vEmail, prevIg || null);
     let tier = 'free';
     if (server) {
@@ -275,6 +353,8 @@
     // Onboarding profil ze serveru natáhneme ještě teď (během rozmazaného bootu),
     // aby dashboard po odhalení věděl, že profil je hotový, a onboarding znovu nespustil.
     try { await reconcileProfile(); } catch (e) {}
+    // KP účtu (napříč zařízeními) také ještě teď, ať dashboard ukáže správný total.
+    try { await reconcileXp(); } catch (e) {}
     return true;
   }
 
@@ -308,6 +388,8 @@
     setLocalRead(merged.read); setLocalQuiz(merged.quiz);
     if (window.KenjiNav && window.KenjiNav.refreshReadUI) window.KenjiNav.refreshReadUI();
     saveProgressRemote(user.email, merged.read, merged.quiz);
+    // KP účtu sesynchronizuj i u už přihlášeného uživatele (návrat na web) a dej dashboardu vědět.
+    try { await reconcileXp(); document.dispatchEvent(new Event('kenji-xp-synced')); } catch (e) {}
   }
 
   // Veřejné API pro nav.js / kvíz / odměnu — pošle aktuální progres na server (debounce)
@@ -335,6 +417,7 @@
     wrap.id = 'kenji-gate';
     wrap.innerHTML = `
       <div class="kg-modal">
+        <button class="kg-close" id="kg-close" type="button" aria-label="Zpět na úvodní stránku">✕</button>
         <div class="kg-intro">
           <div class="kg-logo">KENJI ACADEMY</div>
           <h2>Tohle najdeš v Kenji Academy</h2>
@@ -351,6 +434,7 @@
           </ul>
         </div>
         <div class="kg-form">
+          <div class="kg-logo kg-logo-mobile">KENJI ACADEMY</div>
           <div class="kg-pane" id="kg-pane-lead">
             <div class="kg-form-head">Vstup do Kenji Academy</div>
             <p class="kg-form-sub">Zadej e-mail — pošleme ti přihlašovací odkaz. Klikneš a jsi uvnitř. Bez hesla, jeden krok.</p>
@@ -374,6 +458,13 @@
     const btn = document.getElementById('kg-submit');
 
     function err(msg) { errEl.textContent = msg; errEl.hidden = false; }
+
+    // Křížek → zpět na prodejní stránku. Když už na ní jsme (overlay nad ní), jen zavři bránu.
+    const closeBtn = document.getElementById('kg-close');
+    if (closeBtn) closeBtn.addEventListener('click', function () {
+      if (currentFile === 'academy.html') { wrap.remove(); revealSite(); }
+      else { location.href = ROOT + 'academy.html'; }
+    });
 
     const sentEl = document.getElementById('kg-sent');
 
@@ -623,8 +714,7 @@
           <div class="selfp-stat"><strong>${xp}</strong><span>KP</span></div>
           <div class="selfp-stat"><strong>${level}</strong><span>Level</span></div>
         </div>
-        <a class="selfp-edit" href="${ROOT}nastaveni.html">Upravit profil →</a>
-        <a class="selfp-edit selfp-edit-focus" href="${ROOT}index.html?profil=zamereni">Upravit zaměření pro AI →</a>
+        <a class="selfp-link" href="${ROOT}nastaveni.html">Nastavení →</a>
       </div>`;
     document.body.appendChild(ov);
     document.body.classList.add('selfp-modal-open');
