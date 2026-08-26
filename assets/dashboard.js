@@ -320,7 +320,8 @@
       { key: 'profile', title: 'Doplň svůj profil', sub: 'Přidej fotku, jméno, Instagram a dvě věty o sobě.', href: 'nastaveni.html', xp: 20, done: localStorage.getItem('kenji_task_profile') === '1', icon: 'camera' },
       { key: 'read', title: 'Projdi první článek', sub: rec ? rec.title : 'Otevři doporučený článek.', href: rec ? rec.url : 'clanky/expozice.html', xp: 20, done: readSlugs().length > 0, icon: 'file' },
       { key: 'ai', title: 'Polož první dotaz Kenji AI', sub: 'Dostaneš konkrétní krok pro tento týden.', href: aiUrl(aiPrompt), xp: 20, done: aiDone || tourCheckpointDone('ai'), icon: 'sparkles' },
-      { key: 'course', title: 'Otevři první kurz', sub: 'Podívej se na osnovu, video a návazné materiály.', href: 'kurzy.html', xp: 20, done: tourCheckpointDone('course-open'), icon: 'video' }
+      { key: 'intro', title: 'Představ se komunitě', sub: 'Nahraj fotku a napiš, kdo jsi, jak dlouho tvoříš, co fotíš/natáčíš a co čekáš od Academy.', href: 'prispevky.html?category=predstav-se&intro=1', xp: 350, done: localStorage.getItem('kenji_task_intro') === '1', icon: 'user' },
+      { key: 'feedback', title: 'Nahraj práci na Foto feedback', sub: 'Sdílej fotku nebo video své tvorby a řekni, s čím chceš poradit — komunita ti dá zpětnou vazbu.', href: 'prispevky.html?category=foto-feedback&onboarding=1', xp: 100, done: localStorage.getItem('kenji_task_community') === '1', icon: 'camera' }
     ];
   }
 
@@ -348,7 +349,7 @@
       '</span>';
     }).join('');
     return '<section class="co-activation' + (doneCount === tasks.length ? ' is-complete' : '') + '" data-tour="plan">' +
-      '<div class="co-activation-head"><div><span class="co-activation-kicker">TVŮJ START</span><h2>' + (doneCount === tasks.length ? 'Základ máš hotový.' : 'Jeden krok. Potom další.') + '</h2></div><strong><span>' + doneCount + '</span> / ' + tasks.length + '</strong>' + (doneCount === tasks.length ? '<button class="co-activation-close" type="button" data-act="activation-dismiss" aria-label="Zavřít">✕</button>' : '') + '</div>' +
+      '<div class="co-activation-head"><div><span class="co-activation-kicker">TVŮJ START</span><h2>' + (doneCount === tasks.length ? 'Základ máš hotový.' : 'Jeden krok. Potom další.') + '</h2></div><strong><span>' + doneCount + '</span> / ' + tasks.length + '</strong><button class="co-activation-close" type="button" data-act="activation-dismiss" aria-label="Skrýt úvodní průvodce" title="Skrýt úvodní průvodce">✕</button></div>' +
       '<div class="co-activation-progress"><i style="width:' + (doneCount / tasks.length * 100) + '%"></i></div>' +
       focusCard +
       '<div class="co-activation-steps" aria-label="Postup prvními kroky">' + steps + '</div>' +
@@ -367,12 +368,23 @@
     var days = jget(DAYS, []);
     var b = bizGet();
 
-    if (!profileComplete() || editingProfile) {
+    // Onboarding nikdy nepřekrývá přihlašovací okno: dokud je gate nahoře (blur + login),
+    // nespouštíme celoobrazovkový onboarding. Po přihlášení se gate sundá a dashboard
+    // se překreslí (kenji-auth-ready) — pak se onboarding případně ukáže čistě.
+    var gated = document.body.classList.contains('kenji-gated');
+    // Kvíz zaměření (výběr oboru/fáze/priority) ukazujeme jen dvěma lidem:
+    //  • hostovi z „Vyzkoušet zdarma" — build-before-register trychtýř (vybere zaměření → pak e-mail),
+    //  • komukoliv, kdo si ho VĚDOMĚ otevře z profilu („Upravit zaměření").
+    // Přihlášený nový/platící uživatel kvíz NEDOSTÁVÁ — přistane rovnou na informačním dashboardu.
+    var isGuestUser = !!(window.KenjiAuth && window.KenjiAuth.isLoggedIn && !window.KenjiAuth.isLoggedIn());
+    var showQuiz = editingProfile || (isGuestUser && !profileComplete());
+    if (!gated && showQuiz) {
       document.body.classList.add('kenji-onboarding-active');
       MOUNT.innerHTML = onboardingCard(b);
       document.documentElement.scrollTop = 0; document.body.scrollTop = 0;
       return;
     }
+    if (gated) { document.body.classList.remove('kenji-onboarding-active'); return; }
     document.body.classList.remove('kenji-onboarding-active');
     reconcileActivationXp(b);
 
@@ -502,11 +514,31 @@
   // ---------- Živý webinář ----------
   // Termín dalšího webináře uprav tady. `youtube` nech prázdné, dokud stream neběží
   // (po vyplnění a dosažení času se z tlačítka stane přímý odkaz na živý stream).
+  // Výchozí (fallback) webinář. Reálně se přepíše z adminu přes next_webinar().
   var WEBINAR = {
     topic: 'Jak nacenit zakázku tak, aby klient řekl ano',
     at: '2026-09-02T20:00:00',
-    youtube: ''
+    youtube: '',
+    info: ''
   };
+  // Načte nejbližší webinář z adminu a překreslí kartu (fallback = výchozí výše).
+  var webinarLoaded = false;
+  async function loadWebinar() {
+    if (webinarLoaded) return; webinarLoaded = true;
+    try {
+      var A = window.KenjiAuth;
+      var sb = A && A.getSupabase ? await A.getSupabase() : null;
+      if (!sb) return;
+      var res = await sb.rpc('next_webinar');
+      if (res.error || !res.data || !res.data.length) return;
+      var w = res.data[0];
+      if (w.title) WEBINAR.topic = w.title;
+      if (w.starts_at) WEBINAR.at = w.starts_at;
+      WEBINAR.youtube = w.link_url || '';
+      WEBINAR.info = w.body || '';
+      render();
+    } catch (e) { console.warn('webinar', e); }
+  }
   function webinarCard() {
     var start = new Date(WEBINAR.at).getTime();
     if (!start || isNaN(start)) return '';
@@ -533,6 +565,7 @@
         '<span class="co-webinar-kicker">Živý webinář</span>' +
         '<h3>Doraž na další webinář, připrav si otázky</h3>' +
         '<p class="co-webinar-topic">Téma: ' + esc(WEBINAR.topic) + '</p>' +
+        (WEBINAR.info ? '<p class="co-webinar-topic co-webinar-info">' + esc(WEBINAR.info) + '</p>' : '') +
         '<p class="co-webinar-when"><span>📅 ' + dateText + ' · ' + timeText + '</span><strong>⏱ ' + countdown + '</strong></p>' +
         '<div class="co-webinar-action">' + btn + '</div>' +
       '</div>' +
@@ -700,6 +733,8 @@
       var firstTime = !editingProfile && !jget(ONB_DONE, false);
       bizSet(target2);
       jset(ONB_DONE, true);
+      // Ulož profil i na server, ať se onboarding neopakuje na jiném zařízení (mobil vs. počítač).
+      try { if (window.KenjiAuth && window.KenjiAuth.saveProfile) window.KenjiAuth.saveProfile(target2); } catch (eSP) {}
       try { localStorage.removeItem(ONB_DRAFT); } catch (e2) {}
       if (firstTime && !todosGet().length) seedTasks(target2.blocker);
       editingProfile = false; pendOnb = {}; onbStep = 1;
@@ -826,10 +861,21 @@
   }
 
   // ---------- Start ----------
+  // Vstup z „Můj profil → Upravit zaměření pro AI": otevři kvíz zaměření a ukliď URL.
+  try {
+    var _pq = new URLSearchParams(location.search);
+    if (_pq.get('profil') === 'zamereni') {
+      editingProfile = true; onbStep = 1;
+      _pq.delete('profil');
+      history.replaceState({}, '', location.pathname + (_pq.toString() ? '?' + _pq.toString() : ''));
+    }
+  } catch (e) {}
   reconcileContentXp();
   render();
   document.addEventListener('kenji-auth-ready', render);
   document.addEventListener('kenji:challenge-updated', render);
+  document.addEventListener('kenji-auth-ready', loadWebinar, { once: true });
+  setTimeout(loadWebinar, 1500);
 
   // Zápis úspěchu spuštěný z pop-upu (odkaz index.html?addwin=1)
   try {

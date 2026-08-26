@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20260825-flow-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20260825-flow-v2">
 </head>
 <body>
 
@@ -36,6 +36,9 @@
         <p class="article-hero-sub">Kompletní cesta od první fotky až k platícím klientům. Pět kurzů, desítky lekcí z praxe — technika, byznys, svatby i zákulisí. Součást plného členství.</p>
       </section>
 
+      <!-- Uvítací video — jen pro platící členy (naplní se skriptem dole) -->
+      <div id="course-welcome"></div>
+
       <div class="courses-grid" id="courses-grid" data-tour="course-grid"></div>
 
     </div>
@@ -45,7 +48,7 @@
 <script src="assets/articles.js?v=20260824-value-v1"></script>
 <script src="assets/courses.js?v=20260824-ai-retry-v1"></script>
 <script src="assets/nav.js?v=20260824-buymodal-v1"></script>
-<script src="assets/auth.js?v=20260825-flow-v1"></script>
+<script src="assets/auth.js?v=20260826-profile-v2"></script>
 <script src="assets/script.js?v=20260824-ai-retry-v1"></script>
 
 <script>
@@ -53,6 +56,26 @@
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   var canWatchCourses = false;
   try { canWatchCourses = !!(window.KenjiAuth && window.KenjiAuth.can && window.KenjiAuth.can('courses')); } catch(e){}
+
+  // Uvítací video — jen platícím členům (neplatící ho nevidí).
+  function renderWelcome() {
+    var mount = document.getElementById('course-welcome');
+    if (!mount) return;
+    var academy = false;
+    try { academy = !!(window.KenjiAuth && window.KenjiAuth.can && window.KenjiAuth.can('courses')); } catch(e){}
+    if (!academy) { mount.innerHTML = ''; return; }
+    if (mount.querySelector('iframe')) return;
+    mount.innerHTML =
+      '<section class="course-welcome">' +
+        '<span class="course-welcome-badge">🎉 VÍTEJ V ACADEMY</span>' +
+        '<h2 class="course-welcome-title">Vítej v Kenji Academy</h2>' +
+        '<p class="course-welcome-sub">Díky, že ses přidal. Než se pustíš do kurzů, koukni na krátké uvítání.</p>' +
+        '<div class="player-embed"><iframe src="https://www.youtube-nocookie.com/embed/AShoO7Ad7s8" title="Vítej v Kenji Academy" frameborder="0" allow="clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>' +
+      '</section>';
+  }
+  renderWelcome();
+  document.addEventListener('kenji-auth-ready', renderWelcome);
+
   var grid = document.getElementById('courses-grid');
   var html = '';
   (window.KENJI_COURSES || []).forEach(function(c){

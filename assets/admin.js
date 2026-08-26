@@ -11,7 +11,21 @@
 
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
   function date(value, withTime) { if (!value) return '—'; try { return new Intl.DateTimeFormat('cs-CZ', withTime ? { dateStyle:'medium',timeStyle:'short' } : { dateStyle:'medium' }).format(new Date(value)); } catch (e) { return '—'; } }
-  function rel(value) { if (!value) return 'bez aktivity'; var days = Math.floor((Date.now()-new Date(value).getTime())/86400000); return days <= 0 ? 'dnes' : days === 1 ? 'včera' : 'před ' + days + ' dny'; }
+  function rel(value) {
+    if (!value) return 'nikdy';
+    var ms = Date.now() - new Date(value).getTime();
+    var mins = Math.floor(ms / 60000);
+    if (mins < 1) return 'právě teď';
+    if (mins < 60) return 'před ' + mins + ' min';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return 'před ' + hrs + (hrs === 1 ? ' hodinou' : ' hodinami');
+    var days = Math.floor(hrs / 24);
+    if (days === 1) return 'včera';
+    if (days < 5) return 'před ' + days + ' dny';
+    if (days < 30) return 'před ' + days + ' dny';
+    var months = Math.floor(days / 30);
+    return 'před ' + months + (months === 1 ? ' měsícem' : ' měsíci');
+  }
   function n(value) { return Number(value || 0).toLocaleString('cs-CZ'); }
   function label(value) { return ({ page_view:'Návštěva stránky',session_started:'Nová relace',registered:'Registrace',onboarding_completed:'Dokončený onboarding',quiz_started:'Spuštěný kvíz',quiz_completed:'Dokončený kvíz',audit_completed:'Dokončený audit',hourly_calculator_completed:'Spočítaná hodinovka',ai_question_sent:'Dotaz na Kenji AI',community_post_created:'Příspěvek v komunitě',checkout_started:'Zahájená objednávka',purchase_completed:'Dokončený nákup' })[value] || value || 'Událost'; }
   function typeLabel(value) { return ({ weekly_challenge:'Týdenní výzva',news:'Novinka',webinar:'Webinář',quiz:'Kvíz',audit:'Audit',hourly_calculator:'Hodinovka' })[value] || value; }
@@ -77,17 +91,46 @@
   function kpi(title,value,note){return '<div class="admin-kpi"><span>'+esc(title)+'</span><strong>'+n(value)+'</strong><small>'+esc(note)+'</small></div>';}
   function eventRow(e){return '<div class="admin-event"><i></i><div><strong>'+esc(label(e.event_name))+'</strong><small>'+esc(e.email||e.source||'anonymní návštěvník')+'</small></div><time>'+esc(rel(e.created_at))+'</time></div>';}
 
+  function tierSelect(email, current) {
+    return '<select class="admin-quick-tier" data-quick-tier="'+esc(email)+'" title="Změnit tier">'+
+      ['free','knihovna','academy'].map(function(t){ return '<option value="'+t+'"'+((current||'free')===t?' selected':'')+'>'+t+'</option>'; }).join('')+
+      '</select>';
+  }
+  function blockButton(email, status) {
+    var blocked = status === 'blocked';
+    return '<button class="admin-quick-block'+(blocked?' is-blocked':'')+'" type="button" data-quick-block="'+esc(email)+'">'+(blocked?'Odblokovat':'Zablokovat')+'</button>';
+  }
+  function linkButton(email) {
+    return '<button class="admin-quick-link" type="button" data-quick-link="'+esc(email)+'" title="Poslat přihlašovací odkaz" aria-label="Poslat odkaz">✉</button>';
+  }
+  // Malé auto-štítky — jen užitečné signály, minimalisticky.
+  function userBadges(u) {
+    var b = [];
+    if (u.tier === 'academy') b.push('<span class="admin-badge is-academy">Academy</span>');
+    else if (u.tier === 'knihovna') b.push('<span class="admin-badge is-db">Databáze</span>');
+    var created = u.created_at ? Date.now() - new Date(u.created_at).getTime() : 0;
+    if (created > 0 && created < 7 * 86400000) b.push('<span class="admin-badge is-new">Nový</span>');
+    var seen = u.last_seen_at ? Date.now() - new Date(u.last_seen_at).getTime() : Infinity;
+    if (seen > 30 * 86400000) b.push('<span class="admin-badge is-idle">Neaktivní</span>');
+    return b.length ? '<span class="admin-badges">' + b.join('') + '</span>' : '';
+  }
   function usersTable(users,compact) {
     if (!users.length) return '<div class="admin-empty">Nikdo neodpovídá filtru.</div>';
-    return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Člověk</th><th>Tier</th><th>Stav</th><th>Přidal se</th><th>Aktivita</th>'+(compact?'':'<th>Nástroje</th>')+'</tr></thead><tbody>'+users.map(function(u){
+    return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Člověk</th><th>Tier</th><th>Stav</th><th>Přidal se</th><th>Naposledy</th>'+(compact?'':'<th>Nástroje</th><th>Rychlá akce</th>')+'</tr></thead><tbody>'+users.map(function(u){
       var name=u.display_name||(u.instagram?'@'+u.instagram:'Bez jména');
       var tools=[u.quiz_completed?'Kvíz':'',u.audit_completed?'Audit':'',u.calculator_completed?'Sazba':''].filter(Boolean).join(' · ')||'—';
-      return '<tr data-email="'+esc(u.email)+'"><td><span class="admin-person"><strong>'+esc(name)+'</strong><small>'+esc(u.email)+'</small></span></td><td>'+chip(u.tier||'free')+'</td><td>'+chip(u.account_status||'active')+'</td><td>'+esc(date(u.created_at,false))+'</td><td>'+esc(rel(u.last_seen_at))+'</td>'+(compact?'':'<td>'+esc(tools)+'</td>')+'</tr>';
+      return '<tr data-email="'+esc(u.email)+'"><td><span class="admin-person"><strong>'+esc(name)+'</strong><small>'+esc(u.email)+'</small>'+userBadges(u)+'</span></td><td>'+chip(u.tier||'free')+'</td><td>'+chip(u.account_status||'active')+'</td><td>'+esc(date(u.created_at,false))+'</td><td>'+esc(rel(u.last_seen_at))+'</td>'+(compact?'':'<td>'+esc(tools)+'</td><td class="admin-quick" data-noopen>'+tierSelect(u.email,u.tier)+blockButton(u.email,u.account_status)+linkButton(u.email)+'</td>')+'</tr>';
     }).join('')+'</tbody></table></div>';
   }
 
   function renderPeople() {
     ROOT.innerHTML = head('CRM','Lidé','Kdo přišel, kde se nachází a co už v Academy udělal.')+
+      '<form class="admin-addform" id="admin-add-user"><span class="admin-addform-label">Přidat člověka</span>'+
+        '<input class="admin-input" name="email" type="email" required placeholder="email@clovek.cz">'+
+        '<select class="admin-select" name="tier"><option value="free">free</option><option value="knihovna">knihovna (databáze)</option><option value="academy">academy (plný přístup)</option></select>'+
+        '<button class="admin-button" type="submit">Přidat / nastavit</button>'+
+        '<span class="admin-addform-msg" id="admin-add-msg"></span>'+
+      '</form>'+
       '<div class="admin-filters"><input class="admin-input" id="admin-user-search" placeholder="Hledat e-mail, jméno nebo Instagram"><select class="admin-select" id="admin-user-tier"><option value="">Všechny tiery</option><option>free</option><option>knihovna</option><option>academy</option></select><select class="admin-select" id="admin-user-status"><option value="">Všechny stavy</option><option>active</option><option>pending</option><option>paused</option><option>blocked</option></select><button class="admin-button" id="admin-user-filter">Filtrovat</button></div>'+usersTable(cache.users,false);
   }
 
@@ -143,7 +186,9 @@
   document.addEventListener('click',async function(e){
     var viewButton=e.target.closest('[data-admin-view]');if(viewButton){view=viewButton.getAttribute('data-admin-view');ROOT.innerHTML='<div class="admin-loading">Načítám…</div>';try{if(view==='overview'&&!cache.overview)await loadOverview();if(view==='people'&&!cache.users.length)await loadUsers();if(view==='tools'&&!cache.tools.length)await loadTools();if(view==='content'&&!cache.content.length)await loadContent();if(view==='coupons'&&!cache.coupons.length)await loadCoupons();render();}catch(err){fail(err);}return;}
     if(e.target.closest('[data-admin-refresh]')){try{if(view==='overview')await loadOverview();if(view==='people')await loadUsers();if(view==='tools')await loadTools();if(view==='content')await loadContent();if(view==='coupons')await loadCoupons();render();}catch(err){fail(err);}return;}
-    var row=e.target.closest('tr[data-email]');if(row){openUser(row.getAttribute('data-email')).catch(fail);return;}
+    var qb=e.target.closest('[data-quick-block]');if(qb){var qbEmail=qb.getAttribute('data-quick-block');var qbUser=cache.users.find(function(x){return x.email===qbEmail;});var newStatus=(qbUser&&qbUser.account_status==='blocked')?'active':'blocked';if(qbUser)qbUser.account_status=newStatus;try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:qbEmail,p_status:newStatus});}catch(err){fail(err);return;}renderPeople();return;}
+    var qlink=e.target.closest('[data-quick-link]');if(qlink){var lEmail=qlink.getAttribute('data-quick-link');qlink.disabled=true;try{if(IS_LOCAL){alert('(Lokálně) Přihlašovací odkaz by šel na: '+lEmail);}else{var A=window.KenjiAuth;if(A&&A.requestMagicLink){var r=await A.requestMagicLink(lEmail,{redirect:'index.html'});if(!r||!r.ok)throw new Error('nepovedlo se odeslat');}alert('Přihlašovací odkaz odeslán na '+lEmail);}}catch(err){alert('Odkaz se nepovedlo odeslat: '+((err&&err.message)||'chyba'));}qlink.disabled=false;return;}
+    var row=e.target.closest('tr[data-email]');if(row&&!e.target.closest('[data-noopen]')){openUser(row.getAttribute('data-email')).catch(fail);return;}
     if(e.target.id==='admin-user-filter'){await loadUsers(document.getElementById('admin-user-search').value,document.getElementById('admin-user-tier').value,document.getElementById('admin-user-status').value);renderPeople();return;}
     var tool=e.target.closest('[data-tool-filter]');if(tool){await loadTools(tool.getAttribute('data-tool-filter'));renderTools();return;}
     var editItem=e.target.closest('[data-content-edit]');if(editItem){editContent(editItem.getAttribute('data-content-edit'));return;}
@@ -153,7 +198,36 @@
     var delCoupon=e.target.closest('[data-coupon-delete]');if(delCoupon&&confirm('Opravdu smazat kupón '+delCoupon.getAttribute('data-coupon-delete')+'?')){if(!IS_LOCAL)await rpc('admin_delete_coupon_v2',{p_code:delCoupon.getAttribute('data-coupon-delete')});cache.coupons=cache.coupons.filter(function(x){return x.code!==delCoupon.getAttribute('data-coupon-delete');});renderCoupons();}
   });
 
+  // Rychlá změna tieru přímo v řádku.
+  document.addEventListener('change',async function(e){
+    var qt=e.target.closest('[data-quick-tier]');if(!qt)return;
+    var email=qt.getAttribute('data-quick-tier'),tier=qt.value;
+    var u=cache.users.find(function(x){return x.email===email;});if(u)u.tier=tier;
+    // vizuální potvrzení
+    qt.classList.add('is-saved');setTimeout(function(){qt.classList.remove('is-saved');},900);
+    try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:email,p_tier:tier});}catch(err){fail(err);}
+  });
+
   document.addEventListener('submit',async function(e){
+    if(e.target.id==='admin-add-user'){
+      e.preventDefault();
+      var af=new FormData(e.target),aEmail=String(af.get('email')||'').trim().toLowerCase(),aTier=af.get('tier')||'free';
+      var msg=document.getElementById('admin-add-msg');
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(aEmail)){if(msg){msg.textContent='Zadej platný e-mail.';msg.className='admin-addform-msg is-err';}return;}
+      try{
+        if(IS_LOCAL){
+          var ex=cache.users.find(function(x){return x.email===aEmail;});
+          if(ex){ex.tier=aTier;ex.account_status='active';}
+          else cache.users.unshift({email:aEmail,display_name:'',instagram:'',tier:aTier,account_status:'active',role:'member',created_at:new Date().toISOString(),last_seen_at:null});
+        } else {
+          await rpc('admin_upsert_user',{p_email:aEmail,p_tier:aTier});
+          await loadUsers();
+        }
+        renderPeople();
+        var msg2=document.getElementById('admin-add-msg');if(msg2){msg2.textContent='Hotovo: '+aEmail+' → '+aTier;msg2.className='admin-addform-msg is-ok';}
+      }catch(err){var m=document.getElementById('admin-add-msg');if(m){m.textContent='Nepovedlo se: '+((err&&err.message)||'chyba');m.className='admin-addform-msg is-err';}}
+      return;
+    }
     if(e.target.id==='admin-content-form'){e.preventDefault();var f=new FormData(e.target),existingId=f.get('id')||null;var row={id:existingId||(IS_LOCAL?'demo-'+Date.now():null),type:f.get('type'),title:f.get('title'),body:f.get('body'),status:f.get('status'),audience:f.get('audience'),starts_at:f.get('starts_at')?new Date(f.get('starts_at')).toISOString():null,ends_at:f.get('ends_at')?new Date(f.get('ends_at')).toISOString():null,xp:Number(f.get('xp')||0),link_url:f.get('link_url')||null,metadata:{}};if(IS_LOCAL){var oldIndex=cache.content.findIndex(function(x){return x.id===row.id;});if(oldIndex>=0)cache.content.splice(oldIndex,1,row);else cache.content.unshift(row);}else await rpc('admin_upsert_content',{p_id:row.id,p_type:row.type,p_title:row.title,p_body:row.body,p_status:row.status,p_audience:row.audience,p_starts_at:row.starts_at,p_ends_at:row.ends_at,p_xp:row.xp,p_link_url:row.link_url,p_metadata:{}});if(!IS_LOCAL)await loadContent();renderContent();}
     if(e.target.id==='admin-coupon-form'){e.preventDefault();var c=new FormData(e.target),code=String(c.get('code')||'').trim().toUpperCase(),products=c.get('products')?[c.get('products')]:[];if(IS_LOCAL)cache.coupons.unshift({code:code,description:c.get('description'),percent_off:Number(c.get('percent')),products:products,active:true,used_count:0,max_uses:Number(c.get('max_uses'))||null});else{await rpc('admin_upsert_coupon_v2',{p_code:code,p_percent:Number(c.get('percent')),p_products:products,p_active:true,p_max_uses:Number(c.get('max_uses'))||null,p_description:c.get('description')||null,p_valid_until:null});await loadCoupons();}renderCoupons();}
   });

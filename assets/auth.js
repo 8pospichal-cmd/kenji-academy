@@ -187,6 +187,45 @@
     if (error) console.warn('save_progress', error);
   }
 
+  // ---------------- ONBOARDING PROFIL (obor/zkušenost/brzda) local ⇄ server ----------------
+  const BIZ_KEY = 'kenji_biz_v1', ONB_DONE_KEY = 'kenji_onboarding_done_v2';
+  function localBiz() { try { return JSON.parse(localStorage.getItem(BIZ_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function bizComplete(b) {
+    b = b || {};
+    const hasIndustry = (Array.isArray(b.industries) && b.industries.length) || b.industry;
+    return !!(hasIndustry && b.experience && b.blocker);
+  }
+  async function getProfileRemote() {
+    const sb = await getSupabase();
+    if (!sb) return null;
+    const { data, error } = await sb.rpc('get_profile');
+    if (error) { console.warn('get_profile', error); return null; }
+    return data || null; // jsonb objekt nebo null
+  }
+  async function saveProfileRemote(profile) {
+    if (!isLive || IS_LOCAL || !isLoggedIn()) return;
+    const sb = await getSupabase();
+    if (!sb) return;
+    const { error } = await sb.rpc('save_profile', { p_profile: profile || {} });
+    if (error) console.warn('save_profile', error);
+  }
+  // Server je zdroj pravdy napříč zařízeními: když má server hotový profil a lokálně chybí,
+  // přenes ho do localStorage, ať dashboard onboarding znovu nespouští. Když má lokál hotový
+  // profil a server ne (starší člen), pošli lokál nahoru.
+  async function reconcileProfile() {
+    if (!isLive || IS_LOCAL || !isLoggedIn()) return;
+    const local = localBiz();
+    const server = await getProfileRemote();
+    if (bizComplete(server) && !bizComplete(local)) {
+      try {
+        localStorage.setItem(BIZ_KEY, JSON.stringify(server));
+        localStorage.setItem(ONB_DONE_KEY, 'true');
+      } catch (e) {}
+    } else if (bizComplete(local) && !bizComplete(server)) {
+      await saveProfileRemote(local);
+    }
+  }
+
   // ---------------- PŘIHLÁŠENÍ E-MAILEM (Supabase Auth — magic link) ----------------
   // Pošle na e-mail přihlašovací odkaz. Po kliknutí se uživatel vrátí s tokeny
   // v URL, Supabase je zpracuje a naběhne session (viz getInitialSession).
@@ -233,6 +272,9 @@
     }
     saveUser({ email: vEmail, instagram: prevIg, tier: tier, auth: 'email', name: name });
     user = loadUser();
+    // Onboarding profil ze serveru natáhneme ještě teď (během rozmazaného bootu),
+    // aby dashboard po odhalení věděl, že profil je hotový, a onboarding znovu nespustil.
+    try { await reconcileProfile(); } catch (e) {}
     return true;
   }
 
@@ -375,7 +417,7 @@
     }
   }
 
-  function revealSite() { document.body.classList.remove('kenji-gated'); }
+  function revealSite() { document.body.classList.remove('kenji-gated'); document.documentElement.classList.remove('kenji-preboot'); }
 
   // ===================================================
   //  „PŘIDAT NA PLOCHU" — mini návod (iPhone / Android)
@@ -582,6 +624,7 @@
           <div class="selfp-stat"><strong>${level}</strong><span>Level</span></div>
         </div>
         <a class="selfp-edit" href="${ROOT}nastaveni.html">Upravit profil →</a>
+        <a class="selfp-edit selfp-edit-focus" href="${ROOT}index.html?profil=zamereni">Upravit zaměření pro AI →</a>
       </div>`;
     document.body.appendChild(ov);
     document.body.classList.add('selfp-modal-open');
@@ -932,6 +975,8 @@
     live: isLive,
     getSupabase: getSupabase,   // sdílený Supabase klient (pro feed apod.)
     updateUserProfile: updateUserProfile,
+    saveProfile: saveProfileRemote,   // dashboard po dokončení onboardingu pošle profil na server
+    getProfile: getProfileRemote,
     requestMagicLink: function (email, opts) {
       if (opts && opts.redirect) { try { gateRedirectTo = new URL(opts.redirect, location.href).href; } catch (e) {} }
       return sendMagicLink(email);

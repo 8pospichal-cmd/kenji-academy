@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20260825-flow-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20260825-flow-v2">
 </head>
 <body>
 
@@ -38,7 +38,7 @@
 <script src="assets/courses.js?v=20260824-ai-retry-v1"></script>
 <script src="assets/course-content.js?v=20260822-basics-intro"></script>
 <script src="assets/nav.js?v=20260824-buymodal-v1"></script>
-<script src="assets/auth.js?v=20260825-flow-v1"></script>
+<script src="assets/auth.js?v=20260826-profile-v2"></script>
 <script src="assets/script.js?v=20260824-ai-retry-v1"></script>
 
 <script>
@@ -51,6 +51,10 @@
   // obsah lekcí (videa + popisky) z generovaného souboru; merge s manifestem
   var CC = (window.KENJI_COURSE_CONTENT || {})[slug] || {};
   var introContent = CC.__intro && CC.__intro.content ? CC.__intro.content : '';
+  var introYt = CC.__intro && CC.__intro.youtube ? CC.__intro.youtube : '';
+  // Pracovní listy ke stažení (jen kde existují a jen pro platící).
+  var WORKSHEETS = { '90denni-vyzva': { file: 'assets/90VYZVA-LISTY.pdf', label: 'Pracovní listy k 90denní výzvě' } };
+  var worksheet = WORKSHEETS[slug] || null;
   function lessonData(l){ var e = CC[normTitle(l.title)] || {}; return { youtube: e.youtube || l.youtube || '', content: e.content || l.content || '' }; }
   var root = document.getElementById('course-root');
 
@@ -79,11 +83,15 @@
   '</section>';
 
   if (canWatchCourses) {
+    var playerDefault = introYt
+      ? '<div class="player-embed"><iframe src="https://www.youtube-nocookie.com/embed/'+encodeURIComponent(introYt)+'" title="Úvodní video" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
+      : '<div class="player-empty"><span class="pe-ico">▶</span><span>Vyber lekci vlevo a spustí se tady.</span></div>';
     html += '<div class="player-wrap" id="player" data-tour="course-player">'+
-      '<div class="player-box"><div class="player-empty"><span class="pe-ico">▶</span><span>Vyber lekci vlevo a spustí se tady.</span></div></div>'+
-      '<div class="player-title" id="player-title"></div>'+
+      '<div class="player-box">'+playerDefault+'</div>'+
+      '<div class="player-title" id="player-title">'+(introYt ? 'Úvodní video' : '')+'</div>'+
       '<div class="player-note" id="player-note" data-tour="lesson-content">'+(introContent ? '<div class="lesson-content">'+introContent+'</div>' : '')+'</div>'+
       '<div class="lesson-nav" id="lesson-nav"></div>'+
+      (worksheet ? '<div class="course-worksheet"><a class="course-worksheet-btn" href="'+esc(worksheet.file)+'" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Stáhnout pracovní listy (PDF)</a></div>' : '')+
     '</div>';
   } else {
     html += '<div class="paywall">'+
@@ -188,7 +196,8 @@
           playLesson(+row.getAttribute('data-id'));
         });
       });
-      if (flat.length) playLesson(0, false);
+      // S úvodním videem nech na startu úvod (video + zadání); jinak rovnou první lekci.
+      if (flat.length && !introYt) playLesson(0, false);
       else updateNav();
       treeMount.querySelectorAll('.ct-check').forEach(function(ch){
         ch.addEventListener('click', function(e){

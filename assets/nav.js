@@ -272,7 +272,7 @@
         { id: 'slevy', label: 'Slevy', icon: 'tag' },
         { id: 'dotazy', label: 'Dotazy', icon: 'help' },
         { id: 'fotka-mesice', label: 'Fotka měsíce', icon: 'camera' },
-        { id: 'predstav-se', label: 'Představ se', icon: 'user' },
+        { id: 'predstav-se', label: 'Představ se', icon: 'user', free: true },
         { id: 'uspechy', label: 'Úspěchy', icon: 'trophy' },
         { id: 'second-shooting', label: 'Second shooting', icon: 'users' }
       ];

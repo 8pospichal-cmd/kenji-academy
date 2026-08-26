@@ -1,6 +1,6 @@
 # Stav projektu Kenji Academy
 
-> **Aktualizováno:** 24. 8. 2026  
+> **Aktualizováno:** 25. 8. 2026  
 > Tento dokument je aktuální zdroj pravdy pro další práci. Starší soubory `README.md` a `CONTEXT.md` popisují dřívější MVP a nemusí odpovídat současnému stavu.
 
 ## Přehled projektu
@@ -57,7 +57,7 @@ V uživatelském rozhraní používáme slovo **databáze**, nikoliv **knihovna*
 
 Projekt nemá `package.json` ani klasický bundler. Při změnách je proto nutné hlídat pořadí `<script>` tagů, cache-busting parametrů a kompatibilitu přímo v prohlížeči.
 
-Sdílené soubory `styles.css`, `articles.js`, `nav.js`, `auth.js`, `script.js`, `courses.js` a `quiz.js` používají napříč primárními HTML stránkami jednotnou cache verzi `20260824-ai-retry-v1`. Při změně kteréhokoli z nich je nutné verzi aktualizovat konzistentně ve všech primárních HTML souborech, jinak prohlížeč znovu stáhne stejný soubor pod více URL nebo naopak podrží starou verzi.
+Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS aktuálně používá `20260825-flow-v2`, `auth.js` používá `20260825-flow-v1` a komunitní `feed.js` na `prispevky.html` používá `20260825-intro-v2`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
 
 ## Struktura složek a souborů
 
@@ -159,6 +159,7 @@ Sdílené soubory `styles.css`, `articles.js`, `nav.js`, `auth.js`, `script.js`,
 ### Komunita
 
 - Importované příspěvky mají autory, avatary, média, kategorie, lajky a realistické počty komentářů.
+- Všech 51 importovaných příspěvků v rubrice `Představ se` se vykresluje jako přirozený bílý text rozdělený do odstavců. Očíslované šablonové otázky mohou být tučně na začátku odstavce, ale nepoužívají barevné nadpisy, rámečky ani oranžovou linku; původní texty a emoji zůstávají zachované.
 - Počty importovaných reakcí respektují nastavené limity: 18-40 lajků a nejvýše 14 komentářů na příspěvek.
 - Feed umí filtrovat podle kategorií a vyhledávat podle klíčových slov v názvu i textu.
 - Dlouhé příspěvky používají rozbalení „Zobrazit více“.

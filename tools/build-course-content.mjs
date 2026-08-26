@@ -43,7 +43,7 @@ for (const f of fs.readdirSync(EXPORTS).filter((x) => x.endsWith('.json'))) {
   content[slug] = content[slug] || {};
   for (const l of (j.lessons || [])) {
     if (l.type === 'INTRO') {
-      content[slug].__intro = { content: clean(l.content_raw) || '' };
+      content[slug].__intro = { youtube: ytId(l.video), content: clean(l.content_raw) || '' };
       continue;
     }
     content[slug][norm(l.title)] = { youtube: ytId(l.video), content: clean(l.content_raw) || '' };

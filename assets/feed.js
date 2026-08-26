@@ -17,7 +17,7 @@
     { id: 'slevy', label: 'Slevy', icon: 'tag', adminOnly: true },
     { id: 'dotazy', label: 'Dotazy', icon: 'help' },
     { id: 'fotka-mesice', label: 'Fotka měsíce', icon: 'camera' },
-    { id: 'predstav-se', label: 'Představ se', icon: 'user' },
+    { id: 'predstav-se', label: 'Představ se', icon: 'user', free: true },
     { id: 'uspechy', label: 'Úspěchy', icon: 'trophy' },
     { id: 'second-shooting', label: 'Second shooting', icon: 'users' }
   ];
@@ -145,7 +145,7 @@
       .replace(/^CÍL PRO ROK 2026$/i, 'Cíl pro rok 2026')
       .replace(/^PROČ JSI TU$/i, 'Proč je tady')
       .replace(/^BIZÁR(?:\s*\/\s*FUNFACT O MNĚ)?$/i, 'Bizár / fun fact');
-    return '<section class="post-intro-block"><h3>' + esc(label) + '</h3>' + (answer ? '<p>' + renderInline(answer) + '</p>' : '') + '</section>';
+    return '<p><strong>' + esc(label) + ':</strong>' + (answer ? ' ' + renderInline(answer) : '') + '</p>';
   }
   function renderBody(value, post) {
     const blocks = bodyBlocks(value);
@@ -153,6 +153,7 @@
       if (post && post.category === 'predstav-se') {
         const intro = introBlock(block);
         if (intro) return intro;
+        return '<p>' + renderInline(block) + '</p>';
       }
       const isStep = /^(?:\d+[.)]|[1-9]️⃣|✅|👉|🔍|🖥️|🤝|📹|📚)/.test(block);
       const isHeading = block.length < 105 && (/[?:]$/.test(block) || /^(?:🔥|💸|🧠|🎯|📞|⚡|📝)/.test(block) || block === block.toUpperCase());
@@ -324,11 +325,35 @@
         feedIcon(c.icon) + '<span>' + c.label + '</span><small>' + (locked ? '🔒' : categoryCount(c.id)) + '</small></button>';
     }).join('') + '</div>';
   }
+  function introGuideDismissed() {
+    try { return localStorage.getItem('kenji_hide_intro_guide') === '1'; } catch (e) { return false; }
+  }
+  function showIntroGuide() {
+    return activeCat === 'predstav-se' && !introGuideDismissed();
+  }
+  function updateIntroGuide() {
+    const el = document.getElementById('composer-guide');
+    if (el) el.hidden = !showIntroGuide();
+  }
   function composer() {
     const opts = CATS.filter((c) => c.id && canAccessCategory(c.id) && (!c.adminOnly || isAdmin))
       .map((c) => '<option value="' + c.id + '"' + (c.id === activeCat ? ' selected' : '') + '>' + c.label + '</option>').join('');
+    const introGuide =
+      '<div class="composer-guide" id="composer-guide"' + (showIntroGuide() ? '' : ' hidden') + '>' +
+        '<button type="button" class="composer-guide-close" id="composer-guide-close" aria-label="Zavřít návod">×</button>' +
+        '<strong>Představ se komunitě 👋</strong>' +
+        '<p>Napiš pár vět o sobě, ať tě ostatní poznají — a přidej svoji fotku:</p>' +
+        '<ul>' +
+          '<li>Kdo jsi a odkud</li>' +
+          '<li>Jak dlouho fotíš, natáčíš nebo tvoříš</li>' +
+          '<li>Co děláš a co nabízíš (co fotíš, čemu se věnuješ, co prodáváš)</li>' +
+          '<li>Co čekáš od Kenji Academy</li>' +
+        '</ul>' +
+        '<span>Níž vidíš, jak se představili ostatní — klidně se inspiruj.</span>' +
+      '</div>';
     return '' +
       '<div class="composer" data-tour="community-composer" hidden>' +
+        introGuide +
         '<div class="composer-top"><span class="feed-avatar">' + initials(ig) + '</span>' +
           '<textarea id="composer-text" class="composer-input" rows="2" placeholder="Co je nového' + (ig ? ', @' + esc(ig) : '') + '?"></textarea>' +
         '</div>' +
@@ -664,6 +689,11 @@
     const preview = document.getElementById('composer-preview');
     const errEl = document.getElementById('composer-err');
     const showErr = (m) => { errEl.textContent = m; errEl.hidden = false; };
+    const guideClose = document.getElementById('composer-guide-close');
+    if (guideClose) guideClose.addEventListener('click', () => {
+      try { localStorage.setItem('kenji_hide_intro_guide', '1'); } catch (e) {}
+      updateIntroGuide();
+    });
     const uploadErrorMessage = (error) => {
       const message = String((error && error.message) || '').toLowerCase();
       if (message.includes('bucket not found')) return 'Nahrávání fotek zatím není na serveru aktivní.';
@@ -726,8 +756,9 @@
         await rpc('create_post', { p_email: email, p_ig: ig, p_category: cat, p_body: body, p_media_url: media_url, p_media_type: media_type, p_link_url: link || null });
         const weeklyXpAwarded = cat === 'tydenni-vyzva' && awardWeeklyChallengeXp();
         try { if (media_url && cat === 'foto-feedback') localStorage.setItem('kenji_task_community', '1'); } catch (e2) {}
-        if (media_url && cat === 'foto-feedback') {
-          try { document.dispatchEvent(new CustomEvent('kenji:community-post-published', { detail: { category: cat, media: true } })); } catch (e3) {}
+        try { if (cat === 'predstav-se') localStorage.setItem('kenji_task_intro', '1'); } catch (e2b) {}
+        if ((media_url && cat === 'foto-feedback') || cat === 'predstav-se') {
+          try { document.dispatchEvent(new CustomEvent('kenji:community-post-published', { detail: { category: cat, media: !!media_url } })); } catch (e3) {}
         }
         document.getElementById('composer-text').value = '';
         document.getElementById('composer-link').value = '';
@@ -757,6 +788,7 @@
     const weeklyEl = document.getElementById('feed-weekly-challenge');
     const allowed = canAccessCategory(activeCat);
     if (composerEl) composerEl.hidden = !allowed;
+    updateIntroGuide();
     if (searchEl) searchEl.hidden = !allowed;
     if (weeklyEl) weeklyEl.hidden = activeCat !== 'tydenni-vyzva' || !allowed;
     const categorySelect = document.getElementById('composer-cat');

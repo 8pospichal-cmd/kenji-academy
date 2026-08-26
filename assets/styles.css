@@ -4067,6 +4067,10 @@ html { scrollbar-gutter: stable; }
 /* ============================================
    VSTUPNÍ GATE (e-mail + Instagram)
    ============================================ */
+/* Preboot: rozmaž appku okamžitě (před vykreslením) pro nepřihlášené — ať nebliká náhled platformy před přihlašovacím modalem. */
+html.kenji-preboot { overflow: hidden; }
+html.kenji-preboot body { overflow: hidden; }
+html.kenji-preboot .top-header, html.kenji-preboot .layout { filter: blur(4px); pointer-events: none; user-select: none; }
 body.kenji-gated { overflow: hidden; height: 100vh; }
 body.kenji-gated .top-header,
 body.kenji-gated .layout { filter: blur(4px); pointer-events: none; user-select: none; }
@@ -4897,6 +4901,15 @@ body.selfp-modal-open { overflow: hidden; }
 
 /* composer */
 .composer { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 18px; }
+/* Návod „co napsat" u kategorie Představ se */
+.composer-guide { position: relative; margin: -2px 0 14px; padding: 14px 44px 14px 16px; border-radius: 12px; background: rgba(255,107,26,.06); border: 1px solid rgba(255,107,26,.22); }
+.composer-guide-close { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-mute); font-size: 19px; line-height: 1; cursor: pointer; transition: background .15s, color .15s; }
+.composer-guide-close:hover { background: rgba(255,107,26,.14); color: var(--text-strong); }
+.composer-guide strong { display: block; color: var(--text-strong); font-size: 14.5px; margin-bottom: 4px; }
+.composer-guide p { margin: 0 0 8px; color: var(--text-dim); font-size: 13px; }
+.composer-guide ul { margin: 0 0 8px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.composer-guide li { color: var(--text); font-size: 13px; line-height: 1.4; }
+.composer-guide span { display: block; color: var(--text-mute); font-size: 12px; }
 .composer-top { display: flex; gap: 12px; align-items: flex-start; }
 .composer-input { flex: 1; background: transparent; border: none; color: var(--text); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.5; resize: vertical; outline: none; padding: 8px 0; min-height: 44px; }
 .composer-input::placeholder { color: var(--text-mute); }
@@ -5184,6 +5197,17 @@ body.selfp-modal-open { overflow: hidden; }
 .player-box { position: relative; background: #000; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; aspect-ratio: 16/9; }
 .player-embed { position: absolute; inset: 0; }
 .player-embed iframe { width: 100%; height: 100%; border: 0; display: block; }
+/* Uvítací video na přehledu kurzů (jen pro platící) */
+.course-welcome { margin: 0 0 30px; padding: 22px; border-radius: 16px; border: 1px solid rgba(255,107,26,.28); background: rgba(255,107,26,.05); }
+.course-welcome-badge { display: inline-block; margin-bottom: 10px; padding: 4px 12px; border-radius: 999px; background: rgba(255,107,26,.14); color: var(--orange); font: 700 10px/1 'JetBrains Mono', monospace; letter-spacing: .1em; }
+.course-welcome-title { margin: 0 0 6px; color: var(--text-strong); font-size: 22px; font-weight: 800; }
+.course-welcome-sub { margin: 0 0 18px; color: var(--text-dim); font-size: 14px; line-height: 1.5; }
+.course-welcome .player-embed { position: relative; inset: auto; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
+/* Pracovní listy ke stažení v kurzu */
+.course-worksheet { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+.course-worksheet-btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 20px; border-radius: 12px; background: var(--orange); color: #1a0d02; font: 800 14px/1 'Inter', sans-serif; text-decoration: none; transition: background .16s, transform .16s; }
+.course-worksheet-btn:hover { background: var(--orange-bright); transform: translateY(-1px); }
+.course-worksheet-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
 .player-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; color: var(--text-dim); font-size: 14.5px; background: var(--bg-card); }
 .player-empty .pe-ico { font-size: 30px; opacity: .7; }
 .player-title { margin-top: 12px; font-size: 16px; font-weight: 700; color: var(--text); }
@@ -8555,7 +8579,7 @@ body.upg-modal-open { overflow: hidden; }
 }
 
 /* Dashboard 2026-08: méně bloků, jedna jasná další akce. */
-.co-activation-steps { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.co-activation-steps { grid-template-columns: repeat(5,minmax(0,1fr)); }
 .co-kpintro { box-sizing: border-box; max-width: 100%; }
 .co-streaknudge .co-fire { margin-right: 0; }
 
