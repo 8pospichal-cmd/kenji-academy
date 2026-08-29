@@ -381,9 +381,11 @@
     if (!isLive || !isLoggedIn()) return;
     const server = await registerLead(user.email, user.instagram); // vrací i progres
     if (!server) return;
-    // Placený tier přijmeme jen u ověřené magic-link session (user.auth === 'email').
-    // Neověřený lead zůstává 'free', i kdyby server pro e-mail vrátil vyšší tier.
-    if (!DEV_TIER && user.auth === 'email' && server.tier && server.tier !== user.tier) { user.tier = server.tier; saveUser(user); renderHeaderUI(); applyGating(); markHomepagePlan(); try { document.dispatchEvent(new Event('kenji-auth-ready')); } catch (e) {} }
+    // Tier bereme ze serveru: register_lead vrací data VÝHRADNĚ pro ověřený JWT e-mail
+    // (bez platné session vrátí null → `if (!server) return` výše). Samotná odpověď serveru
+    // je tedy důkaz ověřeného přihlášení — nespoléháme na křehký lokální flag user.auth,
+    // který u některých session chyběl a academy tier se pak tiše zahazoval na free.
+    if (!DEV_TIER && server.tier && server.tier !== user.tier) { user.tier = server.tier; user.auth = 'email'; saveUser(user); renderHeaderUI(); applyGating(); markHomepagePlan(); try { document.dispatchEvent(new Event('kenji-auth-ready')); } catch (e) {} }
     const merged = mergeProgress({ read: getLocalRead(), quiz: getLocalQuiz() }, { read: server.read, quiz: server.quiz });
     setLocalRead(merged.read); setLocalQuiz(merged.quiz);
     if (window.KenjiNav && window.KenjiNav.refreshReadUI) window.KenjiNav.refreshReadUI();

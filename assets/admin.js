@@ -6,7 +6,7 @@
   var DIALOG_CONTENT = document.getElementById('admin-dialog-content');
   var A = window.KenjiAuth || {};
   var IS_LOCAL = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname);
-  var sb = null, started = false, view = 'overview';
+  var sb = null, started = false, view = 'people';
   var cache = { overview: null, users: [], tools: [], content: [], coupons: [] };
 
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
@@ -57,7 +57,7 @@
       }
       var adminEmail = await rpc('current_admin_email');
       if (!adminEmail) throw new Error('not admin');
-      await loadOverview(); render();
+      await loadOverview(); await loadUsers(); render();
     } catch (e) { fail(e); }
   }
 
@@ -69,24 +69,28 @@
 
   function render() {
     document.querySelectorAll('[data-admin-view]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-admin-view')===view);});
-    if (view === 'overview') renderOverview();
     if (view === 'people') renderPeople();
     if (view === 'tools') renderTools();
     if (view === 'content') renderContent();
     if (view === 'coupons') renderCoupons();
+    if (view === 'activity') renderActivity();
   }
 
-  function renderOverview() {
+  // Čísla, která vedou k akci (nahoře nad CRM) — ne dekorativní analytika.
+  function kpiRow() {
     var d = cache.overview || {};
-    var users = d.recent_users || [], events = d.recent_events || [];
-    ROOT.innerHTML = head('PRACOVNÍ PŘEHLED','Co se děje právě teď','Čísla, která vedou k další akci. Ne dekorativní analytika.')+
-      '<div class="admin-kpis">'+
-        kpi('Všichni lidé',d.users_total,'+'+n(d.users_new_7d)+' za 7 dní')+
-        kpi('Aktivní za 7 dní',d.active_7d,'ověřená aktivita')+
-        kpi('Academy',d.academy_total,'z '+n(d.free_total)+' Free')+
-        kpi('Lidé s auditem',d.audit_30d,'za posledních 30 dní')+
-        kpi('Lidé v nástrojích',Number(d.quiz_30d||0)+Number(d.calculator_30d||0),n(d.quiz_30d)+' kvíz · '+n(d.calculator_30d)+' sazba')+
-      '</div><div class="admin-grid-2"><section class="admin-section"><div class="admin-section-head"><h2>Noví lidé</h2><span>posledních 8</span></div>'+usersTable(users,true)+'</section><section class="admin-section"><div class="admin-section-head"><h2>Poslední aktivita</h2><span>živý signál</span></div><div class="admin-events">'+(events.length?events.map(eventRow).join(''):'<div class="admin-empty">Zatím bez událostí.</div>')+'</div></section></div>';
+    return '<div class="admin-kpis">'+
+      kpi('Všichni lidé',d.users_total,'+'+n(d.users_new_7d)+' za 7 dní')+
+      kpi('Aktivní za 7 dní',d.active_7d,'ověřená aktivita')+
+      kpi('Academy',d.academy_total,'z '+n(d.free_total)+' Free')+
+      kpi('Lidé s auditem',d.audit_30d,'za posledních 30 dní')+
+      kpi('Lidé v nástrojích',Number(d.quiz_30d||0)+Number(d.calculator_30d||0),n(d.quiz_30d)+' kvíz · '+n(d.calculator_30d)+' sazba')+
+    '</div>';
+  }
+  function renderActivity() {
+    var events = (cache.overview && cache.overview.recent_events) || [];
+    ROOT.innerHTML = head('SIGNÁL','Aktivita','Živý přehled toho, co lidé v Academy dělají.')+
+      '<div class="admin-events admin-events-full">'+(events.length?events.map(eventRow).join(''):'<div class="admin-empty">Zatím bez událostí.</div>')+'</div>';
   }
   function kpi(title,value,note){return '<div class="admin-kpi"><span>'+esc(title)+'</span><strong>'+n(value)+'</strong><small>'+esc(note)+'</small></div>';}
   function eventRow(e){return '<div class="admin-event"><i></i><div><strong>'+esc(label(e.event_name))+'</strong><small>'+esc(e.email||e.source||'anonymní návštěvník')+'</small></div><time>'+esc(rel(e.created_at))+'</time></div>';}
@@ -114,24 +118,56 @@
     if (seen > 30 * 86400000) b.push('<span class="admin-badge is-idle">Neaktivní</span>');
     return b.length ? '<span class="admin-badges">' + b.join('') + '</span>' : '';
   }
-  function usersTable(users,compact) {
+  function opts(list, current) { return list.map(function(x){ return '<option value="'+x+'"'+((current||list[0])===x?' selected':'')+'>'+x+'</option>'; }).join(''); }
+  function usersTable(users) {
     if (!users.length) return '<div class="admin-empty">Nikdo neodpovídá filtru.</div>';
-    return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Člověk</th><th>Tier</th><th>Stav</th><th>Přidal se</th><th>Naposledy</th>'+(compact?'':'<th>Nástroje</th><th>Rychlá akce</th>')+'</tr></thead><tbody>'+users.map(function(u){
+    return '<div class="admin-table-wrap"><table class="admin-table admin-people-table"><thead><tr><th>Člověk</th><th>Tier</th><th>Stav</th><th>Přidal se</th><th>Naposledy</th></tr></thead><tbody>'+users.map(function(u){
       var name=u.display_name||(u.instagram?'@'+u.instagram:'Bez jména');
-      var tools=[u.quiz_completed?'Kvíz':'',u.audit_completed?'Audit':'',u.calculator_completed?'Sazba':''].filter(Boolean).join(' · ')||'—';
-      return '<tr data-email="'+esc(u.email)+'"><td><span class="admin-person"><strong>'+esc(name)+'</strong><small>'+esc(u.email)+'</small>'+userBadges(u)+'</span></td><td>'+chip(u.tier||'free')+'</td><td>'+chip(u.account_status||'active')+'</td><td>'+esc(date(u.created_at,false))+'</td><td>'+esc(rel(u.last_seen_at))+'</td>'+(compact?'':'<td>'+esc(tools)+'</td><td class="admin-quick" data-noopen>'+tierSelect(u.email,u.tier)+blockButton(u.email,u.account_status)+linkButton(u.email)+'</td>')+'</tr>';
+      return '<tr class="admin-people-row" data-email="'+esc(u.email)+'"><td><span class="admin-person"><strong>'+esc(name)+'</strong><small>'+esc(u.email)+'</small>'+userBadges(u)+'</span></td><td>'+chip(u.tier||'free')+'</td><td>'+chip(u.account_status||'active')+'</td><td>'+esc(date(u.created_at,false))+'</td><td>'+esc(rel(u.last_seen_at))+'</td></tr>';
     }).join('')+'</tbody></table></div>';
+  }
+  // Inline rozbalení řádku — úprava člověka rovnou v tabulce, bez nové stránky.
+  async function toggleUser(email, rowEl) {
+    var next = rowEl.nextElementSibling;
+    if (next && next.classList.contains('admin-detail-row')) { next.remove(); rowEl.classList.remove('is-open'); return; }
+    document.querySelectorAll('.admin-detail-row').forEach(function(r){ r.remove(); });
+    document.querySelectorAll('.admin-people-row.is-open').forEach(function(r){ r.classList.remove('is-open'); });
+    var u;
+    if (IS_LOCAL) { u = cache.users.find(function(x){return x.email===email;}) || {}; }
+    else { try { var detail = await rpc('admin_get_user_v2',{p_target:email}); u = (detail&&detail.user)||{}; } catch(err){ fail(err); return; } }
+    var tools=[u.quiz_completed?'Kvíz':'',u.audit_completed?'Audit':'',u.calculator_completed?'Sazba':''].filter(Boolean).join(' · ')||'—';
+    var tr = document.createElement('tr');
+    tr.className = 'admin-detail-row';
+    tr.innerHTML = '<td colspan="'+rowEl.children.length+'"><div class="admin-inline-detail">'+
+      '<div class="admin-inline-meta">'+
+        '<span>Přidal se<strong>'+esc(date(u.created_at,true))+'</strong></span>'+
+        '<span>Instagram<strong>'+esc(u.instagram?'@'+u.instagram:'—')+'</strong></span>'+
+        '<span>Poslední aktivita<strong>'+esc(rel(u.last_seen_at))+'</strong></span>'+
+        '<span>Nástroje<strong>'+esc(tools)+'</strong></span>'+
+      '</div>'+
+      '<div class="admin-inline-fields">'+
+        '<label>Tier<select class="admin-select" data-d="tier">'+opts(['free','knihovna','academy'],u.tier||'free')+'</select></label>'+
+        '<label>Role<select class="admin-select" data-d="role">'+opts(['member','moderator','admin'],u.role||'member')+'</select></label>'+
+        '<label>Stav<select class="admin-select" data-d="status">'+opts(['active','pending','paused','blocked'],u.account_status||'active')+'</select></label>'+
+        '<button class="admin-button" type="button" data-detail-save="'+esc(email)+'">Uložit změny</button>'+
+        '<button class="admin-quick-link" type="button" data-quick-link="'+esc(email)+'" title="Poslat přihlašovací odkaz">✉ Odkaz</button>'+
+      '</div>'+
+      '<span class="admin-inline-msg" data-detail-msg></span>'+
+    '</div></td>';
+    rowEl.after(tr);
+    rowEl.classList.add('is-open');
   }
 
   function renderPeople() {
     ROOT.innerHTML = head('CRM','Lidé','Kdo přišel, kde se nachází a co už v Academy udělal.')+
+      kpiRow()+
       '<form class="admin-addform" id="admin-add-user"><span class="admin-addform-label">Přidat člověka</span>'+
         '<input class="admin-input" name="email" type="email" required placeholder="email@clovek.cz">'+
         '<select class="admin-select" name="tier"><option value="free">free</option><option value="knihovna">knihovna (databáze)</option><option value="academy">academy (plný přístup)</option></select>'+
         '<button class="admin-button" type="submit">Přidat / nastavit</button>'+
         '<span class="admin-addform-msg" id="admin-add-msg"></span>'+
       '</form>'+
-      '<div class="admin-filters"><input class="admin-input" id="admin-user-search" placeholder="Hledat e-mail, jméno nebo Instagram"><select class="admin-select" id="admin-user-tier"><option value="">Všechny tiery</option><option>free</option><option>knihovna</option><option>academy</option></select><select class="admin-select" id="admin-user-status"><option value="">Všechny stavy</option><option>active</option><option>pending</option><option>paused</option><option>blocked</option></select><button class="admin-button" id="admin-user-filter">Filtrovat</button></div>'+usersTable(cache.users,false);
+      '<div class="admin-filters"><input class="admin-input" id="admin-user-search" placeholder="Hledat e-mail, jméno nebo Instagram"><select class="admin-select" id="admin-user-tier"><option value="">Všechny tiery</option><option>free</option><option>knihovna</option><option>academy</option></select><select class="admin-select" id="admin-user-status"><option value="">Všechny stavy</option><option>active</option><option>pending</option><option>paused</option><option>blocked</option></select><button class="admin-button" id="admin-user-filter">Filtrovat</button></div>'+usersTable(cache.users);
   }
 
   function renderTools() {
@@ -144,7 +180,7 @@
 
   function renderContent() {
     ROOT.innerHTML = head('PUBLIKOVÁNÍ','Obsah','Výzvy, novinky a webináře na jednom místě.')+
-      '<form class="admin-form" id="admin-content-form"><input type="hidden" name="id"><label>Typ<select class="admin-select" name="type"><option value="weekly_challenge">Týdenní výzva</option><option value="news">Novinka</option><option value="webinar">Webinář</option></select></label><label class="span-2">Název<input class="admin-input" name="title" required maxlength="160"></label><label>Stav<select class="admin-select" name="status"><option value="draft">Koncept</option><option value="scheduled">Naplánováno</option><option value="published">Publikováno</option><option value="archived">Archiv</option></select></label><label>Pro koho<select class="admin-select" name="audience"><option value="all">Všichni</option><option value="free">Free</option><option value="academy">Academy</option></select></label><label>KP<input class="admin-input" type="number" min="0" max="10000" name="xp" value="0"></label><label class="span-3">Text<textarea class="admin-textarea" name="body" maxlength="4000"></textarea></label><label>Začátek<input class="admin-input" type="datetime-local" name="starts_at"></label><label>Konec<input class="admin-input" type="datetime-local" name="ends_at"></label><label>Odkaz<input class="admin-input" name="link_url" placeholder="https://…"></label><div class="admin-form-actions"><button class="admin-button secondary" type="button" data-content-reset hidden>Zrušit úpravu</button><button class="admin-button" type="submit">Uložit obsah</button></div></form>'+contentTable(cache.content);
+      '<form class="admin-form" id="admin-content-form"><input type="hidden" name="id"><label>Typ<select class="admin-select" name="type"><option value="weekly_challenge">Týdenní výzva</option><option value="news">Novinka</option><option value="webinar">Webinář</option></select></label><label class="span-2">Název<input class="admin-input" name="title" required maxlength="160"></label><label>Stav<select class="admin-select" name="status"><option value="draft">Koncept</option><option value="scheduled">Naplánováno</option><option value="published">Publikováno</option><option value="archived">Archiv</option></select></label><label>Pro koho<select class="admin-select" name="audience"><option value="all">Všichni</option><option value="free">Free</option><option value="academy">Academy</option></select></label><label>KP<input class="admin-input" type="number" min="0" max="10000" name="xp" value="0"></label><label class="span-3">Text<textarea class="admin-textarea" name="body" maxlength="4000"></textarea></label><label>Začátek<input class="admin-input" type="datetime-local" name="starts_at"></label><label>Odkaz<input class="admin-input" name="link_url" placeholder="https://…"></label><div class="admin-form-actions"><button class="admin-button secondary" type="button" data-content-reset hidden>Zrušit úpravu</button><button class="admin-button" type="submit">Uložit obsah</button></div></form>'+contentTable(cache.content);
   }
   function contentTable(rows){if(!rows.length)return '<div class="admin-empty">Zatím žádný spravovaný obsah.</div>';return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Typ</th><th>Název</th><th>Stav</th><th>Publikum</th><th>Termín</th><th></th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td>'+esc(typeLabel(x.type))+'</td><td><span class="admin-person"><strong>'+esc(x.title)+'</strong><small>'+esc((x.body||'').slice(0,90))+'</small></span></td><td>'+chip(x.status)+'</td><td>'+esc(x.audience)+'</td><td>'+esc(date(x.starts_at,true))+'</td><td><div class="admin-row-actions"><button class="admin-button secondary" type="button" data-content-edit="'+esc(x.id)+'">Upravit</button><button class="admin-button danger" type="button" data-content-delete="'+esc(x.id)+'">Smazat</button></div></td></tr>';}).join('')+'</tbody></table></div>';}
 
@@ -161,7 +197,7 @@
   function editContent(id) {
     var item = cache.content.find(function(x){return x.id===id;}), form = document.getElementById('admin-content-form');
     if (!item || !form) return;
-    form.elements.id.value=item.id;form.elements.type.value=item.type;form.elements.title.value=item.title||'';form.elements.status.value=item.status;form.elements.audience.value=item.audience;form.elements.xp.value=item.xp||0;form.elements.body.value=item.body||'';form.elements.starts_at.value=localDateTime(item.starts_at);form.elements.ends_at.value=localDateTime(item.ends_at);form.elements.link_url.value=item.link_url||'';
+    form.elements.id.value=item.id;form.elements.type.value=item.type;form.elements.title.value=item.title||'';form.elements.status.value=item.status;form.elements.audience.value=item.audience;form.elements.xp.value=item.xp||0;form.elements.body.value=item.body||'';form.elements.starts_at.value=localDateTime(item.starts_at);form.elements.link_url.value=item.link_url||'';
     form.querySelector('[data-content-reset]').hidden=false;form.scrollIntoView({behavior:'smooth',block:'start'});form.elements.title.focus();
   }
 
@@ -184,11 +220,12 @@
   }
 
   document.addEventListener('click',async function(e){
-    var viewButton=e.target.closest('[data-admin-view]');if(viewButton){view=viewButton.getAttribute('data-admin-view');ROOT.innerHTML='<div class="admin-loading">Načítám…</div>';try{if(view==='overview'&&!cache.overview)await loadOverview();if(view==='people'&&!cache.users.length)await loadUsers();if(view==='tools'&&!cache.tools.length)await loadTools();if(view==='content'&&!cache.content.length)await loadContent();if(view==='coupons'&&!cache.coupons.length)await loadCoupons();render();}catch(err){fail(err);}return;}
-    if(e.target.closest('[data-admin-refresh]')){try{if(view==='overview')await loadOverview();if(view==='people')await loadUsers();if(view==='tools')await loadTools();if(view==='content')await loadContent();if(view==='coupons')await loadCoupons();render();}catch(err){fail(err);}return;}
+    var viewButton=e.target.closest('[data-admin-view]');if(viewButton){view=viewButton.getAttribute('data-admin-view');ROOT.innerHTML='<div class="admin-loading">Načítám…</div>';try{if(view==='people'){if(!cache.overview)await loadOverview();if(!cache.users.length)await loadUsers();}if(view==='activity'&&!cache.overview)await loadOverview();if(view==='tools'&&!cache.tools.length)await loadTools();if(view==='content'&&!cache.content.length)await loadContent();if(view==='coupons'&&!cache.coupons.length)await loadCoupons();render();}catch(err){fail(err);}return;}
+    if(e.target.closest('[data-admin-refresh]')){try{if(view==='people'){await loadOverview();await loadUsers();}if(view==='activity')await loadOverview();if(view==='tools')await loadTools();if(view==='content')await loadContent();if(view==='coupons')await loadCoupons();render();}catch(err){fail(err);}return;}
     var qb=e.target.closest('[data-quick-block]');if(qb){var qbEmail=qb.getAttribute('data-quick-block');var qbUser=cache.users.find(function(x){return x.email===qbEmail;});var newStatus=(qbUser&&qbUser.account_status==='blocked')?'active':'blocked';if(qbUser)qbUser.account_status=newStatus;try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:qbEmail,p_status:newStatus});}catch(err){fail(err);return;}renderPeople();return;}
     var qlink=e.target.closest('[data-quick-link]');if(qlink){var lEmail=qlink.getAttribute('data-quick-link');qlink.disabled=true;try{if(IS_LOCAL){alert('(Lokálně) Přihlašovací odkaz by šel na: '+lEmail);}else{var A=window.KenjiAuth;if(A&&A.requestMagicLink){var r=await A.requestMagicLink(lEmail,{redirect:'index.html'});if(!r||!r.ok)throw new Error('nepovedlo se odeslat');}alert('Přihlašovací odkaz odeslán na '+lEmail);}}catch(err){alert('Odkaz se nepovedlo odeslat: '+((err&&err.message)||'chyba'));}qlink.disabled=false;return;}
-    var row=e.target.closest('tr[data-email]');if(row&&!e.target.closest('[data-noopen]')){openUser(row.getAttribute('data-email')).catch(fail);return;}
+    var saveDetail=e.target.closest('[data-detail-save]');if(saveDetail){var sEmail=saveDetail.getAttribute('data-detail-save');var wrap=saveDetail.closest('.admin-inline-detail');var sTier=wrap.querySelector('[data-d="tier"]').value,sRole=wrap.querySelector('[data-d="role"]').value,sStatus=wrap.querySelector('[data-d="status"]').value;var dmsg=wrap.querySelector('[data-detail-msg]');saveDetail.disabled=true;try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:sEmail,p_tier:sTier,p_role:sRole,p_status:sStatus});var su=cache.users.find(function(x){return x.email===sEmail;});if(su){su.tier=sTier;su.role=sRole;su.account_status=sStatus;}if(dmsg){dmsg.textContent='Uloženo ✓';dmsg.className='admin-inline-msg is-ok';}setTimeout(function(){renderPeople();},600);}catch(err){if(dmsg){dmsg.textContent='Nepovedlo se uložit.';dmsg.className='admin-inline-msg is-err';}saveDetail.disabled=false;}return;}
+    var row=e.target.closest('tr[data-email]');if(row&&!e.target.closest('[data-noopen]')){toggleUser(row.getAttribute('data-email'),row).catch(fail);return;}
     if(e.target.id==='admin-user-filter'){await loadUsers(document.getElementById('admin-user-search').value,document.getElementById('admin-user-tier').value,document.getElementById('admin-user-status').value);renderPeople();return;}
     var tool=e.target.closest('[data-tool-filter]');if(tool){await loadTools(tool.getAttribute('data-tool-filter'));renderTools();return;}
     var editItem=e.target.closest('[data-content-edit]');if(editItem){editContent(editItem.getAttribute('data-content-edit'));return;}
