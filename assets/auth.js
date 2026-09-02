@@ -54,11 +54,18 @@
     user = { email: '8pospichal@gmail.com', instagram: 'kenjiacademy', tier: 'academy' }; // admin dev účet (jen lokálně, neukládá se)
   }
 
-  // Lokální náhled value-first vstupu. V produkci query parametr přihlášení nikdy nemění.
-  if (IS_LOCAL) {
-    var forceGuest = /[?&]guest=1/.test(location.search);
-    var freshStart = /[?&]start=1/.test(location.search) && !(function () { try { return localStorage.getItem('kenji_onboarding_done_v2'); } catch (e) { return ''; } })();
-    if (forceGuest || freshStart) user = null;
+  // Lokální náhled value-first vstupu. V produkci query parametr tier nemění přihlášení,
+  // ale start=1 je veřejný trychtýř z prodejní stránky: vždy začne třemi otázkami.
+  const FORCE_PLAN_START = /[?&]start=1(?:&|$)/.test(location.search);
+  if (FORCE_PLAN_START) {
+    user = null;
+    try {
+      localStorage.removeItem('kenji_onboarding_done_v2');
+      localStorage.removeItem('kenji_onboarding_draft_v2');
+      localStorage.removeItem('kenji_biz_v1');
+    } catch (e) {}
+  } else if (IS_LOCAL && /[?&]guest=1/.test(location.search)) {
+    user = null;
   }
 
   // Dev náhled placeného obsahu: ?tier=academy / ?tier=knihovna / ?tier=free
@@ -992,7 +999,7 @@
   const authLinkError = /[#&?](error|error_code)=/.test(location.href) && /otp_expired|access_denied|expired|invalid/i.test(location.href);
   if (authLinkError) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
   const hasSbToken = (function () { try { return !!localStorage.getItem('sb-' + projRef + '-auth-token'); } catch (e) { return false; } })();
-  const mightHaveSession = isLive && !IS_LOCAL && !isLoggedIn() && (returningFromAuth || hasSbToken);
+  const mightHaveSession = isLive && !IS_LOCAL && !FORCE_PLAN_START && !isLoggedIn() && (returningFromAuth || hasSbToken);
 
   function loadProductTour() {
     if (isPublicPage || currentFile === 'admin.html' || !isLoggedIn() || document.querySelector('script[data-kenji-tour]')) return;
@@ -1017,14 +1024,14 @@
     const onHome = currentFile === 'index.html' || currentFile === '';
     if (!isLoggedIn() && !isPublicPage) {
       var onbDone = false; try { onbDone = localStorage.getItem('kenji_onboarding_done_v2') === 'true'; } catch (e) {}
-      var startOnb = /[?&]start=1(?:&|$)/.test(location.search);
+      var startOnb = FORCE_PLAN_START;
       if (onHome) {
         if (!onbDone && !startOnb && !authLinkError) {
           // Nepřihlášený host na kořeni → hlavní stránkou je prodejní stránka.
           location.replace(ROOT + 'academy.html');
           return;
         }
-        if (!onbDone && startOnb) {
+        if (startOnb) {
           // Build-before-register: host si smí na domovské stránce postavit plán (onboarding).
           revealSite();
           document.body.classList.add('kenji-guest');

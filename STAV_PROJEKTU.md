@@ -57,7 +57,7 @@ V uživatelském rozhraní používáme slovo **databáze**, nikoliv **knihovna*
 
 Projekt nemá `package.json` ani klasický bundler. Při změnách je proto nutné hlídat pořadí `<script>` tagů, cache-busting parametrů a kompatibilitu přímo v prohlížeči.
 
-Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS, `auth.js` a `nav.js` aktuálně používají `20260902-legal-v1` a komunitní `feed.js` na `prispevky.html` používá `20260825-intro-v2`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
+Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS a `nav.js` aktuálně používají `20260902-legal-v1`, `auth.js` používá `20260902-funnel-fix-v1` a komunitní `feed.js` na `prispevky.html` používá `20260825-intro-v2`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
 
 ## Struktura složek a souborů
 
@@ -264,7 +264,7 @@ Tato práce byla přerušena v průběhu úprav a je aktuálně nejbližším ro
 
 - Zachovat nový směr a sekce, ale dokončit kontrolu celé stránky.
 - Aktuální hlavní headline je „Proměň tvorbu v byznys, který vydělává.“
-- Prodejní stránka má dvě jasné cesty. Bezplatná cesta vede z hlavičky, hero CTA „Jdu do toho“ a sekundárních odkazů „Vyzkoušet Kenji Academy zdarma“ na osobní plán přes `index.html?start=1`; po třech otázkách následuje e-mailové přihlášení a produktový průvodce. V cenové nabídce a závěrečné sekci má vyšší vizuální prioritu placené CTA „Získat plný přístup“ / „Plný přístup · 24 997 Kč“, zatímco bezplatné vyzkoušení je sekundární.
+- Prodejní stránka má dvě jasné cesty. Bezplatná cesta vede z hlavičky, hero CTA „Jdu do toho“ a sekundárních odkazů „Vyzkoušet Kenji Academy zdarma“ na osobní plán přes `index.html?start=1`; tento parametr vždy spustí tři otázky před e-mailovou bránou i v prohlížeči, kde už dříve existoval uložený onboarding. Přímé přihlášení se otevírá pouze tlačítkem „Přihlásit se“. V cenové nabídce a závěrečné sekci má vyšší vizuální prioritu placené CTA „Získat plný přístup“ / „Plný přístup · 24 997 Kč“, zatímco bezplatné vyzkoušení je sekundární.
 - Sekce praktických lekcí na `academy.html` používá kompaktní čtyřpoložkový přepínač místo čtyř vysokých karet. Každá volba mění konkrétní copy i optimalizovanou WebP fotografii z reálné výuky; ovládání funguje myší, dotykem i klávesnicí a zachovává positioning pro fotografy, kameramany a další vizuální tvůrce.
 - Nabídka plného přístupu výslovně uvádí živé webináře a sekundární CTA komunikuje „Vyzkoušet Kenji Academy zdarma“. Hlavní partnerská sekce používá samostatná kontrastní loga přímo na tmavém pozadí bez bílých dlaždic; kompaktní partner strip zůstává také v patičce.
 - Prodejní stránka obsahuje partnerskou sekci se značkami PIXIN, Manfrotto, Nikon a Kvalitní fotky. Stejná čtveřice je v kompaktním pruhu patičky bez světlých dlaždic; tmavá loga se na černém podkladu vykreslují bíle. Loga jsou uložená lokálně v `assets/partners/` a načítají se lazy.
