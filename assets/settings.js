@@ -55,7 +55,7 @@
     '<div id="set-focus"></div>' +
     '<div class="set-card set-guide">' +
       '<div class="set-guide-copy"><div class="set-card-title">Úvodní průvodce</div>' +
-      '<p class="set-hint">Kenji ti znovu ukáže osobní plán, databázi, AI, kurzy a komunitu.</p></div>' +
+      '<p class="set-hint">Kenji ti znovu ukáže dashboard, databázi, kurzy, AI, komunitu a profil.</p></div>' +
       '<a class="set-tour-start" href="index.html?tour=1">Spustit průvodce znovu →</a>' +
     '</div>' +
     '<div id="set-admin"></div>';

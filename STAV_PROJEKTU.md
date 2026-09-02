@@ -1,6 +1,6 @@
 # Stav projektu Kenji Academy
 
-> **Aktualizováno:** 25. 8. 2026  
+> **Aktualizováno:** 2. 9. 2026  
 > Tento dokument je aktuální zdroj pravdy pro další práci. Starší soubory `README.md` a `CONTEXT.md` popisují dřívější MVP a nemusí odpovídat současnému stavu.
 
 ## Přehled projektu
@@ -57,7 +57,7 @@ V uživatelském rozhraní používáme slovo **databáze**, nikoliv **knihovna*
 
 Projekt nemá `package.json` ani klasický bundler. Při změnách je proto nutné hlídat pořadí `<script>` tagů, cache-busting parametrů a kompatibilitu přímo v prohlížeči.
 
-Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS aktuálně používá `20260825-flow-v2`, `auth.js` používá `20260825-flow-v1` a komunitní `feed.js` na `prispevky.html` používá `20260825-intro-v2`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
+Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS aktuálně používá `20260902-cta-v1`, `auth.js` používá `20260902-funnel-v1` a komunitní `feed.js` na `prispevky.html` používá `20260825-intro-v2`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
 
 ## Struktura složek a souborů
 
@@ -219,7 +219,7 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 
 - Sdílené CSS a základní JavaScript mají na všech primárních stránkách jednotný cache parametr. Přechody mezi dashboardem, databází, kurzy, komunitou, AI a články proto znovu nestahují stejný fyzický soubor pod různými verzemi URL.
 - Netlify posílá pro `/assets/*` týdenní browser cache se `stale-while-revalidate`; nový deploy zůstává na CDN invalidovaný standardním mechanismem Netlify. HTML se dlouhodobě necachuje v prohlížeči.
-- Dokončený produktový průvodce se na každé další stránce znovu nestahuje. Rozpracovaný povinný průchod a ruční spuštění přes `?tour=1` se dál načítají beze změny.
+- Dokončený nebo uživatelem ukončený produktový průvodce se na každé další stránce znovu nestahuje. Rozpracovaný statický průchod a ruční spuštění přes `?tour=1` se načtou jen tam, kde jsou potřeba.
 - Dlouhé prodejní sekce a komunitní příspěvky používají `content-visibility: auto`, takže prohlížeč nevykresluje vzdálený obsah mimo obrazovku. V nepodporovaných prohlížečích se deklarace bezpečně ignoruje.
 - Automatické pásy recenzí a výsledků na prodejní stránce se mimo viewport pozastaví a po návratu pokračují bez změny vzhledu nebo ovládání.
 - Dashboardový vizuál webináře používá `assets/kenjimen.webp` místo PNG. Zachovává 1025 × 576 px a průhlednost; velikost klesla přibližně z 472 KB na 35 KB.
@@ -227,18 +227,18 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 ### Value-first onboarding a aktivace
 
 - Bezplatný vstup z `academy.html` vede na osobní plán přes `index.html?start=1`.
-- Nový návštěvník nejprve projde třemi krátkými kroky: více oborů, současná fáze a hlavní priorita; příjmové pásmo je nepovinné.
+- Nový návštěvník nejprve projde třemi krátkými kroky „Čemu se věnuješ?“, „Kde jsi teď?“ a „Co teď nejvíc řešíš?“; v prvním kroku lze vybrat více oborů a příjmové pásmo ve třetím kroku je nepovinné.
 - Onboarding před registrací vytvoří konkrétní mini-plán se třemi doporučenými kroky. Poté následuje povinný e-mailový modal „Uložit plán zdarma“ bez možnosti zavření nebo přeskočení; návštěvník si vytvoří bezplatný profil, případně se přepne na přihlášení.
 - Rozpracovaný onboarding se ukládá lokálně a po obnovení pokračuje ve stejném kroku.
-- Po uložení se zobrazí aktivační cesta se čtyřmi skutečně povinnými kroky: kompletní profil, doporučený článek, první dotaz do Kenji AI a otevření kurzu. Dashboard zdůrazňuje vždy jen jeden aktuální krok; hotové a následující kroky jsou zobrazené v kompaktní mapě bez opakovaných popisů.
+- Po uložení se na dashboardu zobrazí samostatná aktivační cesta s pěti reálnými úkoly: kompletní profil, první článek, první dotaz do Kenji AI, představení v komunitě a Foto feedback. Dashboard zdůrazňuje vždy jen jeden aktuální krok; hotové a následující kroky jsou zobrazené v kompaktní mapě bez opakovaných popisů.
 - Aktivační úkoly se dokončují podle skutečné uložené akce, ne pouhým ručním odškrtnutím, a XP používá jednorázové klíče.
 - Registrace i přihlášení začínají pouze e-mailem. Instagram je povinný až při dokončení profilu společně se jménem, bio a profilovou fotografií; komunitní úkol vyžaduje úspěšně publikovaný příspěvek s médiem ve Free kanálu `foto-feedback`.
 - Současné e-mailové uložení stále představuje Free lead profil. Ověřený produkční účet, obnova relace a finální magic-link tok zůstávají součástí závěrečné autentizační práce.
-- Po prvním přihlášení navazuje povinný produktový onboarding vedený Kenjim. Nelze jej zavřít ani přeskočit a po obnovení nebo pokusu odejít pokračuje od posledního nedokončeného kroku.
-- Průchod vede uživatele přímo dovnitř funkcí a vyžaduje skutečné checkpointy: kompletní profil včetně fotografie, popisu a Instagramu, označení doporučeného článku jako přečteného, odeslání reálného dotazu do Kenji AI a otevření kurzu včetně seznámení s osnovou, přehrávačem a popisky. Foto feedback průvodce pouze ukáže; publikování příspěvku není podmínkou dokončení onboardingu a zůstává samostatným úkolem za 30 XP na dashboardu.
-- Panel produktového onboardingu se umisťuje podle volného prostoru kolem cílového ovládacího prvku. U akcí při spodním okraji, zejména odeslání dotazu v Kenji AI, se přesune nad ně; na telefonu se přepíná mezi horním a spodním panelem, aby cílové tlačítko nezakryl.
-- Na telefonu používá kompaktní spodní panel a nechává úkolovou stránku posouvat; na desktopu zvýrazní cílový prvek a úkolový panel drží při okraji. Pokud cílový prvek není pro daný tier dostupný, zobrazí se bezpečný centrovaný výklad místo dialogu mimo obrazovku.
-- Aktivační cesta `0/4` používá stejné skutečně provedené akce jako povinný průvodce. Opětovné spuštění z Nastavení je pouze dobrovolný režim zopakování, který lze zavřít a nevyžaduje nové publikování obsahu.
+- Po prvním přihlášení navazuje statický produktový průvodce vedený Kenjim. Má osm krátkých obrazovek: přivítání, dashboard, databázi, kurzy, Kenji AI, komunitu, profil a dokončení.
+- Průvodce přechází mezi skutečnými stránkami aplikace, ale nevyžaduje scrollování, vyplnění formuláře, dotaz do AI ani jiný checkpoint. Stránka zůstává úplně ostrá, nezatmavená a pouze neaktivní; vysvětlovaný prvek zvýrazňuje tenký oranžový obrys. Uživatel pokračuje jen tlačítky Zpět/Další nebo šipkami na klávesnici.
+- Panel je kompaktní floating karta. Na desktopu se podle kroku přesouvá do vhodného rohu; na telefonu je většinou pod hlavičkou a u profilu nad spodní navigací, aby nikdy nezakryl právě vysvětlovaný prvek ani hlavní navigaci. Na každém kroku lze průvodce ukončit tlačítkem vpravo nahoře.
+- Stav rozpracovaného průchodu se ukládá lokálně a po přechodu na další stránku pokračuje správným krokem. Dokončení i ukončení zabrání automatickému opakování; z Nastavení lze průvodce kdykoli spustit znovu.
+- Produktový průvodce pouze vysvětluje platformu. Aktivační cesta na dashboardu zůstává oddělená a úkoly i XP dokončuje až podle skutečně provedených akcí.
 
 ### Platby a nasazení
 
@@ -256,7 +256,7 @@ Tato práce byla přerušena v průběhu úprav a je aktuálně nejbližším ro
 
 - Zachovat nový směr a sekce, ale dokončit kontrolu celé stránky.
 - Aktuální hlavní headline je „Proměň tvorbu v byznys, který vydělává.“
-- Prodejní stránka používá Free-first konverzní hierarchii: hlavní CTA v hlavičce, hero a závěru je „Vyzkoušet zdarma“ a vede na osobní plán přes `index.html?start=1`. Hlavička obsahuje pouze logo a jedno neoranžové glass CTA bez dalších navigačních odkazů. Plný přístup za 24 997 Kč zůstává transparentně uvedený jako další rozhodnutí po vyzkoušení hodnoty platformy, ne jako první požadovaná akce.
+- Prodejní stránka má dvě jasné cesty. Bezplatná cesta vede z hlavičky, hero CTA „Jdu do toho“ a sekundárních odkazů „Vyzkoušet Kenji Academy zdarma“ na osobní plán přes `index.html?start=1`; po třech otázkách následuje e-mailové přihlášení a produktový průvodce. V cenové nabídce a závěrečné sekci má vyšší vizuální prioritu placené CTA „Získat plný přístup“ / „Plný přístup · 24 997 Kč“, zatímco bezplatné vyzkoušení je sekundární.
 - Sekce praktických lekcí na `academy.html` používá kompaktní čtyřpoložkový přepínač místo čtyř vysokých karet. Každá volba mění konkrétní copy i optimalizovanou WebP fotografii z reálné výuky; ovládání funguje myší, dotykem i klávesnicí a zachovává positioning pro fotografy, kameramany a další vizuální tvůrce.
 - Nabídka plného přístupu výslovně uvádí živé webináře a sekundární CTA komunikuje „Vyzkoušet Kenji Academy zdarma“. Hlavní partnerská sekce používá samostatná kontrastní loga přímo na tmavém pozadí bez bílých dlaždic; kompaktní partner strip zůstává také v patičce.
 - Prodejní stránka obsahuje partnerskou sekci se značkami PIXIN, Manfrotto, Nikon a Kvalitní fotky. Stejná čtveřice je v kompaktním pruhu patičky bez světlých dlaždic; tmavá loga se na černém podkladu vykreslují bíle. Loga jsou uložená lokálně v `assets/partners/` a načítají se lazy.

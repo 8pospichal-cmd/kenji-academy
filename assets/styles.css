@@ -4533,6 +4533,96 @@ body.kenji-tour-active { overflow: auto; }
   .kt-ring,.kt-dots span { transition: none; }
 }
 
+/* Staticka prohlidka: stranka zustava viditelna, ale ovladani patri jen panelu. */
+body.kenji-tour-active { overflow: hidden; }
+.kt-overlay {
+  position: fixed; inset: 0; z-index: 4090;
+  background: transparent;
+}
+.kt-focus {
+  position: fixed; z-index: 1; pointer-events: none;
+  border: 1px solid var(--orange); border-radius: 10px;
+  box-shadow: 0 0 0 3px rgba(255,107,26,.12), 0 8px 30px rgba(0,0,0,.22);
+  transition: top .18s ease,left .18s ease,width .18s ease,height .18s ease;
+}
+body.kenji-tour-active .kt-overlay .kt-card[data-place] {
+  position: fixed; z-index: 2; inset: auto; transform: none;
+  width: min(360px,calc(100vw - 36px)); max-height: calc(100dvh - 108px);
+  padding: 16px; overflow: auto;
+  border: 1px solid rgba(255,255,255,.16); border-radius: 8px;
+  background: rgba(18,18,18,.94);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+}
+body.kenji-tour-active .kt-overlay .kt-card[data-place="top-right"] { top: 72px; right: 20px; }
+body.kenji-tour-active .kt-overlay .kt-card[data-place="bottom-right"] { right: 20px; bottom: 20px; }
+body.kenji-tour-active .kt-overlay .kt-card[data-place="center"] { top: 50%; left: 50%; transform: translate(-50%,-50%); }
+.kt-overlay .kt-person { padding-right: 94px; gap: 8px; }
+.kt-overlay .kt-person img { width: 32px; height: 32px; flex-basis: 32px; }
+.kt-overlay .kt-skip {
+  top: 17px; right: 16px; display: inline-flex; align-items: center; justify-content: flex-end; gap: 5px;
+  max-width: none; color: var(--text-mute); font-size: 10px;
+}
+.kt-overlay .kt-skip span { font-size: 16px; font-weight: 400; line-height: .7; }
+.kt-overlay .kt-copy { margin-top: 14px; }
+.kt-overlay .kt-copy h2 { margin-block: 6px 7px; font-size: 27px; }
+.kt-overlay .kt-copy p { font-size: 12px; line-height: 1.48; }
+.kt-footer {
+  position: sticky; z-index: 2; bottom: -16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin: 13px -16px 0; padding: 11px 16px 16px; border-top: 1px solid var(--border);
+  background: rgba(18,18,18,.96);
+}
+.kt-progress { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.kt-progress .kt-dots { margin-top: 0; }
+.kt-progress small { color: var(--text-mute); font: 700 9px/1 'JetBrains Mono',monospace; }
+.kt-footer .kt-actions-main { flex-wrap: nowrap; }
+.kt-footer .kt-back,.kt-footer .kt-next {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 36px; white-space: nowrap;
+}
+.kt-footer .kt-back { min-width: 60px; }
+.kt-footer .kt-next { min-width: 92px; }
+
+@media (max-width: 760px) {
+  body.kenji-tour-active .kt-overlay .kt-card[data-place] {
+    inset: 64px auto auto 10px; transform: none;
+    width: calc(100vw - 20px); max-height: calc(100dvh - 164px);
+    padding: 14px; border-width: 1px; border-radius: 8px;
+    box-shadow: 0 14px 38px rgba(0,0,0,.5);
+  }
+  body.kenji-tour-active .kt-overlay .kt-card[data-place="center"],
+  body.kenji-tour-active .kt-overlay .kt-card[data-place="top-right"] { inset: 64px auto auto 10px; transform: none; }
+  body.kenji-tour-active .kt-overlay .kt-card[data-place="bottom"],
+  body.kenji-tour-active .kt-overlay .kt-card[data-place="bottom-right"] {
+    inset: auto auto calc(90px + env(safe-area-inset-bottom)) 10px;
+    transform: none;
+  }
+  .kt-overlay .kt-person { padding-right: 82px; }
+  .kt-overlay .kt-skip { top: 15px; right: 14px; }
+  .kt-overlay .kt-copy { margin-top: 12px; }
+  .kt-overlay .kt-copy h2 { font-size: 25px; }
+  .kt-footer {
+    bottom: -14px; margin: 12px -14px 0; padding: 10px 14px 14px;
+  }
+}
+
+@media (max-width: 370px) {
+  body.kenji-tour-active .kt-overlay .kt-card[data-place] { max-height: calc(100dvh - 154px); padding-inline: 12px; }
+  .kt-overlay .kt-person { padding-right: 82px; }
+  .kt-overlay .kt-person small { display: none; }
+  .kt-overlay .kt-skip { right: 12px; }
+  .kt-footer { margin-inline: -12px; padding-inline: 12px; }
+  .kt-footer { gap: 9px; }
+  .kt-progress .kt-dots { gap: 3px; }
+  .kt-progress .kt-dots span { width: 5px; }
+  .kt-progress .kt-dots span.is-active { width: 15px; }
+  .kt-footer .kt-back { min-width: 42px; padding-inline: 4px; }
+  .kt-footer .kt-back span:last-child { display: none; }
+  .kt-footer .kt-next { min-width: 92px; }
+}
+
 /* ============================================
    PROMO BANNER — KENJI PRESETY (ostrá fotka, bez ceny)
    ============================================ */
@@ -5832,19 +5922,20 @@ body.selfp-modal-open { overflow: hidden; }
 .hero4-lead { font-size: clamp(15px, 1.5vw, 17px); line-height: 1.6; color: var(--text-dim); max-width: 520px; margin: 0 0 24px; }
 .hero4-proof { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
 .hero4-avatars { height: 32px; width: auto; }
+.hero4-scoreline { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .hero4-stars { color: #ffb300; letter-spacing: 2px; font-size: 15px; }
+.hero4-scoreline strong { color: var(--text); font-size: 13.5px; }
 .hero4-rating { font-size: 13.5px; color: var(--text-dim); }
-.hero4-rating strong { color: var(--text); }
 .hero4-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .hero4-cta {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 15px 30px; border-radius: 14px; text-decoration: none;
   font-size: 16px; font-weight: 800; letter-spacing: -.01em; color: var(--text-strong);
   background: linear-gradient(180deg, #ff9a3d 0%, var(--orange) 55%, #e8620c 100%);
-  box-shadow: 0 14px 32px -10px rgba(255,122,26,.7), inset 0 1px 0 rgba(255,255,255,.3);
+  box-shadow: 0 8px 22px -14px rgba(255,122,26,.46), inset 0 1px 0 rgba(255,255,255,.3);
   transition: transform .15s ease, box-shadow .15s ease;
 }
-.hero4-cta:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -10px rgba(255,122,26,.8), inset 0 1px 0 rgba(255,255,255,.3); }
+.hero4-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px -14px rgba(255,122,26,.58), inset 0 1px 0 rgba(255,255,255,.3); }
 .hero4-ghost {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 15px 26px; border-radius: 14px; text-decoration: none;
@@ -5975,6 +6066,7 @@ body.selfp-modal-open { overflow: hidden; }
 }
 @media (max-width: 640px) {
   .hero4 { padding: 30px 0 48px; }
+  .hero4-proof { gap: 8px 10px; }
   .hero4-actions { flex-direction: column; align-items: stretch; }
   .hero4-cta, .hero4-ghost { width: 100%; }
   .hero4-visual { max-width: 300px; }

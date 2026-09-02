@@ -419,7 +419,7 @@
     wrap.id = 'kenji-gate';
     wrap.innerHTML = `
       <div class="kg-modal">
-        <button class="kg-close" id="kg-close" type="button" aria-label="Zpět na úvodní stránku">✕</button>
+        ${saveplan ? '' : '<button class="kg-close" id="kg-close" type="button" aria-label="Zpět na úvodní stránku">✕</button>'}
         <div class="kg-intro">
           <div class="kg-logo">KENJI ACADEMY</div>
           <h2>Tohle najdeš v Kenji Academy</h2>
@@ -438,8 +438,8 @@
         <div class="kg-form">
           <div class="kg-logo kg-logo-mobile">KENJI ACADEMY</div>
           <div class="kg-pane" id="kg-pane-lead">
-            <div class="kg-form-head">Vstup do Kenji Academy</div>
-            <p class="kg-form-sub">Zadej e-mail — pošleme ti přihlašovací odkaz. Klikneš a jsi uvnitř. Bez hesla, jeden krok.</p>
+            <div class="kg-form-head">${saveplan ? 'Uložit plán zdarma' : 'Vstup do Kenji Academy'}</div>
+            <p class="kg-form-sub">${saveplan ? 'Zadej e-mail. Pošleme ti přihlašovací odkaz a tvůj plán pod ním zůstane uložený.' : 'Zadej e-mail — pošleme ti přihlašovací odkaz. Klikneš a jsi uvnitř. Bez hesla, jeden krok.'}</p>
             <label class="kg-label" for="kg-email">E-mail</label>
             <input class="kg-input" id="kg-email" type="email" placeholder="tvuj@email.cz" autocomplete="email">
             <label class="kg-consent"><input type="checkbox" id="kg-consent"> <span>Souhlasím se zpracováním e-mailu pro vytvoření a správu profilu. <a href="${ROOT}${escapeHtml(CONFIG.privacyUrl)}" target="_blank" rel="noopener">Zásady</a></span></label>
@@ -988,17 +988,19 @@
 
   function loadProductTour() {
     if (isPublicPage || currentFile === 'admin.html' || !isLoggedIn() || document.querySelector('script[data-kenji-tour]')) return;
-    // Dokončený průvodce znovu nestahujeme na každé stránce. Explicitní
-    // spuštění z Nastavení i rozpracovaný povinný průchod zůstávají beze změny.
-    var tourRequested = /[?&](?:tour=1|onboarding=)/.test(location.search);
+    // Dokončený nebo ukončený průvodce znovu nestahujeme. Explicitní spuštění
+    // z Nastavení a rozpracovaný statický průchod se načtou na cílové stránce.
+    var tourRequested = /[?&](?:tour=1|tourStep=)/.test(location.search);
     if (!tourRequested) {
       try {
-        var tourState = JSON.parse(localStorage.getItem('kenji_guided_onboarding_v3') || 'null');
-        if (tourState && tourState.version === 3 && tourState.status === 'complete') return;
+        var tourState = JSON.parse(localStorage.getItem('kenji_guided_onboarding_v4') || 'null');
+        if (tourState && tourState.version === 4 && (tourState.status === 'complete' || tourState.status === 'dismissed')) return;
+        var oldTourState = JSON.parse(localStorage.getItem('kenji_guided_onboarding_v3') || 'null');
+        if (!tourState && oldTourState && oldTourState.version === 3 && oldTourState.status === 'complete') return;
       } catch (e) {}
     }
     const tourScript = document.createElement('script');
-    tourScript.src = ROOT + 'assets/tour.js?v=20260823-dashboard-v1';
+    tourScript.src = ROOT + 'assets/tour.js?v=20260902-static-v2';
     tourScript.dataset.kenjiTour = '1';
     document.body.appendChild(tourScript);
   }

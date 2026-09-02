@@ -624,7 +624,7 @@
       '<div class="onb-progress" aria-label="Krok ' + progress + ' ze 3"><i style="width:' + (progress / 3 * 100) + '%"></i></div>';
 
     if (onbStep === 1) {
-      h += '<div class="onb-screen"><p class="onb-step">01 · TVŮJ OBOR</p><h1>Co tvoříš nejčastěji?</h1><p class="onb-lead">Vyber klidně víc možností. Plán se přizpůsobí tomu, co skutečně děláš.</p>';
+      h += '<div class="onb-screen"><p class="onb-step">01 · ČEMU SE VĚNUJEŠ</p><h1>Čemu se věnuješ?</h1><p class="onb-lead">Vyber klidně víc možností. Plán se přizpůsobí tomu, co skutečně děláš.</p>';
       h += '<div class="onb-industry-grid">' + INDUSTRIES.map(function (x) {
         return '<button type="button" class="onb-choice' + (p.industries.indexOf(x.id) >= 0 ? ' active' : '') + '" data-onb="industries" data-id="' + x.id + '">' + uiIcon(industryIcons[x.id]) + '<span>' + esc(x.label) + '</span><b>✓</b></button>';
       }).join('') + '</div>';
@@ -637,7 +637,7 @@
         clients: 'Zakázky mám, chci stabilnější systém a lepší obchod.',
         fulltime: 'Tvorba mě živí. Řeším cenu, proces a další růst.'
       };
-      h += '<div class="onb-screen"><p class="onb-step">02 · TVOJE FÁZE</p><h1>Kde jsi dnes?</h1><p class="onb-lead">Nejde o hodnocení. Podle toho zvolím správný začátek tvého plánu.</p>' +
+      h += '<div class="onb-screen"><p class="onb-step">02 · KDE JSI TEĎ</p><h1>Kde jsi teď?</h1><p class="onb-lead">Nejde o hodnocení. Podle toho zvolím správný začátek tvého plánu.</p>' +
         '<div class="onb-levels" role="radiogroup" aria-label="Tvoje fáze">' + EXPERIENCES.map(function (x, i) {
           var on = p.experience === x.id, bars = '';
           for (var bi = 0; bi < 4; bi++) bars += '<i class="' + (bi <= i ? 'on' : '') + '"></i>';
@@ -648,7 +648,7 @@
         }).join('') + '</div></div>';
     } else if (onbStep === 3) {
       var incomeShort = { '0-10': 'do 10k', '10-30': '10–30k', '30-60': '30–60k', '60-100': '60–100k', '100+': '100k+' };
-      h += '<div class="onb-screen"><p class="onb-step">03 · PRVNÍ PRIORITA</p><h1>Co by ti teď nejvíc pomohlo?</h1><p class="onb-lead">Vyber jednu věc. Podle ní dostaneš první konkrétní kroky.</p>' +
+      h += '<div class="onb-screen"><p class="onb-step">03 · CO TEĎ ŘEŠÍŠ</p><h1>Co teď nejvíc řešíš?</h1><p class="onb-lead">Vyber jednu věc. Podle ní dostaneš první konkrétní kroky.</p>' +
         '<div class="onb-blocker-grid">' + BLOCKERS.map(function (x) { return '<button type="button" class="onb-choice' + (p.blocker === x.id ? ' active' : '') + '" data-onb="blocker" data-id="' + x.id + '">' + uiIcon(blockerIcons[x.id]) + '<span>' + esc(x.label) + '</span><b>✓</b></button>'; }).join('') + '</div>' +
         '<div class="onb-income-v2"><div class="onb-income-head"><strong>Kolik ti tvorba běžně přinese za měsíc?</strong><span>Nepovinné · zpřesní doporučení</span></div>' +
         '<div class="onb-income-pills" role="radiogroup" aria-label="Měsíční příjem z tvorby">' +
