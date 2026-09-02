@@ -44,8 +44,23 @@
   }
 
   async function getSB() { if (sb) return sb; sb = A.getSupabase ? await A.getSupabase() : null; return sb; }
-  async function rpc(name,args) { var client = await getSB(); if (!client) throw new Error('Supabase není dostupný.'); var result = await client.rpc(name,args || {}); if (result.error) throw result.error; return result.data; }
-  function fail(error) { console.warn('admin',error); ROOT.innerHTML = '<section class="admin-denied"><span class="admin-eyebrow">PŘÍSTUP ZAMÍTNUT</span><h1>Administrace je jen pro správce.</h1><p>Přihlas se ověřeným e-mailem s rolí admin. Samotná znalost administrátorského e-mailu nestačí.</p><a class="admin-button" href="nastaveni.html">Zpět do Nastavení</a></section>'; }
+  function errText(error) { return String((error && (error.message || error.hint || error.details)) || error || 'neznámá chyba'); }
+  function isStaleSession(error) { return /jwt|expired|token|Jen pro admina/i.test(errText(error)); }
+
+  // Když vyprší přihlašovací token, RPC spadne na „Jen pro admina". Jednou obnovíme
+  // relaci a zkusíme znovu — jinak by admin viděl jen prázdnou obrazovku.
+  async function rpc(name,args) {
+    var client = await getSB();
+    if (!client) throw new Error('Supabase není dostupný.');
+    var result = await client.rpc(name,args || {});
+    if (result.error && isStaleSession(result.error)) {
+      try { await client.auth.refreshSession(); } catch (e) {}
+      result = await client.rpc(name,args || {});
+    }
+    if (result.error) throw result.error;
+    return result.data;
+  }
+  function fail(error) { console.warn('admin',error); ROOT.innerHTML = '<section class="admin-denied"><span class="admin-eyebrow">PŘÍSTUP ZAMÍTNUT</span><h1>Administrace je jen pro správce.</h1><p>Přihlas se ověřeným e-mailem s rolí admin. Samotná znalost administrátorského e-mailu nestačí.</p><p class="admin-denied-detail">Detail: '+esc(errText(error))+'</p><a class="admin-button" href="nastaveni.html">Zpět do Nastavení</a></section>'; }
 
   async function boot() {
     if (started) return; started = true;
@@ -180,8 +195,63 @@
 
   function renderContent() {
     ROOT.innerHTML = head('PUBLIKOVÁNÍ','Obsah','Výzvy, novinky a webináře na jednom místě.')+
-      '<form class="admin-form" id="admin-content-form"><input type="hidden" name="id"><label>Typ<select class="admin-select" name="type"><option value="weekly_challenge">Týdenní výzva</option><option value="news">Novinka</option><option value="webinar">Webinář</option></select></label><label class="span-2">Název<input class="admin-input" name="title" required maxlength="160"></label><label>Stav<select class="admin-select" name="status"><option value="draft">Koncept</option><option value="scheduled">Naplánováno</option><option value="published">Publikováno</option><option value="archived">Archiv</option></select></label><label>Pro koho<select class="admin-select" name="audience"><option value="all">Všichni</option><option value="free">Free</option><option value="academy">Academy</option></select></label><label>KP<input class="admin-input" type="number" min="0" max="10000" name="xp" value="0"></label><label class="span-3">Text<textarea class="admin-textarea" name="body" maxlength="4000"></textarea></label><label>Začátek<input class="admin-input" type="datetime-local" name="starts_at"></label><label>Odkaz<input class="admin-input" name="link_url" placeholder="https://…"></label><div class="admin-form-actions"><button class="admin-button secondary" type="button" data-content-reset hidden>Zrušit úpravu</button><button class="admin-button" type="submit">Uložit obsah</button></div></form>'+contentTable(cache.content);
+      '<form class="admin-form" id="admin-content-form"><input type="hidden" name="id"><label>Typ<select class="admin-select" name="type"><option value="weekly_challenge">Týdenní výzva</option><option value="news">Novinka</option><option value="webinar">Webinář</option></select></label><label class="span-2">Název<input class="admin-input" name="title" required maxlength="160"></label><label>Stav<select class="admin-select" name="status"><option value="draft">Koncept</option><option value="scheduled">Naplánováno</option><option value="published">Publikováno</option><option value="archived">Archiv</option></select></label><label>Pro koho<select class="admin-select" name="audience"><option value="all">Všichni</option><option value="free">Free</option><option value="academy">Academy</option></select></label><label>KP<input class="admin-input" type="number" min="0" max="10000" name="xp" value="0"></label><label class="span-3">Text<textarea class="admin-textarea" name="body" maxlength="4000"></textarea></label><label>Začátek<input class="admin-input" type="datetime-local" name="starts_at"></label><label>Odkaz<input class="admin-input" name="link_url" placeholder="https://…"></label><div class="admin-form-actions"><span class="admin-inline-msg" id="admin-content-msg"></span><button class="admin-button secondary" type="button" data-content-reset hidden>Zrušit úpravu</button><button class="admin-button" type="submit">Uložit obsah</button></div></form>'+contentTable(cache.content);
+    wireContentForm();
   }
+
+  // Formulář obsahu má vlastní posluchač (ne jen delegovaný), aby prohlížeč nikdy
+  // neprovedl nativní odeslání a nepřenačetl celou administraci.
+  function wireContentForm() {
+    var form = document.getElementById('admin-content-form');
+    if (!form) return;
+    form.addEventListener('submit', function (e) { e.preventDefault(); saveContent(form); });
+  }
+
+  function contentMsg(text, kind) {
+    var el = document.getElementById('admin-content-msg');
+    if (el) { el.textContent = text || ''; el.className = 'admin-inline-msg' + (kind ? ' is-' + kind : ''); }
+  }
+
+  async function saveContent(form) {
+    var f = new FormData(form);
+    var title = String(f.get('title') || '').trim();
+    if (!title) { contentMsg('Doplň název.', 'err'); form.elements.title.focus(); return; }
+    var button = form.querySelector('button[type="submit"]');
+    var row = {
+      id: f.get('id') || null,
+      type: f.get('type'),
+      title: title,
+      body: String(f.get('body') || '').trim() || null,
+      status: f.get('status'),
+      audience: f.get('audience'),
+      starts_at: f.get('starts_at') ? new Date(f.get('starts_at')).toISOString() : null,
+      xp: Number(f.get('xp') || 0),
+      link_url: String(f.get('link_url') || '').trim() || null
+    };
+    if (button) button.disabled = true;
+    contentMsg('Ukládám…', '');
+    try {
+      if (IS_LOCAL) {
+        if (!row.id) row.id = 'demo-' + Date.now();
+        var oldIndex = cache.content.findIndex(function (x) { return x.id === row.id; });
+        if (oldIndex >= 0) cache.content.splice(oldIndex, 1, row); else cache.content.unshift(row);
+      } else {
+        await rpc('admin_upsert_content', {
+          p_id: row.id, p_type: row.type, p_title: row.title, p_body: row.body,
+          p_status: row.status, p_audience: row.audience, p_starts_at: row.starts_at,
+          p_ends_at: null, p_xp: row.xp, p_link_url: row.link_url, p_metadata: {}
+        });
+        await loadContent();
+      }
+      renderContent();
+      contentMsg('Uloženo ✓', 'ok');
+    } catch (err) {
+      console.warn('admin_upsert_content', err);
+      if (button) button.disabled = false;
+      contentMsg('Nepovedlo se uložit: ' + ((err && (err.message || err.hint)) || 'neznámá chyba'), 'err');
+    }
+  }
+
   function contentTable(rows){if(!rows.length)return '<div class="admin-empty">Zatím žádný spravovaný obsah.</div>';return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Typ</th><th>Název</th><th>Stav</th><th>Publikum</th><th>Termín</th><th></th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td>'+esc(typeLabel(x.type))+'</td><td><span class="admin-person"><strong>'+esc(x.title)+'</strong><small>'+esc((x.body||'').slice(0,90))+'</small></span></td><td>'+chip(x.status)+'</td><td>'+esc(x.audience)+'</td><td>'+esc(date(x.starts_at,true))+'</td><td><div class="admin-row-actions"><button class="admin-button secondary" type="button" data-content-edit="'+esc(x.id)+'">Upravit</button><button class="admin-button danger" type="button" data-content-delete="'+esc(x.id)+'">Smazat</button></div></td></tr>';}).join('')+'</tbody></table></div>';}
 
   function localDateTime(value) {
@@ -265,7 +335,7 @@
       }catch(err){var m=document.getElementById('admin-add-msg');if(m){m.textContent='Nepovedlo se: '+((err&&err.message)||'chyba');m.className='admin-addform-msg is-err';}}
       return;
     }
-    if(e.target.id==='admin-content-form'){e.preventDefault();var f=new FormData(e.target),existingId=f.get('id')||null;var row={id:existingId||(IS_LOCAL?'demo-'+Date.now():null),type:f.get('type'),title:f.get('title'),body:f.get('body'),status:f.get('status'),audience:f.get('audience'),starts_at:f.get('starts_at')?new Date(f.get('starts_at')).toISOString():null,ends_at:f.get('ends_at')?new Date(f.get('ends_at')).toISOString():null,xp:Number(f.get('xp')||0),link_url:f.get('link_url')||null,metadata:{}};if(IS_LOCAL){var oldIndex=cache.content.findIndex(function(x){return x.id===row.id;});if(oldIndex>=0)cache.content.splice(oldIndex,1,row);else cache.content.unshift(row);}else await rpc('admin_upsert_content',{p_id:row.id,p_type:row.type,p_title:row.title,p_body:row.body,p_status:row.status,p_audience:row.audience,p_starts_at:row.starts_at,p_ends_at:row.ends_at,p_xp:row.xp,p_link_url:row.link_url,p_metadata:{}});if(!IS_LOCAL)await loadContent();renderContent();}
+    // Obsah řeší wireContentForm() přímo na formuláři.
     if(e.target.id==='admin-coupon-form'){e.preventDefault();var c=new FormData(e.target),code=String(c.get('code')||'').trim().toUpperCase(),products=c.get('products')?[c.get('products')]:[];if(IS_LOCAL)cache.coupons.unshift({code:code,description:c.get('description'),percent_off:Number(c.get('percent')),products:products,active:true,used_count:0,max_uses:Number(c.get('max_uses'))||null});else{await rpc('admin_upsert_coupon_v2',{p_code:code,p_percent:Number(c.get('percent')),p_products:products,p_active:true,p_max_uses:Number(c.get('max_uses'))||null,p_description:c.get('description')||null,p_valid_until:null});await loadCoupons();}renderCoupons();}
   });
 

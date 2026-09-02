@@ -3043,6 +3043,14 @@ html { scrollbar-gutter: stable; }
 .academy-mentor figcaption { position: relative; z-index: 2; margin: -38px 14px 0; padding: 13px 16px; background: rgba(10,10,10,.88); border: 1px solid rgba(255,255,255,.1); backdrop-filter: blur(10px); color: #aaa; font-size: .75rem; }
 .academy-mentor h2 { max-width: 11ch; }
 .academy-mentor-grid > div > p:not(.academy-sale-eyebrow) { color: #999; font-size: 1rem; line-height: 1.75; }
+/* Mentor: tvrdá čísla místo odstavce textu. */
+.mentor-stats { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin: 26px 0 0; padding: 0; }
+.mentor-stats li { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; background: #111; border: 1px solid rgba(255,255,255,.08); }
+.mentor-stats strong { font: 400 2.125rem/1 'Bebas Neue', sans-serif; color: #ff6b1a; }
+.mentor-stats span { font-size: .8125rem; line-height: 1.35; color: #999; }
+.academy-mentor-grid > div > p.mentor-note { margin-top: 18px; font-size: .875rem; line-height: 1.65; color: #8a8a8a; }
+.mentor-note b { font-weight: 600; color: #d8d8d4; }
+@media (max-width: 420px) { .mentor-stats { gap: 7px; } .mentor-stats li { padding: 13px 11px; } .mentor-stats strong { font-size: 1.75rem; } .mentor-stats span { font-size: .75rem; } }
 .academy-mentor-quote { margin-top: 28px; padding: 20px 22px; border-left: 2px solid #ff6b1a; background: #111; color: #e5e5e1; font-size: .9375rem; line-height: 1.65; }
 
 .academy-roi-grid { display: grid; grid-template-columns: 1fr .86fr; gap: 80px; align-items: center; }
@@ -4116,14 +4124,25 @@ html.kenji-preboot body { overflow: hidden; }
 html.kenji-preboot .top-header, html.kenji-preboot .layout { filter: blur(4px); pointer-events: none; user-select: none; }
 body.kenji-gated { overflow: hidden; height: 100vh; }
 body.kenji-gated .top-header,
-body.kenji-gated .layout { filter: blur(4px); pointer-events: none; user-select: none; }
+body.kenji-gated .layout,
+body.kenji-gated .academy-page { filter: blur(4px); pointer-events: none; user-select: none; }
 body.kenji-gated .kenji-help { display: none !important; }
+
+/* Komunita: relace na tomhle zařízení vypršela → jen čtení, ne prázdná stránka. */
+.community-reconnect { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-left: 2px solid var(--orange); border-radius: 12px; }
+.community-reconnect-txt { flex: 1 1 260px; font-size: 13px; line-height: 1.5; color: var(--text-dim); }
+.community-reconnect-txt strong { color: var(--text); font-weight: 600; }
+.community-reconnect-btn { flex: 0 0 auto; min-height: 36px; padding: 0 16px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg-elevated); color: var(--text); font: 600 13px/1 'Inter', sans-serif; cursor: pointer; transition: border-color .15s, color .15s; }
+.community-reconnect-btn:hover:not(:disabled) { border-color: var(--orange); color: var(--orange); }
+.community-reconnect-btn:disabled { opacity: .65; cursor: default; }
+@media (max-width: 560px) { .community-reconnect { padding: 12px 14px; } .community-reconnect-btn { width: 100%; } }
 
 .kenji-gate {
   position: fixed; inset: 0; z-index: 1000;
   display: flex; align-items: center; justify-content: center;
   padding: 20px; overflow-y: auto;
-  background: rgba(8,8,8,.5); backdrop-filter: blur(1px);
+  background: rgba(6,6,6,.72);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
 .kg-modal {
   position: relative;
@@ -4138,11 +4157,12 @@ body.kenji-gated .kenji-help { display: none !important; }
 .kg-close {
   position: absolute; top: 12px; right: 12px; z-index: 3;
   width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-  padding: 0; border: 0; border-radius: 9px; background: transparent;
-  color: var(--text-mute); font-size: 17px; line-height: 1; cursor: pointer;
-  transition: background .15s, color .15s;
+  padding: 0; border: 1px solid rgba(255,255,255,.1); border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  color: var(--text-dim); font-size: 17px; line-height: 1; cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
 }
-.kg-close:hover { background: rgba(140,140,140,.14); color: var(--text-strong); }
+.kg-close:hover, .kg-close:focus-visible { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.24); color: var(--text-strong); }
 .kg-logo-mobile { display: none; }
 
 .kg-intro {
@@ -4393,12 +4413,13 @@ body.kenji-gated .kenji-help { display: none !important; }
 
 @media (max-width: 680px) {
   .kg-modal { grid-template-columns: 1fr; max-width: 440px;
-    background: linear-gradient(160deg, rgba(255,107,26,.14) 0%, var(--bg-card) 60%); }
+    background-color: var(--bg-card);
+    background-image: linear-gradient(160deg, rgba(255,107,26,.14) 0%, rgba(255,107,26,0) 60%); }
   .kg-intro { display: none; }
   .kg-logo-mobile { display: block; width: 140px; height: 24px; margin-bottom: 20px; }
   .kg-form { padding: 30px 24px calc(30px + env(safe-area-inset-bottom, 0px)); background: transparent; }
-  .kg-close { top: 10px; right: 10px; }
-  body.kenji-gated .top-header, body.kenji-gated .layout { filter: blur(5px); }
+  .kg-close { top: 10px; right: 10px; width: 40px; height: 40px; font-size: 19px; }
+  body.kenji-gated .top-header, body.kenji-gated .layout, body.kenji-gated .academy-page { filter: blur(5px); }
 }
 
 @media (max-width: 860px) {
@@ -7596,7 +7617,9 @@ body.selfp-modal-open { overflow: hidden; }
 :root[data-theme="light"] .top-header { box-shadow: 0 1px 0 rgba(0,0,0,.06); }
 :root[data-theme="light"] .sidebar::-webkit-scrollbar-thumb { background: rgba(0,0,0,.16); }
 /* Vstupní brána: rozmazané pozadí ať je světlé, ne černé */
-:root[data-theme="light"] .kenji-gate { background: rgba(255,255,255,.55); }
+:root[data-theme="light"] .kenji-gate { background: rgba(255,255,255,.78); }
+/* Logo v bráně je bílé — ve světlém režimu by zmizelo. */
+:root[data-theme="light"] .kg-logo { filter: invert(1); }
 /* Ať jsou tlačítka s vždy-oranžovým pozadím čitelná (bílý text zpět) */
 :root[data-theme="light"] .switch-btn.active,
 :root[data-theme="light"] .switch-btn.active .sw-lbl,
@@ -8899,4 +8922,70 @@ body.upg-modal-open { overflow: hidden; }
   .community-view-tabs { gap: 16px; }
   .feed-leaderboard .co-podium-name { display: -webkit-box; overflow: hidden; font-size: 10px; line-height: 1.2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .feed-leaderboard .co-podium-ig { display: none; }
+}
+
+/* Samostatne pravni dokumenty: bez aplikacni navigace, karet a calloutu. */
+.legal-page {
+  min-height: 100vh;
+  margin: 0;
+  background: #0a0a0a;
+  color: #d2d2d2;
+  font-family: 'Inter', sans-serif;
+}
+.legal-header {
+  position: static;
+  width: min(100% - 40px, 820px);
+  min-height: 72px;
+  margin: 0 auto;
+  padding: 22px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.legal-brand { color: #f5f5f2; font-size: 14px; font-weight: 600; }
+.legal-back { color: #9a9a9a; font-size: 13px; text-decoration: none; }
+.legal-back:hover { color: #f5f5f2; }
+.legal-document {
+  width: min(100% - 40px, 820px);
+  margin: 0 auto;
+  padding: 64px 0 72px;
+}
+.legal-document h1 {
+  margin: 0;
+  color: #f5f5f2;
+  font: 600 clamp(32px, 6vw, 48px)/1.12 'Inter', sans-serif;
+  letter-spacing: 0;
+}
+.legal-effective { margin: 12px 0 48px; color: #777; font-size: 13px; }
+.legal-document h2 {
+  margin: 42px 0 12px;
+  color: #f0f0ed;
+  font: 600 18px/1.35 'Inter', sans-serif;
+  letter-spacing: 0;
+}
+.legal-document p {
+  margin: 0 0 16px;
+  color: #b3b3b0;
+  font-size: 15px;
+  line-height: 1.78;
+}
+.legal-footer {
+  width: min(100% - 40px, 820px);
+  margin: 0 auto;
+  padding: 24px 0 40px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  color: #717171;
+  font-size: 12px;
+}
+@media (max-width: 560px) {
+  .legal-header, .legal-document, .legal-footer { width: min(100% - 28px, 820px); }
+  .legal-header { min-height: 64px; padding: 18px 0; }
+  .legal-brand { font-size: 12px; }
+  .legal-back { max-width: 130px; text-align: right; line-height: 1.35; }
+  .legal-document { padding: 44px 0 56px; }
+  .legal-effective { margin-bottom: 36px; }
+  .legal-document h2 { margin-top: 34px; }
+  .legal-document p { font-size: 14px; line-height: 1.72; }
 }

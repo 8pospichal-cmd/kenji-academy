@@ -57,7 +57,7 @@ V uživatelském rozhraní používáme slovo **databáze**, nikoliv **knihovna*
 
 Projekt nemá `package.json` ani klasický bundler. Při změnách je proto nutné hlídat pořadí `<script>` tagů, cache-busting parametrů a kompatibilitu přímo v prohlížeči.
 
-Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS aktuálně používá `20260902-cta-v1`, `auth.js` používá `20260902-funnel-v1` a komunitní `feed.js` na `prispevky.html` používá `20260825-intro-v2`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
+Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS, `auth.js` a `nav.js` aktuálně používají `20260902-legal-v1` a komunitní `feed.js` na `prispevky.html` používá `20260825-intro-v2`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
 
 ## Struktura složek a souborů
 
@@ -248,6 +248,14 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 - Klíčové stránky byly při poslední kontrole dostupné přes lokální server s HTTP 200.
 - Produkční platby a kompletní přihlášení ale zatím nelze považovat za dokončené, dokud neproběhne nastavení a end-to-end test v produkci.
 
+### Právní dokumenty
+
+- Provozovatelem Kenji Academy je Daniel Pospíchal, IČO 19079583, se sídlem Práčat 1886, 580 01 Havlíčkův Brod; Kenji Academy je obchodní označení, nikoli samostatná právnická osoba.
+- Obchodní podmínky a zásady ochrany osobních údajů jsou samostatné veřejné stránky bez aplikační navigace, přihlášení a dashboardových skriptů. Používají jednoduchý textový layout a po otevření z registrační brány uživatele nepřenesou do aplikace.
+- Podmínky pokrývají digitální obsah a služby, jednorázový i rozdělený způsob platby, technické požadavky, aktualizace, odstoupení, reklamace, komunitu, AI, licenci a aktuální ADR u České obchodní inspekce. Neobsahují zrušený evropský ODR odkaz.
+- Zásady popisují skutečně používaná data a služby včetně Supabase, Netlify, Stripe, Resend, YouTube a externích poskytovatelů Kenji AI. Povinný registrační checkbox potvrzuje seznámení se zpracováním pro účet; nejde o vynucený souhlas s marketingem.
+- Sdílená patička uvádí pouze `© [rok] Kenji`, nikoli dřívější společnost.
+
 ## Rozpracované a následující kroky
 
 ### 1. Dokončit prodejní stránku `academy.html`
@@ -305,6 +313,7 @@ Tuto oblast chce zadavatel dokončovat až v závěru projektu.
 Také platby mají přijít až po dokončení hlavního obsahu a rozhraní.
 
 - Nastavit produkční Stripe produkty, Price IDs, tajné klíče a webhook secret.
+- Obchodní podmínky už výslovně říkají, že zaplacením digitálního produktu přes Stripe uživatel žádá okamžité zpřístupnění obsahu a bere na vědomí ztrátu práva odstoupit do 14 dnů. Technické doladění Stripe flow a případné ukládání potvrzení k objednávce zůstává na pozdější produkční dokončení.
 - Ověřit cenu, měnu, text nabídky a přístup, který každý produkt skutečně odemyká.
 - Otestovat úspěšnou platbu, zrušení, opakovaný webhook, chybu webhooku a neexistujícího uživatele.
 - Ověřit, že webhook bezpečně aktualizuje tier v Supabase a že přístup nejde změnit z klienta.

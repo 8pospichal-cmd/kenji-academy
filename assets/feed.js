@@ -16,12 +16,16 @@
     { id: 'novinky', label: 'Novinky', icon: 'diamond', adminOnly: true },
     { id: 'slevy', label: 'Slevy', icon: 'tag', adminOnly: true },
     { id: 'dotazy', label: 'Dotazy', icon: 'help' },
-    { id: 'fotka-mesice', label: 'Fotka měsíce', icon: 'camera' },
     { id: 'predstav-se', label: 'Představ se', icon: 'user', free: true },
     { id: 'uspechy', label: 'Úspěchy', icon: 'trophy' },
     { id: 'second-shooting', label: 'Second shooting', icon: 'users' }
   ];
-  const catLabel = (id) => (CATS.find((c) => c.id === id) || {}).label || id;
+  // „Fotka měsíce" splynula s „Foto feedbackem" — jeden kanál, kam všichni (i Free) nahrávají fotky.
+  // Staré příspěvky se proto načítají pod novým ID, aby kanál nebyl prázdný.
+  const CAT_ALIASES = { 'fotka-mesice': 'foto-feedback' };
+  const normCat = (id) => CAT_ALIASES[id] || id || '';
+  const aliasesFor = (id) => [id].concat(Object.keys(CAT_ALIASES).filter((k) => CAT_ALIASES[k] === id));
+  const catLabel = (id) => (CATS.find((c) => c.id === normCat(id)) || {}).label || id;
   const FEED_ICONS = {
     grid: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
     diamond: '<path d="m12 3 8 6-8 12L4 9zM4 9h16"/>', tag: '<path d="M3 12V5h7l11 11-5 5z"/><circle cx="7.5" cy="8.5" r="1"/>',
@@ -40,15 +44,24 @@
   const email = user && user.email ? user.email : '';
   const ig = user && user.instagram ? user.instagram : '';
   const isAdmin = ADMIN_EMAILS.indexOf((email || '').toLowerCase()) >= 0;
-  const requestedCat = new URLSearchParams(location.search).get('category') || '';
+  const requestedCat = normCat(new URLSearchParams(location.search).get('category') || '');
   const communityView = new URLSearchParams(location.search).get('view') === 'leaderboard' ? 'leaderboard' : 'feed';
-  let activeCat = CATS.some((cat) => cat.id === requestedCat)
+  // Prázdné „category" znamená „žádný požadavek", ne kanál Vše — jinak by Free člen
+  // přistál rovnou na zamčeném kanálu místo na Foto feedbacku.
+  let activeCat = (requestedCat && CATS.some((cat) => cat.id === requestedCat))
     ? requestedCat
     : (canPremiumCommunity ? '' : 'foto-feedback');
   let searchQuery = (new URLSearchParams(location.search).get('q') || '').trim();
   let sb = null;
   let sessionUserId = '';
-  const legacyPosts = Array.isArray(window.KENJI_LEGACY_POSTS) ? window.KENJI_LEGACY_POSTS : [];
+  let canWrite = false;   // živá Supabase relace → smí publikovat, komentovat a lajkovat
+  const legacyPosts = (Array.isArray(window.KENJI_LEGACY_POSTS) ? window.KENJI_LEGACY_POSTS : [])
+    .map((post) => {
+      if (!CAT_ALIASES[post.category]) return post;
+      // U archivu je název kanálu zapečený v popisku — přepiš ho na nový.
+      const meta = String(post.legacy_meta || '').replace(/📸\s*FOTKA MĚSÍCE/i, '📸 FOTO FEEDBACK');
+      return Object.assign({}, post, { category: CAT_ALIASES[post.category], legacy_meta: meta });
+    });
 
   function canAccessCategory(category) {
     const cat = CATS.find((item) => item.id === category);
@@ -401,7 +414,8 @@
   }
 
   ROOT_EL.innerHTML =
-    '<div class="feed-wrap">' + communityViewTabs() + '<div class="feed-mobile-categories"><span>Kategorie</span>' + catTabs() + '</div>' + weeklyChallengeBanner() + searchBar() + composer() +
+    '<div class="feed-wrap">' + communityViewTabs() + '<div class="feed-mobile-categories"><span>Kategorie</span>' + catTabs() + '</div>' + weeklyChallengeBanner() + searchBar() +
+    '<div id="community-reconnect" class="community-reconnect" hidden></div>' + composer() +
     '<div id="feed-list" class="feed-list"><div class="feed-loading">Načítám příspěvky…</div></div></div>';
 
   // ---------- SUPABASE ----------
@@ -447,9 +461,22 @@
       updateCategoryUI(current);
     };
     if (archived.length) paint();
+    // Bez živé relace vrací list_posts 401 (je jen pro authenticated) — nemá smysl ji volat.
+    if (!canWrite) { paint(); return; }
     try {
-      const rpcCategory = canPremiumCommunity && searchQuery ? null : activeCat || null;
-      current = await rpc('list_posts', { p_email: email, p_category: rpcCategory, p_limit: 60 }) || [];
+      if (canPremiumCommunity && searchQuery) {
+        current = await rpc('list_posts', { p_email: email, p_category: null, p_limit: 60 }) || [];
+      } else if (activeCat) {
+        // U sloučených kanálů natáhneme i staré ID kategorie, ať se příspěvky neztratí.
+        const batches = await Promise.all(aliasesFor(activeCat).map((cat) =>
+          rpc('list_posts', { p_email: email, p_category: cat, p_limit: 60 }).catch(() => [])
+        ));
+        current = batches.reduce((all, batch) => all.concat(batch || []), [])
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      } else {
+        current = await rpc('list_posts', { p_email: email, p_category: null, p_limit: 60 }) || [];
+      }
+      current = current.map((post) => (CAT_ALIASES[post.category] ? Object.assign({}, post, { category: CAT_ALIASES[post.category] }) : post));
     } catch (e) {
       console.warn('list_posts', e);
     }
@@ -777,7 +804,8 @@
   }
 
   function selectCategory(category) {
-    activeCat = CATS.some((cat) => cat.id === category) ? category : '';
+    const wanted = normCat(category);
+    activeCat = CATS.some((cat) => cat.id === wanted) ? wanted : '';
     const url = new URL(location.href);
     if (activeCat) url.searchParams.set('category', activeCat); else url.searchParams.delete('category');
     if (searchQuery) url.searchParams.set('q', searchQuery); else url.searchParams.delete('q');
@@ -787,7 +815,7 @@
     const searchEl = document.querySelector('.feed-search');
     const weeklyEl = document.getElementById('feed-weekly-challenge');
     const allowed = canAccessCategory(activeCat);
-    if (composerEl) composerEl.hidden = !allowed;
+    if (composerEl) composerEl.hidden = !allowed || !canWrite;
     updateIntroGuide();
     if (searchEl) searchEl.hidden = !allowed;
     if (weeklyEl) weeklyEl.hidden = activeCat !== 'tydenni-vyzva' || !allowed;
@@ -863,46 +891,53 @@
   });
   wireSearch();
   updateCategoryUI([]);
+  // Čtení komunity nikdy neblokujeme — kdo je přihlášený, ten se sem dostal přes ověřený
+  // e-mail. Živá Supabase relace je potřeba jen pro ZÁPIS (příspěvky, komentáře, lajky,
+  // nahrávání fotek), protože ty se podepisují uživatelovým tokenem. Když relace chybí
+  // (vypršela, jiné zařízení, vymazaná data), skryjeme jen composer a nabídneme obnovu.
+  function showReconnectBar() {
+    const bar = document.getElementById('community-reconnect');
+    if (!bar) return;
+    bar.hidden = false;
+    bar.innerHTML =
+      '<span class="community-reconnect-txt">Přihlášení na tomhle zařízení vypršelo, takže vidíš zatím jen archiv komunity. ' +
+      'Pošleme ti nový odkaz na <strong>' + esc(email) + '</strong> — pak uvidíš i nové příspěvky a budeš moct psát.</span>' +
+      '<button class="community-reconnect-btn" id="community-reconnect-btn" type="button">Poslat odkaz</button>';
+    const button = document.getElementById('community-reconnect-btn');
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      button.textContent = 'Odesílám…';
+      const result = A.requestMagicLink ? await A.requestMagicLink(email) : { ok: false };
+      button.textContent = result && result.ok ? 'Odkaz je v e-mailu ✓' : 'Nepovedlo se';
+      if (!(result && result.ok)) button.disabled = false;
+    });
+  }
+
+  function sessionOf(result) {
+    const session = result && result.data ? result.data.session : null;
+    const verified = session && session.user && String(session.user.email || '').toLowerCase();
+    return verified && verified === String(email || '').toLowerCase() ? session : null;
+  }
+
   (async function bootCommunity() {
     try {
       const client = await getSB();
-      const sessionResult = client ? await client.auth.getSession() : null;
-      const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
-      const verifiedEmail = session && session.user && String(session.user.email || '').toLowerCase();
-      if (!verifiedEmail || verifiedEmail !== String(email || '').toLowerCase()) {
-        const composerEl = document.querySelector('.composer');
-        const searchEl = document.querySelector('.feed-search');
-        if (composerEl) composerEl.hidden = true;
-        if (searchEl) searchEl.hidden = true;
-        document.getElementById('feed-list').innerHTML =
-          '<div class="paywall community-verify"><div class="paywall-lock">✉</div>' +
-          '<h2 class="paywall-title">Ověř e-mail pro komunitu</h2>' +
-          '<p class="paywall-text">Příspěvky, komentáře a lajky jsou navázané na ověřený účet. Pošleme ti bezpečný přihlašovací odkaz na ' + esc(email) + '.</p>' +
-          '<div class="paywall-actions"><button class="paywall-cta" id="community-verify-btn" type="button">Poslat ověřovací odkaz</button>' +
-          '<span class="paywall-note" id="community-verify-note">Foto feedback i Týdenní výzva zůstávají zdarma.</span></div></div>';
-        const button = document.getElementById('community-verify-btn');
-        button.addEventListener('click', async () => {
-          button.disabled = true;
-          button.textContent = 'Odesílám…';
-          const result = A.requestMagicLink ? await A.requestMagicLink(email) : { ok: false };
-          button.textContent = result && result.ok ? 'Odkaz je v e-mailu ✓' : 'Odeslání se nepovedlo';
-          document.getElementById('community-verify-note').textContent = result && result.ok
-            ? 'Po kliknutí v e-mailu se vrátíš rovnou do komunity.'
-            : 'Zkus to za chvíli znovu.';
-          if (!(result && result.ok)) button.disabled = false;
-        });
-        return;
+      if (client) {
+        let session = sessionOf(await client.auth.getSession());
+        // Vypršelý přístupový token → zkus ho jednou obnovit, než člověka odstřihneš od psaní.
+        if (!session) {
+          try { session = sessionOf(await client.auth.refreshSession()); } catch (e) {}
+        }
+        if (session) {
+          sessionUserId = session.user.id;
+          canWrite = true;
+        }
       }
-      sessionUserId = session.user.id;
     } catch (error) {
       console.warn('community session', error);
-      const searchEl = document.querySelector('.feed-search');
-      if (searchEl) searchEl.hidden = true;
-      document.getElementById('feed-list').innerHTML =
-        '<div class="feed-empty"><strong>Komunitu se nepovedlo připojit.</strong><span>Obnov stránku a zkus to prosím znovu.</span></div>';
-      return;
     }
+    if (!canWrite) showReconnectBar();
     selectCategory(activeCat);
-    if (isAdmin) loadLegacyPinOverrides();
+    if (isAdmin && canWrite) loadLegacyPinOverrides();
   })();
 })();

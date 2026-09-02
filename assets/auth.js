@@ -419,7 +419,7 @@
     wrap.id = 'kenji-gate';
     wrap.innerHTML = `
       <div class="kg-modal">
-        ${saveplan ? '' : '<button class="kg-close" id="kg-close" type="button" aria-label="Zpět na úvodní stránku">✕</button>'}
+        <button class="kg-close" id="kg-close" type="button" aria-label="Zpět na úvodní stránku">✕</button>
         <div class="kg-intro">
           <div class="kg-logo">KENJI ACADEMY</div>
           <h2>Tohle najdeš v Kenji Academy</h2>
@@ -442,7 +442,7 @@
             <p class="kg-form-sub">${saveplan ? 'Zadej e-mail. Pošleme ti přihlašovací odkaz a tvůj plán pod ním zůstane uložený.' : 'Zadej e-mail — pošleme ti přihlašovací odkaz. Klikneš a jsi uvnitř. Bez hesla, jeden krok.'}</p>
             <label class="kg-label" for="kg-email">E-mail</label>
             <input class="kg-input" id="kg-email" type="email" placeholder="tvuj@email.cz" autocomplete="email">
-            <label class="kg-consent"><input type="checkbox" id="kg-consent"> <span>Souhlasím se zpracováním e-mailu pro vytvoření a správu profilu. <a href="${ROOT}${escapeHtml(CONFIG.privacyUrl)}" target="_blank" rel="noopener">Zásady</a></span></label>
+            <label class="kg-consent"><input type="checkbox" id="kg-consent"> <span>Beru na vědomí zpracování e-mailu pro vytvoření a správu profilu. <a href="${ROOT}${escapeHtml(CONFIG.privacyUrl)}" target="_blank" rel="noopener">Jak pracujeme s údaji</a></span></label>
             <button class="kg-btn" id="kg-submit">Poslat přihlašovací odkaz →</button>
             <div class="kg-error" id="kg-error" hidden></div>
             <div class="kg-sent" id="kg-sent" hidden>
@@ -462,10 +462,17 @@
     function err(msg) { errEl.textContent = msg; errEl.hidden = false; }
 
     // Křížek → zpět na prodejní stránku. Když už na ní jsme (overlay nad ní), jen zavři bránu.
+    // Je i v režimu „ulož plán": bez něj by odhlášený člověk uvízl na bráně bez cesty ven.
     const closeBtn = document.getElementById('kg-close');
-    if (closeBtn) closeBtn.addEventListener('click', function () {
+    function closeGate() {
       if (currentFile === 'academy.html') { wrap.remove(); revealSite(); }
       else { location.href = ROOT + 'academy.html'; }
+    }
+    if (closeBtn) closeBtn.addEventListener('click', closeGate);
+    document.addEventListener('keydown', function onEsc(e) {
+      if (e.key !== 'Escape') return;
+      if (!document.getElementById('kenji-gate')) { document.removeEventListener('keydown', onEsc); return; }
+      closeGate();
     });
 
     const sentEl = document.getElementById('kg-sent');
@@ -473,7 +480,7 @@
     async function submit() {
       const email = normEmail(emailEl.value);
       if (!validEmail(email)) { err('Zadej platný e-mail.'); emailEl.focus(); return; }
-      if (!consentEl.checked) { err('Potřebujeme tvůj souhlas se zpracováním.'); return; }
+      if (!consentEl.checked) { err('Potvrď, že ses seznámil se zpracováním údajů.'); return; }
       errEl.hidden = true;
       btn.disabled = true; btn.textContent = 'Posílám…';
 
@@ -972,7 +979,8 @@
   async function doLogout() {
     try { const sb = await getSupabase(); if (sb) await sb.auth.signOut(); } catch (e) {}
     saveUser(null);
-    location.reload();
+    // Po odhlášení patří člověk na prodejní stránku, ne na zamčenou bránu.
+    location.href = ROOT + 'academy.html';
   }
   window._kenjiLogout = doLogout;
 
@@ -1000,7 +1008,7 @@
       } catch (e) {}
     }
     const tourScript = document.createElement('script');
-    tourScript.src = ROOT + 'assets/tour.js?v=20260902-static-v2';
+    tourScript.src = ROOT + 'assets/tour.js?v=20260902-kp-v1';
     tourScript.dataset.kenjiTour = '1';
     document.body.appendChild(tourScript);
   }

@@ -271,12 +271,12 @@
         { id: 'novinky', label: 'Novinky', icon: 'diamond' },
         { id: 'slevy', label: 'Slevy', icon: 'tag' },
         { id: 'dotazy', label: 'Dotazy', icon: 'help' },
-        { id: 'fotka-mesice', label: 'Fotka měsíce', icon: 'camera' },
         { id: 'predstav-se', label: 'Představ se', icon: 'user', free: true },
         { id: 'uspechy', label: 'Úspěchy', icon: 'trophy' },
         { id: 'second-shooting', label: 'Second shooting', icon: 'users' }
       ];
-      const activeFeedCat = new URLSearchParams(location.search).get('category') || '';
+      const rawFeedCat = new URLSearchParams(location.search).get('category') || '';
+      const activeFeedCat = rawFeedCat === 'fotka-mesice' ? 'foto-feedback' : rawFeedCat;
       const activeCommunityView = new URLSearchParams(location.search).get('view') || '';
       const chatIcon = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-2.8.8.8-2.7-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.6-6.1c-.25-.13-1.5-.74-1.73-.82-.23-.09-.4-.13-.57.13-.17.25-.65.82-.8.99-.15.17-.3.19-.55.06a6.7 6.7 0 0 1-2-1.23 7.4 7.4 0 0 1-1.36-1.7c-.14-.25-.01-.38.11-.5l.38-.44c.13-.15.17-.25.25-.42.09-.17.04-.32-.02-.45l-.8-1.9c-.2-.48-.42-.42-.57-.42l-.49-.01c-.17 0-.45.06-.68.32-.23.25-.9.87-.9 2.12s.92 2.46 1.05 2.63c.13.17 1.8 2.75 4.36 3.86.61.26 1.08.42 1.45.54.61.19 1.16.16 1.6.1.49-.07 1.5-.61 1.72-1.2.21-.6.21-1.1.15-1.2-.06-.11-.23-.17-.48-.3z"/></svg>';
       html += `
@@ -297,7 +297,7 @@
         const href = `${ROOT}prispevky.html${cat.id ? `?category=${encodeURIComponent(cat.id)}` : ''}`;
         const locked = !cat.free && !premiumCommunity;
         html += `<a href="${href}" class="sidebar-link feed-category-link${!activeCommunityView && cat.id === activeFeedCat ? ' active' : ''}${locked ? ' locked' : ''}" data-feed-cat="${cat.id}"${locked ? ' data-community-locked="1" title="Součást Kenji Academy"' : ''}>
-          <span class="icon">${uiIcon(cat.icon)}</span><span>${esc(cat.label)}</span>${locked ? '<span class="feed-category-lock">🔒</span>' : `<span class="feed-category-count" data-feed-count="${cat.id}"></span>`}
+          <span class="icon">${uiIcon(cat.icon)}</span><span>${esc(cat.label)}</span>${locked ? '' : `<span class="feed-category-count" data-feed-count="${cat.id}"></span>`}
         </a>`;
       });
       html += `
@@ -933,7 +933,7 @@
         </div>
       </div>
       <div class="sf-bottom">
-        <span>© ${new Date().getFullYear()} Kenji s.r.o.</span>
+        <span>© ${new Date().getFullYear()} Kenji</span>
         <nav class="sf-legal">
           <a href="${ROOT}obchodni-podminky.html">Obchodní podmínky</a>
           <a href="${ROOT}zasady-ochrany-udaju.html">Ochrana osobních údajů</a>

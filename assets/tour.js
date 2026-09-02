@@ -59,9 +59,14 @@
       text: 'Tady doplníš fotku, jméno, Instagram a pár vět o sobě. Díky tomu dostaneš přesnější pomoc od AI i komunity.'
     },
     {
+      id: 'points', route: 'index.html', anchor: 'dash-modules', place: 'bottom-right', mobilePlace: 'bottom', target: '.co-xp-badge', eyebrow: 'KP — KENJI POINTY',
+      title: 'Za aktivitu sbíráš KP.',
+      text: 'Počítá se všechno: splněné úkoly z plánu, zhlédnutá videa a lekce, účast na webinářích i aktivita v komunitě — vlastní příspěvky, komentáře a pomoc ostatním. Každých 100 KP = nový level.'
+    },
+    {
       id: 'finish', route: 'index.html', anchor: 'dash-modules', place: 'center', target: '.bottom-nav-inner', eyebrow: 'MÁŠ PŘEHLED',
       title: 'Teď si vyber první malý krok.',
-      text: 'Startovní úkoly najdeš na dashboardu. Plň je vlastním tempem a za skutečné akce získávej XP.'
+      text: 'Startovní úkoly najdeš na dashboardu. Plň je vlastním tempem — každá akce ti přidá KP, posune tě v levelu i v žebříčku a otevře cestu k odměnám pro nejaktivnější.'
     }
   ];
 
