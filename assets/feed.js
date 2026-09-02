@@ -409,7 +409,10 @@
 
   if (communityView === 'leaderboard') {
     ROOT_EL.innerHTML = '<div class="feed-wrap feed-wrap-leaderboard">' + communityViewTabs() +
-      (window.KenjiLeaderboard ? window.KenjiLeaderboard.render() : '<div class="feed-loading">Žebříček se nepodařilo načíst.</div>') + '</div>';
+      '<div id="kenji-leaderboard-root">' + (window.KenjiLeaderboard ? window.KenjiLeaderboard.render() : '<div class="feed-loading">Žebříček se nepodařilo načíst.</div>') + '</div></div>';
+    if (window.KenjiLeaderboard && window.KenjiLeaderboard.hydrate) {
+      window.KenjiLeaderboard.hydrate(document.getElementById('kenji-leaderboard-root'));
+    }
     return;
   }
 

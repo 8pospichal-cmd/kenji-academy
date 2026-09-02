@@ -202,11 +202,29 @@
   // ---------- Úkoly ----------
   function todosGet() { var t = jget(TODO, []); return Array.isArray(t) ? t : []; }
   function todosSet(t) { jset(TODO, t); }
-  function seedTasks(blk) {
-    var list = REC[blk] || REC.klienti;
+  function seedTasks(profileOrBlocker) {
+    var profile = typeof profileOrBlocker === 'string' ? { blocker: profileOrBlocker } : (profileOrBlocker || {});
+    var list = REC[profile.blocker] || REC.klienti;
     var tasks = [];
-    list.forEach(function (r) { tasks.push({ id: uid(), text: r.text, why: r.why, mins: r.mins, cat: r.cat, aiQ: r.aiQ || '', done: false, rec: true }); });
+    list.slice(0, 3).forEach(function (r) {
+      tasks.push({
+        id: uid(),
+        text: r.text,
+        why: r.why,
+        mins: r.mins,
+        cat: r.cat,
+        aiQ: contextualAiPrompt(r, profile),
+        done: false,
+        rec: true
+      });
+    });
     todosSet(tasks);
+  }
+  function contextualAiPrompt(task, b) {
+    var intro = 'Jsem ' + (industryNames(b) || 'vizuální tvůrce') + ', jsem ve fázi „' + experienceLabel(b.experience) + '“';
+    var focus = b.blocker ? ' a teď řeším ' + blocker(b.blocker).focus : '';
+    var income = b.income ? '. Můj příjem z tvorby je ' + incomeLabel(b.income) : '';
+    return intro + focus + income + '. Můj aktuální úkol je: „' + task.text + '“. Dej mi konkrétní postup na tento týden, stručně a prakticky.';
   }
 
   // ---------- XP ----------
@@ -214,11 +232,11 @@
   function xpSet(x) { jset(XP, x); }
   function hasXpKey(x, key) { return x.log.some(function (e) { return e.k === key; }); }
   function xpUid() { return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-  function addXp(amount, reason, onceKey) {
+  function addXp(amount, reason, onceKey, type) {
     var x = xpGet();
     if (onceKey && hasXpKey(x, onceKey)) return 0;
     // `u` = jedinečné id neklíčovaných odměn, ať se při synchronizaci účtu mezi zařízeními nezdvojí.
-    x.xp += amount; x.log.push({ k: onceKey || null, u: onceKey ? null : xpUid(), a: amount, r: reason, t: Date.now() });
+    x.xp += amount; x.log.push({ k: onceKey || null, u: onceKey ? null : xpUid(), a: amount, r: reason, type: type || '', t: Date.now() });
     if (x.log.length > 300) x.log = x.log.slice(-300);
     xpSet(x);
     try { if (window.KenjiXP && window.KenjiXP.push) window.KenjiXP.push(); } catch (e) {}
@@ -229,8 +247,32 @@
     var read = jget('kenji_read_v1', []); if (Array.isArray(read)) read.forEach(function (slug) { addXp(5, 'Přečtený článek', 'read:' + slug); });
     var q = jget('kenji_quiz_v1', null); if (q && Array.isArray(q.passed)) q.passed.forEach(function (b) { addXp(15, 'Získaný pásek', 'quiz:' + b); });
   }
-  function levelOf(xp) { return Math.floor(xp / 100) + 1; }
-  function levelFloor(lvl) { return (lvl - 1) * 100; }
+  var LEVEL_THRESHOLDS = [0, 100, 500, 1500, 3000, 5000, 8000, 12000, 17000, 23000];
+  var MAX_LEVEL = LEVEL_THRESHOLDS.length;
+  function levelOf(xp) {
+    xp = Math.max(0, Number(xp) || 0);
+    var lvl = 1;
+    for (var i = 0; i < LEVEL_THRESHOLDS.length; i++) if (xp >= LEVEL_THRESHOLDS[i]) lvl = i + 1;
+    return Math.min(MAX_LEVEL, lvl);
+  }
+  function nextLevelAt(lvl) { return lvl >= MAX_LEVEL ? null : LEVEL_THRESHOLDS[lvl]; }
+  function levelFloor(lvl) { return LEVEL_THRESHOLDS[Math.max(0, Math.min(MAX_LEVEL - 1, lvl - 1))] || 0; }
+  function todayTaskXpCount(x) {
+    var today = dstr(new Date());
+    return (x.log || []).filter(function (entry) {
+      return entry && entry.type === 'task' && dstr(new Date(entry.t || 0)) === today;
+    }).length;
+  }
+  function awardTaskXp() {
+    var x = xpGet();
+    var used = todayTaskXpCount(x);
+    if (used >= 5) return { awarded: 0, used: used, limit: 5 };
+    return { awarded: addXp(20, 'Splněný úkol', null, 'task'), used: used + 1, limit: 5 };
+  }
+  function reconcileMemberBaseline() {
+    var A = window.KenjiAuth;
+    if (A && typeof A.isAcademy === 'function' && A.isAcademy()) addXp(100, 'Členský start Academy', 'baseline:academy');
+  }
 
   // ---------- Streak ----------
   function dstr(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
@@ -390,11 +432,14 @@
     }
     if (gated) { document.body.classList.remove('kenji-onboarding-active'); return; }
     document.body.classList.remove('kenji-onboarding-active');
+    reconcileMemberBaseline();
     reconcileActivationXp(b);
 
     var x = xpGet(), lvl = levelOf(x.xp), streak = streakOf(days);
-    var levelPct = Math.max(6, x.xp % 100);            // nikdy prázdný pruh (goal gradient)
-    var toNext = 100 - (x.xp % 100);
+    var floor = levelFloor(lvl);
+    var nextAt = nextLevelAt(lvl);
+    var levelPct = nextAt == null ? 100 : Math.max(6, Math.min(100, Math.round((x.xp - floor) / Math.max(1, nextAt - floor) * 100)));
+    var toNext = nextAt == null ? 0 : Math.max(0, nextAt - x.xp);
     var todos = todosGet();
     var active = todos.filter(function (t) { return !t.done; });
     var done = todos.filter(function (t) { return t.done; });
@@ -432,14 +477,14 @@
       }).join('') + '</div></div>';
     h += '<div class="co-xp-badge"><div class="co-badge-num"><strong>' + x.xp + '</strong><span>KP · Level ' + lvl + '</span></div>' +
       '<span class="co-xpbar"><i style="width:' + levelPct + '%"></i></span>' +
-      '<span class="co-kp-todo">ještě ' + toNext + ' KP do levelu ' + (lvl + 1) + '</span></div>';
+      '<span class="co-kp-todo">' + (nextAt == null ? 'maximální level' : ('ještě ' + toNext + ' KP do levelu ' + (lvl + 1))) + '</span></div>';
     h += '</div>';
     h += '</div>';
 
     if (!jget('kenji_kp_intro_v1', false)) {
       h += '<div class="co-kpintro"><span class="co-kpintro-ico">⚡</span>' +
         '<div class="co-kpintro-body"><strong>Co jsou Kenji Points (KP)?</strong>' +
-        '<p>Sbíráš je za všechno, co tady děláš — čtení, splněné úkoly, kvíz i komunitu. Každých 100 KP = nový level. Čím víc KP, tím výš v žebříčku a tím blíž k odměnám, slevám a speciálním věcem pro nejaktivnější.</p></div>' +
+        '<p>Sbíráš je za čtení, splněné úkoly, kvíz i komunitu. Levely jsou postupně těžší a končí levelem 10. Za vlastní úkoly se počítá nejvýš 5 splnění denně, ať má žebříček férový rytmus.</p></div>' +
         '<button class="co-kpintro-x" type="button" data-act="kpintro-dismiss" aria-label="Rozumím">Rozumím</button></div>';
     }
 
@@ -740,7 +785,7 @@
       // Ulož profil i na server, ať se onboarding neopakuje na jiném zařízení (mobil vs. počítač).
       try { if (window.KenjiAuth && window.KenjiAuth.saveProfile) window.KenjiAuth.saveProfile(target2); } catch (eSP) {}
       try { localStorage.removeItem(ONB_DRAFT); } catch (e2) {}
-      if (firstTime && !todosGet().length) seedTasks(target2.blocker);
+      if (firstTime && !todosGet().length) seedTasks(target2);
       editingProfile = false; pendOnb = {}; onbStep = 1;
       reconcileContentXp();
       track('onboarding_plan_created', { experience: target2.experience, blocker: target2.blocker, industries: target2.industries });
@@ -765,7 +810,13 @@
       var id = el.getAttribute('data-id'), t = todosGet(), justDone = false;
       t.forEach(function (x) { if (x.id === id) { x.done = !x.done; justDone = x.done; } });
       todosSet(t);
-      if (justDone) { tactile(16); addXp(20, 'Splněný úkol'); render(); xpToast(20, 'Úkol splněn'); }
+      if (justDone) {
+        tactile(16);
+        var award = awardTaskXp();
+        render();
+        if (award.awarded) xpToast(20, 'Úkol splněn · ' + award.used + '/5 dnes');
+        else flash('Úkol je hotový. KP za úkoly dnes už máš vyčerpané (5/5).');
+      }
       else render();
       return;
     }

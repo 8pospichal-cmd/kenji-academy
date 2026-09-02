@@ -57,7 +57,7 @@ V uživatelském rozhraní používáme slovo **databáze**, nikoliv **knihovna*
 
 Projekt nemá `package.json` ani klasický bundler. Při změnách je proto nutné hlídat pořadí `<script>` tagů, cache-busting parametrů a kompatibilitu přímo v prohlížeči.
 
-Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS a `nav.js` aktuálně používají `20260902-legal-v1`, `auth.js` používá `20260902-funnel-fix-v1` a komunitní `feed.js` na `prispevky.html` používá `20260825-intro-v2`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
+Primární HTML stránky používají explicitní cache verze u sdílených assetů. Hlavní CSS a `nav.js` aktuálně používají `20260902-legal-v1`, `auth.js` a `dashboard.js` používají `20260902-levels-v1`, komunitní `leaderboard.js` a `feed.js` na `prispevky.html` používají `20260902-leaderboard-v1`; ostatní datové a stránkové skripty mají vlastní verze podle poslední změny. Při úpravě assetu je nutné jeho parametr aktualizovat na všech stránkách, které jej načítají, jinak prohlížeč může podržet starou verzi.
 
 ## Struktura složek a souborů
 
@@ -91,7 +91,7 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 - `assets/auth.js` - uživatelský stav, přístupové úrovně a kontrola funkcí.
 - `assets/dashboard.js` - stav a vykreslení dashboardu.
 - `assets/feed.js` - komunitní feed, filtrování, vyhledávání, příspěvky, lajky a média.
-- `assets/leaderboard.js` - samostatný komunitní žebříček a napojení vlastních lokálních KP.
+- `assets/leaderboard.js` - samostatný komunitní žebříček; v produkci čte veřejná KP data ze Supabase, lokálně používá seed fallback a vlastní KP.
 - `assets/kenji-ai.js` - klientská logika Kenji AI a průběhové stavy odpovědi.
 - `assets/admin.js`, `assets/admin.css` - přehled, CRM, nástroje, obsah a kupóny pro admina.
 - `assets/quiz.js` - logika kvízu a odemykání odměny.
@@ -171,7 +171,7 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 - Upload komunitních médií používá cestu navázanou na ID uživatele, přijímá JPG, PNG a WebP do 6 MB a bucket `post-media` vytváří databázová migrace.
 - Publikování fotografie není povinnou součástí onboardingu. Zůstává samostatným úkolem za XP a běžný textový příspěvek lze odeslat i bez média.
 - Týdenní výzva se přednostně načítá z centrálního adminského obsahu; `assets/challenges.js` zůstává bezpečnou lokální zálohou. Dashboard i komunita ukazují stejné zadání. +50 XP se připíše jednou týdně až po úspěšném publikování odpovědi v kanálu `tydenni-vyzva`, ne po pouhém kliknutí na CTA.
-- Leaderboard už nezabírá místo na dashboardu. Je samostatným pohledem Komunity dostupným přes horní přepínač i levé menu; používá stejný stav KP jako dashboard.
+- Leaderboard už nezabírá místo na dashboardu. Je samostatným pohledem Komunity dostupným přes horní přepínač i levé menu; používá stejný stav KP jako dashboard. Produkční žebříček načítá přes RPC `community_leaderboard` bezpečný veřejný výřez uživatelů bez e-mailů.
 - Supabase lint po bezpečnostních migracích nehlásil chyby; anonymní čtení příspěvků ani upload médií nejsou povolené.
 - Migrace komunity, AI kontextu i administrace jsou aplikované v produkčním Supabase. Anonymní volání admin RPC vrací `401`, veřejné čtení publikované výzvy funguje.
 
@@ -213,6 +213,7 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 - Prázdný stav Kenji AI je bez dekorativní ilustrace a používá lidské oslovení „Čau, rád ti poradím.“
 - Dashboard nepoužívá samostatný velký formulář „Zeptej se Kenji AI“. První aktivní úkol je zobrazený jako jediná priorita s odkazem na AI; další úkoly jsou kompaktní. Úkol se dokončuje pouze checkboxem.
 - Pokračování v článku, personalizované doporučení a mapa vzdělávací cesty jsou sloučené do jednoho obsahového bloku. Týdenní výzva a poslední komunitní úspěchy tvoří jeden společný komunitní blok.
+- Levely KP jsou progresivní a končí levelem 10. Prahy jsou 0, 100, 500, 1 500, 3 000, 5 000, 8 000, 12 000, 17 000 a 23 000 KP. Academy účet dostává jednorázový členský start 100 KP, takže nezačíná pod levelem 2. Za odškrtávání to-do úkolů se připisuje maximálně 5 odměn denně; další úkoly lze dokončit, ale bez dalších KP za daný den.
 - Rozhraní má globální tmavý vizuální styl Kenji Academy.
 
 ### Výkon a plynulost
@@ -228,7 +229,7 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 
 - Bezplatný vstup z `academy.html` vede na osobní plán přes `index.html?start=1`.
 - Nový návštěvník nejprve projde třemi krátkými kroky „Čemu se věnuješ?“, „Kde jsi teď?“ a „Co teď nejvíc řešíš?“; v prvním kroku lze vybrat více oborů a příjmové pásmo ve třetím kroku je nepovinné.
-- Onboarding před registrací vytvoří konkrétní mini-plán se třemi doporučenými kroky. Poté následuje povinný e-mailový modal „Uložit plán zdarma“ bez možnosti zavření nebo přeskočení; návštěvník si vytvoří bezplatný profil, případně se přepne na přihlášení.
+- Onboarding před registrací vytvoří konkrétní mini-plán se třemi doporučenými pracovními aktivitami podle hlavního problému z dotazníku. Nejde o náhodnou live AI generaci; jde o stabilní doporučení s personalizovaným AI promptem, který obsahuje obor, fázi, příjmové pásmo a aktuální brzdu. Poté následuje povinný e-mailový modal „Uložit plán zdarma“ bez možnosti zavření nebo přeskočení; návštěvník si vytvoří bezplatný profil, případně se přepne na přihlášení.
 - Rozpracovaný onboarding se ukládá lokálně a po obnovení pokračuje ve stejném kroku.
 - Po uložení se na dashboardu zobrazí samostatná aktivační cesta s pěti reálnými úkoly: kompletní profil, první článek, první dotaz do Kenji AI, představení v komunitě a Foto feedback. Dashboard zdůrazňuje vždy jen jeden aktuální krok; hotové a následující kroky jsou zobrazené v kompaktní mapě bez opakovaných popisů.
 - Aktivační úkoly se dokončují podle skutečné uložené akce, ne pouhým ručním odškrtnutím, a XP používá jednorázové klíče.

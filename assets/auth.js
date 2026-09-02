@@ -494,7 +494,7 @@
       // Localhost (vývoj): magic link nefunguje → okamžitý vstup jako free, ať jde testovat.
       if (!isLive || IS_LOCAL) {
         saveUser({ email: email, instagram: '', tier: 'free' });
-        location.reload();
+        location.href = ROOT + 'index.html';
         return;
       }
 
@@ -700,12 +700,19 @@
   // ===================================================
   //  HLAVIČKA (přihlášený uživatel)
   // ===================================================
+  const LEVEL_THRESHOLDS = [0, 100, 500, 1500, 3000, 5000, 8000, 12000, 17000, 23000];
+  function levelOf(xp) {
+    xp = Math.max(0, Number(xp) || 0);
+    let level = 1;
+    for (let i = 0; i < LEVEL_THRESHOLDS.length; i++) if (xp >= LEVEL_THRESHOLDS[i]) level = i + 1;
+    return Math.min(LEVEL_THRESHOLDS.length, level);
+  }
   // Náhled vlastního profilu (jak tě zhruba vidí komunita). Úpravy v nastavení.
   function openSelfProfile() {
     if (document.querySelector('.selfp-modal')) return;
     let pc = {}; try { pc = JSON.parse(localStorage.getItem('kenji_profile_v1') || '{}') || {}; } catch (e) {}
     let xp = 0; try { const x = JSON.parse(localStorage.getItem('kenji_xp_v1') || '{}'); if (x && typeof x.xp === 'number') xp = x.xp; } catch (e) {}
-    const level = Math.floor(xp / 100) + 1;
+    const level = levelOf(xp);
     const ig = String(pc.instagram || (user && user.instagram) || '').replace(/^@+/, '');
     const name = String(pc.displayName || '').trim() || (ig ? '@' + ig : String((user && user.email) || '').split('@')[0]) || 'Tvůj profil';
     const avatar = String(pc.avatar || '').trim();
