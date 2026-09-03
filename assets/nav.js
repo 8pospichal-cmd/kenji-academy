@@ -271,7 +271,7 @@
         { id: 'novinky', label: 'Novinky', icon: 'diamond' },
         { id: 'slevy', label: 'Slevy', icon: 'tag' },
         { id: 'dotazy', label: 'Dotazy', icon: 'help' },
-        { id: 'predstav-se', label: 'Představ se', icon: 'user', free: true },
+        { id: 'predstav-se', label: 'Představ se', icon: 'user' },
         { id: 'uspechy', label: 'Úspěchy', icon: 'trophy' },
         { id: 'second-shooting', label: 'Second shooting', icon: 'users' }
       ];

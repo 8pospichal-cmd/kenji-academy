@@ -115,9 +115,11 @@
           industries: industries,
           industryOther: b.industryOther || '',
           experience: b.experience || '',
+          experienceOther: b.experienceOther || '',
           income: b.income || '',
           monthlyGoal: Number(b.goal) > 0 ? Number(b.goal) : null,
           blocker: b.blocker || '',
+          blockerOther: b.blockerOther || '',
           hasPortfolio: typeof b.portfolio === 'boolean' ? b.portfolio : null,
           hasWebsite: typeof b.web === 'boolean' ? b.web : null
         },

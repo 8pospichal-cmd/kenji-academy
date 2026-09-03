@@ -16,7 +16,7 @@
     { id: 'novinky', label: 'Novinky', icon: 'diamond', adminOnly: true },
     { id: 'slevy', label: 'Slevy', icon: 'tag', adminOnly: true },
     { id: 'dotazy', label: 'Dotazy', icon: 'help' },
-    { id: 'predstav-se', label: 'Představ se', icon: 'user', free: true },
+    { id: 'predstav-se', label: 'Představ se', icon: 'user' },
     { id: 'uspechy', label: 'Úspěchy', icon: 'trophy' },
     { id: 'second-shooting', label: 'Second shooting', icon: 'users' }
   ];
@@ -374,8 +374,8 @@
         '<div class="composer-bar">' +
           '<label class="composer-tool" title="Nahrát foto">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h.9l.8-1.3A1 1 0 0 1 9 4.2h6a1 1 0 0 1 .8.5l.8 1.3h.9A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"/><circle cx="12" cy="12.5" r="3.3"/></svg>' +
-            '<span>Nahrát foto</span>' +
-            '<input type="file" id="composer-file" accept="image/jpeg,image/png,image/webp" hidden></label>' +
+            '<span>Nahrát fotky</span>' +
+            '<input type="file" id="composer-file" accept="image/*" multiple hidden></label>' +
           '<input type="url" id="composer-link" class="composer-link" placeholder="Odkaz / YouTube (nepovinné)">' +
           '<select id="composer-cat" class="composer-cat">' + opts + '</select>' +
           '<button id="composer-send" class="composer-send">Publikovat</button>' +
@@ -486,6 +486,18 @@
     paint();
   }
 
+  // media_url je buď jedna adresa, nebo JSON pole adres (víc fotek v jednom příspěvku).
+  function parseMedia(value) {
+    const raw = String(value || '').trim();
+    if (raw.charAt(0) === '[') {
+      try {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) return list.filter((u) => typeof u === 'string' && u);
+      } catch (e) {}
+    }
+    return raw ? [raw] : [];
+  }
+
   function renderMedia(p) {
     if (p.legacy) {
       let html = '';
@@ -502,7 +514,17 @@
       }).join('');
       return html;
     }
-    if (p.media_type === 'image' && p.media_url) return '<div class="post-media"><img src="' + esc(p.media_url) + '" alt="" loading="lazy"></div>';
+    if (p.media_type === 'image' && p.media_url) {
+      // Víc fotek ukládáme jako JSON pole do stejného sloupce (databáze se nemění).
+      const shots = parseMedia(p.media_url);
+      if (shots.length > 1) {
+        return '<div class="post-media post-gallery count-' + Math.min(shots.length, 5) + '">' + shots.slice(0, 5).map((src) =>
+          '<button class="post-gallery-item" type="button" data-full="' + esc(src) + '" aria-label="Zvětšit fotografii"><img src="' + esc(src) + '" alt="" loading="lazy"></button>'
+        ).join('') + '</div>';
+      }
+      const only = shots[0] || p.media_url;
+      return '<div class="post-media post-gallery count-1"><button class="post-gallery-item" type="button" data-full="' + esc(only) + '" aria-label="Zvětšit fotografii"><img src="' + esc(only) + '" alt="" loading="lazy"></button></div>';
+    }
     if (p.media_type === 'youtube' && p.link_url) { const id = ytId(p.link_url); if (id) return '<div class="post-media post-yt"><iframe src="https://www.youtube-nocookie.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; }
     if (p.link_url) return '<a class="post-link" href="' + esc(p.link_url) + '" target="_blank" rel="noopener">🔗 ' + esc(p.link_url) + '</a>';
     return '';
@@ -683,7 +705,7 @@
   }
 
   // ---------- COMPOSER ----------
-  let pendingImageUrl = null;
+  let pendingImages = [];   // až 5 nahraných fotek k příspěvku
   function awardWeeklyChallengeXp() {
     if (!window.KenjiWeeklyChallenge) return false;
     const key = window.KenjiWeeklyChallenge.weekKey();
@@ -727,40 +749,95 @@
     const uploadErrorMessage = (error) => {
       const message = String((error && error.message) || '').toLowerCase();
       if (message.includes('bucket not found')) return 'Nahrávání fotek zatím není na serveru aktivní.';
-      if (message.includes('row-level security') || message.includes('unauthorized') || message.includes('jwt')) {
-        return 'Platnost přihlášení vypršela. Obnov stránku a ověř e-mail znovu.';
-      }
+      if (message.includes('format-unsupported')) return 'Tenhle formát fotky prohlížeč neumí zpracovat. Ulož ji prosím jako JPG a zkus to znovu.';
+      if (message.includes('too-large-after-compress')) return 'Foto je i po zmenšení moc velké. Zkus ho prosím uložit v menším rozlišení.';
+      if (message.includes('no-session') || message.includes('jwt') || message.includes('expired')) return 'Přihlášení na tomhle zařízení vypršelo. Načti stránku znovu a přihlas se.';
+      if (message.includes('row-level security') || message.includes('policy') || message.includes('unauthorized')) return 'Nahrání fotky server odmítl. Načti stránku znovu — když to bude trvat, napiš nám.';
       if (message.includes('mime') || message.includes('content type')) return 'Nahraj fotku ve formátu JPG, PNG nebo WebP.';
-      if (message.includes('maximum allowed size') || message.includes('too large')) return 'Foto je moc velké (max 6 MB).';
+      if (message.includes('maximum allowed size') || message.includes('too large')) return 'Foto je pro server moc velké (max 6 MB).';
       return 'Foto se nepovedlo nahrát. Zkus to prosím znovu.';
     };
 
+    // Bucket „post-media" bere jen JPG/PNG/WebP do 6 MB. iPhone posílá HEIC a některé
+    // androidí prohlížeče neposílají typ vůbec — proto se ptáme i na příponu.
+    const POST_MIME = /^image\/(jpeg|png|webp)$/;
+    const POST_MAX = 6 * 1024 * 1024;
+    const EXT_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+    const looksLikeImage = (f) => /^image\//.test(f.type || '') || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || '');
+    const uploadMime = (f) => {
+      if (POST_MIME.test(f.type || '')) return f.type;
+      return EXT_MIME[String(f.name || '').split('.').pop().toLowerCase()] || '';
+    };
+    // Prošlý token se projeví jako chyba oprávnění — jednou relaci obnovíme.
+    const freshUid = async () => {
+      let session = null;
+      if (A.liveSession) session = await A.liveSession();
+      else {
+        const c = await getSB(); if (!c) return '';
+        const r = await c.auth.getSession();
+        session = r && r.data ? r.data.session : null;
+      }
+      if (session && session.user) { sessionUserId = session.user.id; return session.user.id; }
+      return '';
+    };
+
+    const MAX_FOTEK = 5;
+
+    function renderPreview() {
+      if (!pendingImages.length) { preview.hidden = true; preview.innerHTML = ''; return; }
+      preview.hidden = false;
+      preview.innerHTML = '<div class="cp-grid">' + pendingImages.map((url, i) =>
+        '<div class="cp-thumb"><img src="' + esc(url) + '" alt=""><button class="cp-remove" type="button" data-remove="' + i + '" aria-label="Odebrat fotku">✕</button></div>'
+      ).join('') + '</div><span class="cp-count">' + pendingImages.length + ' z ' + MAX_FOTEK + ' fotek</span>';
+      preview.querySelectorAll('[data-remove]').forEach((btn) => btn.addEventListener('click', () => {
+        pendingImages.splice(Number(btn.getAttribute('data-remove')), 1);
+        renderPreview();
+      }));
+    }
+
+    async function uploadOne(f, client, uid) {
+      const small = window.KenjiImage ? await window.KenjiImage.compress(f, { maxDim: 2048, quality: 0.86 }) : f;
+      const mime = uploadMime(small);
+      if (!mime) throw new Error('format-unsupported');
+      if (small.size > POST_MAX) throw new Error('too-large-after-compress');
+      const ext = mime === 'image/png' ? 'png' : (mime === 'image/jpeg' ? 'jpg' : 'webp');
+      const path = uid + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const up = await client.storage.from('post-media').upload(path, small, { contentType: mime, upsert: false });
+      if (up.error) throw up.error;
+      return client.storage.from('post-media').getPublicUrl(path).data.publicUrl;
+    }
+
     fileInput.addEventListener('change', async () => {
-      const f = fileInput.files[0]; if (!f) return;
+      const vybrane = Array.from(fileInput.files || []);
+      fileInput.value = '';
+      if (!vybrane.length) return;
       errEl.hidden = true;
-      pendingImageUrl = null;
-      if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { showErr('Nahraj fotku ve formátu JPG, PNG nebo WebP.'); fileInput.value = ''; return; }
-      if (f.size > 25 * 1024 * 1024) { showErr('Foto je moc velké (max 25 MB).'); fileInput.value = ''; return; }
-      preview.hidden = false; preview.innerHTML = '<span class="cp-up">Zpracovávám foto…</span>';
+
+      const volno = MAX_FOTEK - pendingImages.length;
+      if (volno <= 0) { showErr('Víc než ' + MAX_FOTEK + ' fotek do jednoho příspěvku nejde.'); return; }
+      const davka = vybrane.slice(0, volno);
+      const oriznuto = vybrane.length - davka.length;
+
+      const spatny = davka.find((f) => !looksLikeImage(f));
+      if (spatny) { showErr('Vyber prosím jen obrázky (JPG, PNG nebo WebP).'); return; }
+      const velky = davka.find((f) => f.size > 25 * 1024 * 1024);
+      if (velky) { showErr('Fotka „' + velky.name + '" je moc velká (max 25 MB).'); return; }
+
+      preview.hidden = false;
+      preview.innerHTML = '<span class="cp-up">Zpracovávám ' + davka.length + (davka.length === 1 ? ' fotku…' : ' fotky…') + '</span>';
       try {
-        const small = window.KenjiImage ? await window.KenjiImage.compress(f, { maxDim: 1600, quality: 0.82 }) : f;
-        const c = await getSB();
-        if (!c || !sessionUserId) throw new Error('Unauthorized session');
-        preview.innerHTML = '<span class="cp-up">Nahrávám foto…</span>';
-        const ext = /png/.test(small.type) ? 'png' : (/jpeg/.test(small.type) ? 'jpg' : 'webp');
-        const path = sessionUserId + '/' + Date.now() + '.' + ext;
-        const up = await c.storage.from('post-media').upload(path, small, { contentType: small.type, upsert: false });
-        if (up.error) throw up.error;
-        const pub = c.storage.from('post-media').getPublicUrl(path);
-        pendingImageUrl = pub.data.publicUrl;
-        preview.innerHTML = '<img src="' + esc(pendingImageUrl) + '" alt=""><button class="cp-remove" type="button">✕ odebrat</button>';
-        preview.querySelector('.cp-remove').addEventListener('click', () => { pendingImageUrl = null; preview.hidden = true; preview.innerHTML = ''; fileInput.value = ''; });
+        const client = await getSB();
+        const uid = await freshUid();
+        if (!client || !uid) throw new Error('no-session');
+        for (let i = 0; i < davka.length; i++) {
+          preview.innerHTML = '<span class="cp-up">Nahrávám ' + (i + 1) + ' z ' + davka.length + '…</span>';
+          pendingImages.push(await uploadOne(davka[i], client, uid));
+        }
+        renderPreview();
+        if (oriznuto) showErr('Přidal jsem prvních ' + davka.length + '. Do jednoho příspěvku se vejde nejvýš ' + MAX_FOTEK + ' fotek.');
       } catch (e) {
         console.warn('upload', e);
-        pendingImageUrl = null;
-        fileInput.value = '';
-        preview.hidden = true;
-        preview.innerHTML = '';
+        renderPreview();
         showErr(uploadErrorMessage(e));
       }
     });
@@ -770,7 +847,7 @@
       const body = document.getElementById('composer-text').value.trim();
       const link = document.getElementById('composer-link').value.trim();
       const cat = document.getElementById('composer-cat').value;
-      if (!body && !pendingImageUrl && !link) { showErr('Napiš text, přidej foto nebo odkaz.'); return; }
+      if (!body && !pendingImages.length && !link) { showErr('Napiš text, přidej fotku nebo odkaz.'); return; }
       if (!canAccessCategory(cat)) { showErr('Do tohoto kanálu nemáš ve svém členství přístup.'); return; }
       // Týdenní výzva: jen jedna odpověď za týden (žádný spam).
       if (cat === 'tydenni-vyzva' && window.KenjiWeeklyChallenge) {
@@ -778,7 +855,9 @@
         var cs = {}; try { cs = JSON.parse(localStorage.getItem('kenji_challenge_v1') || '{}') || {}; } catch (_) {}
         if (wk && cs[wk]) { showErr('Na tuhle výzvu už jsi tento týden odpověděl — další zas příští týden. 💪'); return; }
       }
-      let media_url = pendingImageUrl, media_type = pendingImageUrl ? 'image' : null;
+      // Jedna fotka zůstává prostou adresou (zpětná kompatibilita), víc jich uložíme jako JSON pole.
+      let media_url = pendingImages.length ? (pendingImages.length === 1 ? pendingImages[0] : JSON.stringify(pendingImages)) : null;
+      let media_type = pendingImages.length ? 'image' : null;
       if (!media_url && link) { media_type = ytId(link) ? 'youtube' : 'link'; }
       const btn = document.getElementById('composer-send');
       btn.disabled = true; btn.textContent = 'Publikuju…';
@@ -792,8 +871,9 @@
         }
         document.getElementById('composer-text').value = '';
         document.getElementById('composer-link').value = '';
-        pendingImageUrl = null; preview.hidden = true; preview.innerHTML = '';
+        pendingImages = []; preview.hidden = true; preview.innerHTML = '';
         await loadFeed();
+        try { if (window.KenjiNotify) { window.KenjiNotify.markSeen(cat); window.KenjiNotify.refresh(true); } } catch (e4) {}
         if (weeklyXpAwarded) showWeeklyXpToast();
       } catch (e) {
         console.warn('create_post', e);
@@ -814,6 +894,8 @@
     if (searchQuery) url.searchParams.set('q', searchQuery); else url.searchParams.delete('q');
     history.replaceState({}, '', url);
     updateCategoryUI([]);
+    // Otevřený kanál označ za přečtený, ať zmizí červená značka.
+    try { if (window.KenjiNotify) window.KenjiNotify.markSeen(activeCat || null); } catch (e) {}
     const composerEl = document.querySelector('.composer');
     const searchEl = document.querySelector('.feed-search');
     const weeklyEl = document.getElementById('feed-weekly-challenge');

@@ -6,7 +6,7 @@
   var DIALOG_CONTENT = document.getElementById('admin-dialog-content');
   var A = window.KenjiAuth || {};
   var IS_LOCAL = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname);
-  var sb = null, started = false, view = 'people';
+  var sb = null, started = false, view = 'people', toolFilter = '', toolSort = 'money';
   var cache = { overview: null, users: [], tools: [], content: [], coupons: [] };
 
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
@@ -29,7 +29,11 @@
   function n(value) { return Number(value || 0).toLocaleString('cs-CZ'); }
   function label(value) { return ({ page_view:'Návštěva stránky',session_started:'Nová relace',registered:'Registrace',onboarding_completed:'Dokončený onboarding',quiz_started:'Spuštěný kvíz',quiz_completed:'Dokončený kvíz',audit_completed:'Dokončený audit',hourly_calculator_completed:'Spočítaná hodinovka',ai_question_sent:'Dotaz na Kenji AI',community_post_created:'Příspěvek v komunitě',checkout_started:'Zahájená objednávka',purchase_completed:'Dokončený nákup' })[value] || value || 'Událost'; }
   function typeLabel(value) { return ({ weekly_challenge:'Týdenní výzva',news:'Novinka',webinar:'Webinář',quiz:'Kvíz',audit:'Audit',hourly_calculator:'Hodinovka' })[value] || value; }
-  function head(eyebrow,title,description) { return '<div class="admin-view-head"><div><span class="admin-eyebrow">'+esc(eyebrow)+'</span><h1>'+esc(title)+'</h1><p>'+esc(description)+'</p></div><button class="admin-refresh" type="button" data-admin-refresh>Obnovit</button></div>'; }
+  var REFRESH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>';
+  function head(eyebrow,title,description) {
+    return '<div class="admin-view-head"><div><span class="admin-eyebrow">'+esc(eyebrow)+'</span><h1>'+esc(title)+'</h1><p>'+esc(description)+'</p></div>'+
+      '<button class="admin-refresh" type="button" data-admin-refresh title="Načíst čerstvá data" aria-label="Načíst čerstvá data">'+REFRESH_ICON+'<span data-refresh-label>Načíst data</span></button></div>';
+  }
   function chip(value) { return '<span class="admin-chip is-'+esc(value)+'">'+esc(value)+'</span>'; }
 
   function demoData() {
@@ -38,7 +42,7 @@
       recent_users:[{email:'klara@example.cz',display_name:'Klára',instagram:'klaravisual',tier:'free',account_status:'active',created_at:now.toISOString(),last_seen_at:now.toISOString()},{email:'david@example.cz',display_name:'David',instagram:'davidvideo',tier:'academy',account_status:'active',created_at:yesterday,last_seen_at:yesterday}],
       recent_events:[{event_name:'audit_completed',email:'klara@example.cz',source:'audit',created_at:now.toISOString()},{event_name:'quiz_completed',email:'david@example.cz',source:'quiz',created_at:yesterday}] };
     cache.users = cache.overview.recent_users.map(function(u,i){return Object.assign({},u,{role:'member',updated_at:u.created_at,quiz_completed:i===1,audit_completed:i===0,calculator_completed:false});});
-    cache.tools = [{id:'demo1',tool:'audit',claimed_email:'klara@example.cz',result:{level:'rozjizdi',goal:'prechod',brake:'klienti',current:18000,potential:43000},completed_at:now.toISOString()},{id:'demo2',tool:'quiz',user_email:'david@example.cz',result:{level:'business',score:13,total:15,passed:true},completed_at:yesterday}];
+    cache.tools = [{id:'demo1',tool:'audit',claimed_email:'klara@example.cz',result:{industries:['svatby','portret'],level:'rozjizdi',average_price:9000,jobs_per_month:2,hours_per_week:20,problems:['cena','klienti'],goal:'prechod',brake:'klienti',current:18000,potential:43000,annual_gap:300000},completed_at:now.toISOString()},{id:'demo2',tool:'quiz',user_email:'david@example.cz',result:{level:'business',level_name:'Byznys',score:13,total:15,passed:true},completed_at:yesterday},{id:'demo3',tool:'audit',user_email:'petra@example.cz',result:{industries:['firemni'],level:'zavedeny',average_price:24000,jobs_per_month:3,goal:'skalovat',brake:'cas',current:72000,potential:120000,annual_gap:576000},completed_at:yesterday},{id:'demo4',tool:'hourly_calculator',user_email:'tomas@example.cz',result:{billable_hours:90,hourly:1450,daily:11600,monthly_revenue:130500,monthly_taxes_and_levies:31000},completed_at:now.toISOString()}];
     cache.content = [{id:'demo-content',type:'weekly_challenge',title:'Ukaž svůj největší posun',body:'Sdílej jednu věc, kterou ses tento týden naučil.',status:'published',audience:'all',xp:50,starts_at:now.toISOString()}];
     cache.coupons = [{code:'NIKON20',description:'Partner Nikon',percent_off:20,products:['academy'],active:true,used_count:7,max_uses:50,valid_until:null}];
   }
@@ -78,7 +82,7 @@
 
   async function loadOverview() { cache.overview = await rpc('admin_overview'); }
   async function loadUsers(search,tier,status) { cache.users = await rpc('admin_list_users_v2',{p_search:search||null,p_tier:tier||null,p_status:status||null,p_limit:200,p_offset:0}) || []; }
-  async function loadTools(tool) { cache.tools = await rpc('admin_list_tool_submissions',{p_tool:tool||null,p_limit:200}) || []; }
+  async function loadTools(tool) { toolFilter = tool || ''; cache.tools = await rpc('admin_list_tool_submissions',{p_tool:tool||null,p_limit:1000}) || []; }
   async function loadContent() { cache.content = await rpc('admin_list_content',{p_type:null}) || []; }
   async function loadCoupons() { cache.coupons = await rpc('admin_list_coupons_v2') || []; }
 
@@ -185,13 +189,126 @@
       '<div class="admin-filters"><input class="admin-input" id="admin-user-search" placeholder="Hledat e-mail, jméno nebo Instagram"><select class="admin-select" id="admin-user-tier"><option value="">Všechny tiery</option><option>free</option><option>knihovna</option><option>academy</option></select><select class="admin-select" id="admin-user-status"><option value="">Všechny stavy</option><option>active</option><option>pending</option><option>paused</option><option>blocked</option></select><button class="admin-button" id="admin-user-filter">Filtrovat</button></div>'+usersTable(cache.users);
   }
 
-  function renderTools() {
-    var counts={quiz:0,audit:0,hourly_calculator:0}; cache.tools.forEach(function(x){counts[x.tool]=(counts[x.tool]||0)+1;});
-    ROOT.innerHTML = head('SIGNÁLY ZÁJMU','Nástroje','Dokončení a výsledky, podle kterých lze tvořit smysluplné segmenty.')+
-      '<p class="admin-notice">Výsledky zadané bez ověřené relace jsou označené jako neověřený e-mail. Detailní životní výdaje z kalkulačky se neukládají.</p>'+
-      '<div class="admin-tools-summary"><button class="active" data-tool-filter=""><span>Všechny výsledky</span><strong>'+n(cache.tools.length)+'</strong></button><button data-tool-filter="audit"><span>Audit</span><strong>'+n(counts.audit)+'</strong></button><button data-tool-filter="quiz"><span>Kvíz</span><strong>'+n(counts.quiz)+'</strong></button><button data-tool-filter="hourly_calculator"><span>Hodinovka</span><strong>'+n(counts.hourly_calculator)+'</strong></button></div>'+toolsTable(cache.tools);
+  // Kolik člověk měsíčně točí — audit i kalkulačka to počítají, jen jinak se to jmenuje.
+  function mesicniPrijem(row) {
+    var r = row.result || {};
+    if (row.tool === 'audit') return Number(r.current || 0);
+    if (row.tool === 'hourly_calculator') return Number(r.monthly_revenue || 0);
+    return 0;
   }
-  function toolsTable(rows){if(!rows.length)return '<div class="admin-empty">Zatím žádná dokončení.</div>';return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Nástroj</th><th>Člověk</th><th>Výsledek</th><th>Dokončeno</th></tr></thead><tbody>'+rows.map(function(x){var r=x.result||{};var summary=x.tool==='quiz'?((r.score||0)+' / '+(r.total||'—')):x.tool==='audit'?([r.level,r.goal,r.brake].filter(Boolean).join(' · ')||'audit dokončen'):(r.hourly?Math.round(r.hourly).toLocaleString('cs-CZ')+' Kč/h':'výpočet dokončen');return '<tr><td>'+chip(typeLabel(x.tool))+'</td><td><span class="admin-person"><strong>'+esc(x.user_email||x.claimed_email||'Anonymní')+'</strong><small>'+(x.user_email?'ověřeno':'neověřený e-mail')+'</small></span></td><td>'+esc(summary)+'</td><td>'+esc(date(x.completed_at,true))+'</td></tr>';}).join('')+'</tbody></table></div>';}
+  function potencial(row) {
+    var r = row.result || {};
+    return row.tool === 'audit' ? Number(r.potential || 0) : 0;
+  }
+  function kc(value) { return value ? n(Math.round(value)) + ' Kč' : '—'; }
+  function toolEmail(row) { return row.user_email || row.claimed_email || ''; }
+
+  function medianOf(list) {
+    if (!list.length) return 0;
+    var a = list.slice().sort(function (x, y) { return x - y; });
+    var mid = Math.floor(a.length / 2);
+    return a.length % 2 ? a[mid] : Math.round((a[mid - 1] + a[mid]) / 2);
+  }
+
+  // Souhrn, který vede k akci: kdo má na Academy peníze už teď.
+  function moneyRow(rows) {
+    var prijmy = rows.map(mesicniPrijem).filter(function (v) { return v > 0; });
+    if (!prijmy.length) return '';
+    var bohati = prijmy.filter(function (v) { return v >= 50000; }).length;
+    var gap = rows.reduce(function (sum, r) { return sum + Math.max(0, potencial(r) - mesicniPrijem(r)); }, 0);
+    return '<div class="admin-kpis admin-kpis-4">' +
+      kpi('Uvedlo příjem', prijmy.length, 'z ' + n(rows.length) + ' vyplnění') +
+      kpi('Medián měsíčně', medianOf(prijmy), 'Kč / měsíc') +
+      kpi('Nad 50 000 Kč', bohati, 'na Academy mají') +
+      kpi('Nevyužitý potenciál', Math.round(gap), 'Kč / měsíc dohromady') +
+    '</div>';
+  }
+
+  function renderTools() {
+    var counts = { quiz:0, audit:0, hourly_calculator:0 };
+    cache.tools.forEach(function (x) { counts[x.tool] = (counts[x.tool] || 0) + 1; });
+    var rows = cache.tools.slice();
+    if (toolSort === 'money') rows.sort(function (a, b) { return mesicniPrijem(b) - mesicniPrijem(a); });
+    else rows.sort(function (a, b) { return new Date(b.completed_at) - new Date(a.completed_at); });
+
+    ROOT.innerHTML = head('SIGNÁLY ZÁJMU','Nástroje','Kdo co vyplnil, kolik točí a kde má rezervu. Seřaď podle příjmu a máš seznam lidí, kterým dává smysl nabídnout Academy.')+
+      '<div class="admin-tools-summary">'+
+        toolTab('', 'Všechny výsledky', cache.tools.length)+
+        toolTab('audit', 'Audit', counts.audit)+
+        toolTab('quiz', 'Kvíz', counts.quiz)+
+        toolTab('hourly_calculator', 'Hodinovka', counts.hourly_calculator)+
+      '</div>'+
+      moneyRow(cache.tools)+
+      '<div class="admin-sortbar">Řadit podle: '+
+        '<button type="button" data-tool-sort="money"'+(toolSort==='money'?' class="is-on"':'')+'>nejvyššího příjmu</button>'+
+        '<button type="button" data-tool-sort="date"'+(toolSort==='date'?' class="is-on"':'')+'>data vyplnění</button>'+
+      '</div>'+
+      '<p class="admin-notice">Klikni na řádek a uvidíš všechno, co člověk vyplnil. Výsledky bez ověřené relace jsou označené jako neověřený e-mail.</p>'+
+      toolsTable(rows);
+  }
+  function toolTab(id, label, count) {
+    return '<button'+(toolFilter===id?' class="active"':'')+' data-tool-filter="'+id+'"><span>'+esc(label)+'</span><strong>'+n(count)+'</strong></button>';
+  }
+
+  function toolsTable(rows) {
+    if (!rows.length) return '<div class="admin-empty">Zatím žádná dokončení.</div>';
+    return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'+
+      '<th>Nástroj</th><th>Člověk</th><th>Měsíčně teď</th><th>Potenciál</th><th>Situace</th><th>Dokončeno</th>'+
+      '</tr></thead><tbody>'+rows.map(toolRow).join('')+'</tbody></table></div>';
+  }
+
+  function toolRow(x) {
+    var r = x.result || {};
+    var email = toolEmail(x);
+    var situace = x.tool === 'quiz'
+      ? ((r.level_name || r.level || 'kvíz') + ' · ' + (r.score || 0) + '/' + (r.total || '—') + (r.passed ? ' ✓' : ''))
+      : x.tool === 'audit'
+        ? ([r.level, r.goal, r.brake].filter(Boolean).join(' · ') || 'audit dokončen')
+        : (r.hourly ? Math.round(r.hourly).toLocaleString('cs-CZ') + ' Kč/h' : 'výpočet dokončen');
+    var prijem = mesicniPrijem(x), pot = potencial(x);
+    return '<tr data-tool-row="'+esc(x.id)+'">'+
+      '<td>'+chip(typeLabel(x.tool))+'</td>'+
+      '<td><span class="admin-person"><strong>'+esc(email || 'Anonymní')+'</strong><small>'+(x.user_email?'ověřeno':'neověřený e-mail')+'</small></span></td>'+
+      '<td'+(prijem>=50000?' class="is-hot"':'')+'>'+kc(prijem)+'</td>'+
+      '<td>'+kc(pot)+'</td>'+
+      '<td>'+esc(situace)+'</td>'+
+      '<td>'+esc(date(x.completed_at,true))+'</td>'+
+    '</tr>';
+  }
+
+  // Rozklikni řádek → uvidíš úplně všechno, co člověk zadal.
+  var POLE = {
+    industries:'Obory', level:'Úroveň', level_name:'Úroveň', average_price:'Průměrná cena zakázky',
+    jobs_per_month:'Zakázek měsíčně', hours_per_week:'Hodin týdně', problems:'Co ho brzdí',
+    goal:'Cíl', brake:'Hlavní brzda', current:'Měsíčně teď', potential:'Potenciál měsíčně',
+    annual_gap:'Rozdíl za rok', hourly:'Hodinovka', daily:'Denní sazba',
+    monthly_revenue:'Měsíční obrat', monthly_taxes_and_levies:'Daně a odvody měsíčně',
+    billable_hours:'Fakturovatelných hodin', score:'Skóre', total:'Otázek', passed:'Prošel'
+  };
+  var PENIZE = { average_price:1, current:1, potential:1, annual_gap:1, hourly:1, daily:1, monthly_revenue:1, monthly_taxes_and_levies:1 };
+  function toggleTool(id, rowEl) {
+    var open = rowEl.nextElementSibling;
+    if (open && open.classList.contains('admin-inline-detail-row')) { open.remove(); return; }
+    document.querySelectorAll('.admin-inline-detail-row').forEach(function (el) { el.remove(); });
+    var item = cache.tools.find(function (x) { return String(x.id) === String(id); });
+    if (!item) return;
+    var r = item.result || {};
+    var radky = Object.keys(r).map(function (k) {
+      var v = r[k];
+      if (v === null || v === '' || (Array.isArray(v) && !v.length)) return '';
+      if (Array.isArray(v)) v = v.join(', ');
+      else if (typeof v === 'boolean') v = v ? 'ano' : 'ne';
+      else if (PENIZE[k] && Number(v)) v = n(Math.round(Number(v))) + ' Kč';
+      return '<div class="admin-kv"><span>'+esc(POLE[k] || k)+'</span><strong>'+esc(v)+'</strong></div>';
+    }).join('');
+    var tr = document.createElement('tr');
+    tr.className = 'admin-inline-detail-row';
+    tr.innerHTML = '<td colspan="6"><div class="admin-inline-detail"><div class="admin-kv-grid">'+
+      (radky || '<div class="admin-kv"><span>Bez detailu</span><strong>—</strong></div>')+'</div>'+
+      (toolEmail(item) ? '<div class="admin-inline-fields"><a class="admin-button secondary" href="mailto:'+esc(toolEmail(item))+'">Napsat e-mail</a></div>' : '')+
+    '</div></td>';
+    rowEl.parentNode.insertBefore(tr, rowEl.nextSibling);
+  }
 
   function renderContent() {
     ROOT.innerHTML = head('PUBLIKOVÁNÍ','Obsah','Výzvy, novinky a webináře na jednom místě.')+
@@ -291,13 +408,51 @@
 
   document.addEventListener('click',async function(e){
     var viewButton=e.target.closest('[data-admin-view]');if(viewButton){view=viewButton.getAttribute('data-admin-view');ROOT.innerHTML='<div class="admin-loading">Načítám…</div>';try{if(view==='people'){if(!cache.overview)await loadOverview();if(!cache.users.length)await loadUsers();}if(view==='activity'&&!cache.overview)await loadOverview();if(view==='tools'&&!cache.tools.length)await loadTools();if(view==='content'&&!cache.content.length)await loadContent();if(view==='coupons'&&!cache.coupons.length)await loadCoupons();render();}catch(err){fail(err);}return;}
-    if(e.target.closest('[data-admin-refresh]')){try{if(view==='people'){await loadOverview();await loadUsers();}if(view==='activity')await loadOverview();if(view==='tools')await loadTools();if(view==='content')await loadContent();if(view==='coupons')await loadCoupons();render();}catch(err){fail(err);}return;}
+    var refreshBtn=e.target.closest('[data-admin-refresh]');
+    if(refreshBtn){
+      refreshBtn.disabled=true; refreshBtn.classList.add('is-loading');
+      var lbl=refreshBtn.querySelector('[data-refresh-label]'); if(lbl) lbl.textContent='Načítám…';
+      try{
+        if(IS_LOCAL){ demoData(); }
+        else {
+          if(view==='people'){await loadOverview();await loadUsers();}
+          if(view==='activity')await loadOverview();
+          if(view==='tools')await loadTools(toolFilter);
+          if(view==='content')await loadContent();
+          if(view==='coupons')await loadCoupons();
+        }
+        render();
+        // render() postavil tlačítko znovu — potvrzení zapiš do toho nového.
+        var fresh=document.querySelector('[data-admin-refresh]');
+        if(fresh){
+          fresh.classList.add('is-done');
+          var freshLbl=fresh.querySelector('[data-refresh-label]');
+          if(freshLbl) freshLbl.textContent='Aktuální ✓';
+          setTimeout(function(){
+            var el=document.querySelector('[data-admin-refresh]');
+            if(el){el.classList.remove('is-done');var l=el.querySelector('[data-refresh-label]');if(l)l.textContent='Načíst data';}
+          },1800);
+        }
+      }catch(err){
+        console.warn('obnova dat',err);
+        var bad=document.querySelector('[data-admin-refresh]')||refreshBtn;
+        bad.disabled=false; bad.classList.remove('is-loading'); bad.classList.add('is-error');
+        var badLbl=bad.querySelector('[data-refresh-label]'); if(badLbl) badLbl.textContent='Nenačteno';
+        setTimeout(function(){
+          var el=document.querySelector('[data-admin-refresh]');
+          if(el){el.classList.remove('is-error');var l=el.querySelector('[data-refresh-label]');if(l)l.textContent='Načíst data';}
+        },2600);
+      }
+      return;
+    }
     var qb=e.target.closest('[data-quick-block]');if(qb){var qbEmail=qb.getAttribute('data-quick-block');var qbUser=cache.users.find(function(x){return x.email===qbEmail;});var newStatus=(qbUser&&qbUser.account_status==='blocked')?'active':'blocked';if(qbUser)qbUser.account_status=newStatus;try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:qbEmail,p_status:newStatus});}catch(err){fail(err);return;}renderPeople();return;}
     var qlink=e.target.closest('[data-quick-link]');if(qlink){var lEmail=qlink.getAttribute('data-quick-link');qlink.disabled=true;try{if(IS_LOCAL){alert('(Lokálně) Přihlašovací odkaz by šel na: '+lEmail);}else{var A=window.KenjiAuth;if(A&&A.requestMagicLink){var r=await A.requestMagicLink(lEmail,{redirect:'index.html'});if(!r||!r.ok)throw new Error('nepovedlo se odeslat');}alert('Přihlašovací odkaz odeslán na '+lEmail);}}catch(err){alert('Odkaz se nepovedlo odeslat: '+((err&&err.message)||'chyba'));}qlink.disabled=false;return;}
     var saveDetail=e.target.closest('[data-detail-save]');if(saveDetail){var sEmail=saveDetail.getAttribute('data-detail-save');var wrap=saveDetail.closest('.admin-inline-detail');var sTier=wrap.querySelector('[data-d="tier"]').value,sRole=wrap.querySelector('[data-d="role"]').value,sStatus=wrap.querySelector('[data-d="status"]').value;var dmsg=wrap.querySelector('[data-detail-msg]');saveDetail.disabled=true;try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:sEmail,p_tier:sTier,p_role:sRole,p_status:sStatus});var su=cache.users.find(function(x){return x.email===sEmail;});if(su){su.tier=sTier;su.role=sRole;su.account_status=sStatus;}if(dmsg){dmsg.textContent='Uloženo ✓';dmsg.className='admin-inline-msg is-ok';}setTimeout(function(){renderPeople();},600);}catch(err){if(dmsg){dmsg.textContent='Nepovedlo se uložit.';dmsg.className='admin-inline-msg is-err';}saveDetail.disabled=false;}return;}
     var row=e.target.closest('tr[data-email]');if(row&&!e.target.closest('[data-noopen]')){toggleUser(row.getAttribute('data-email'),row).catch(fail);return;}
     if(e.target.id==='admin-user-filter'){await loadUsers(document.getElementById('admin-user-search').value,document.getElementById('admin-user-tier').value,document.getElementById('admin-user-status').value);renderPeople();return;}
-    var tool=e.target.closest('[data-tool-filter]');if(tool){await loadTools(tool.getAttribute('data-tool-filter'));renderTools();return;}
+    var tool=e.target.closest('[data-tool-filter]');if(tool){try{await loadTools(tool.getAttribute('data-tool-filter'));}catch(err){fail(err);return;}renderTools();return;}
+    var sortBtn=e.target.closest('[data-tool-sort]');if(sortBtn){toolSort=sortBtn.getAttribute('data-tool-sort');renderTools();return;}
+    var toolRowEl=e.target.closest('tr[data-tool-row]');if(toolRowEl){toggleTool(toolRowEl.getAttribute('data-tool-row'),toolRowEl);return;}
     var editItem=e.target.closest('[data-content-edit]');if(editItem){editContent(editItem.getAttribute('data-content-edit'));return;}
     if(e.target.closest('[data-content-reset]')){resetContentForm();return;}
     var delContent=e.target.closest('[data-content-delete]');if(delContent&&confirm('Opravdu smazat tento obsah?')){if(!IS_LOCAL)await rpc('admin_delete_content',{p_id:delContent.getAttribute('data-content-delete')});cache.content=cache.content.filter(function(x){return x.id!==delContent.getAttribute('data-content-delete');});renderContent();return;}

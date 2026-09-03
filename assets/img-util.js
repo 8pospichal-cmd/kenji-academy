@@ -28,15 +28,26 @@
     });
   }
 
+  // createImageBitmap dekóduje soubor přímo, bez mezikroku přes base64. Na mobilu tím
+  // ušetříme desítky MB paměti (velká fotka jako data URL je ~1,3× větší než originál)
+  // a v některých prohlížečích zvládne i formáty, na které <img> nestačí.
+  async function decode(file) {
+    if (typeof createImageBitmap === 'function') {
+      try { return await createImageBitmap(file); } catch (e) {}
+    }
+    return await loadImage(await readAsDataURL(file));
+  }
+
   async function compress(file, opts) {
     opts = opts || {};
     var maxDim = opts.maxDim || 1600;
     var quality = opts.quality || 0.82;
     var type = opts.type || 'image/webp';
     try {
-      if (!file || !/^image\//.test(file.type) || file.type === 'image/gif') return file;
-      var dataUrl = await readAsDataURL(file);
-      var img = await loadImage(dataUrl);
+      if (!file || file.type === 'image/gif') return file;
+      // Typ nehlídáme podle MIME — Android ho často neposílá a iPhone hlásí HEIC.
+      // Když to prohlížeč umí dekódovat, převedeme to; když ne, vrátíme originál.
+      var img = await decode(file);
       var w = img.naturalWidth || img.width;
       var h = img.naturalHeight || img.height;
       if (!w || !h) return file;
@@ -50,6 +61,7 @@
       var ctx = canvas.getContext('2d');
       if (!ctx) return file;
       ctx.drawImage(img, 0, 0, w, h);
+      if (img.close) { try { img.close(); } catch (e) {} }
       var blob = await toBlob(canvas, type, quality);
       // Fallback na JPEG, kdyby prohlížeč WebP z canvasu neuměl.
       if (!blob && type !== 'image/jpeg') { type = 'image/jpeg'; blob = await toBlob(canvas, type, quality); }

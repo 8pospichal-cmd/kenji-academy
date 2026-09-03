@@ -324,6 +324,25 @@
     return { ok: true };
   }
 
+  // Session s JISTĚ platným tokenem.
+  //
+  // getSession() vrátí uloženou session i tehdy, když je přístupový token už prošlý —
+  // automatické obnovení mohlo selhat (uspaný telefon, výpadek sítě, obnovená záložka).
+  // Takový token pak odejde na server, auth.uid() je NULL a Storage zápis odmítne
+  // jako porušení pravidel oprávnění. Proto expiraci kontrolujeme sami.
+  async function liveSession() {
+    const sb = await getSupabase();
+    if (!sb) return null;
+    let session = null;
+    try { const r = await sb.auth.getSession(); session = r && r.data ? r.data.session : null; } catch (e) {}
+    const expiresAt = session && Number(session.expires_at || 0);
+    const expiringSoon = !expiresAt || (expiresAt * 1000) - Date.now() < 60000;
+    if (!session || expiringSoon) {
+      try { const r2 = await sb.auth.refreshSession(); if (r2 && r2.data && r2.data.session) session = r2.data.session; } catch (e) {}
+    }
+    return session;
+  }
+
   // Přihlášení heslem. Heslo je NEPOVINNÉ zrychlení — kdo si ho nenastavil, jede dál odkazem.
   // Supabase na neexistující i bezheslový účet vrací stejné `invalid_credentials`, proto to
   // volajícímu hlásíme zvlášť, ať můžeme nabídnout odkaz místo hlášky „špatné heslo".
@@ -1174,6 +1193,7 @@
     updateUserProfile: updateUserProfile,
     saveProfile: saveProfileRemote,   // dashboard po dokončení onboardingu pošle profil na server
     getProfile: getProfileRemote,
+    liveSession: liveSession,   // session s ověřeně platným tokenem (pro Storage zápisy)
     setPassword: setAccountPassword,
     requestPasswordReset: requestPasswordReset,
     // Chybový hash z odkazu mažeme hned při startu, tak ho vystavíme — jinak by ho

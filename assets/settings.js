@@ -119,15 +119,12 @@
     return EXT_MIME[ext] || '';
   }
 
-  // Vrátí platnou session; když je token prošlý, jednou ji obnoví.
+  // Session s jistě platným tokenem — hlídá i expiraci, ne jen přítomnost.
   async function freshSession() {
+    if (A.liveSession) return await A.liveSession();
     var c = await getSB(); if (!c) return null;
     var r = await c.auth.getSession();
-    var session = r && r.data ? r.data.session : null;
-    if (!session) {
-      try { var r2 = await c.auth.refreshSession(); session = r2 && r2.data ? r2.data.session : null; } catch (e) {}
-    }
-    return session;
+    return r && r.data ? r.data.session : null;
   }
 
   fileInput.addEventListener('change', async function () {
@@ -160,14 +157,14 @@
 
       var ext = mime === 'image/png' ? 'png' : (mime === 'image/jpeg' ? 'jpg' : 'webp');
       var path = uid + '/' + Date.now() + '.' + ext;
-      var up = await c.storage.from('avatars').upload(path, small, { contentType: mime, upsert: true });
+      var up = await c.storage.from('avatars').upload(path, small, { contentType: mime, upsert: false });
 
       // Prošlý token se projeví jako chyba oprávnění — obnov session a zkus to ještě jednou.
       if (up.error && /jwt|expired|unauthorized|row-level|policy/i.test(String(up.error.message || ''))) {
         var again = await freshSession();
         if (again && again.user) {
           path = again.user.id + '/' + Date.now() + '.' + ext;
-          up = await c.storage.from('avatars').upload(path, small, { contentType: mime, upsert: true });
+          up = await c.storage.from('avatars').upload(path, small, { contentType: mime, upsert: false });
         }
       }
       if (up.error) throw up.error;
@@ -179,7 +176,11 @@
       var m = String((e && e.message) || '').toLowerCase();
       if (m.indexOf('bucket not found') >= 0) msg('Úložiště fotek zatím není na serveru aktivní.', true);
       else if (m.indexOf('no-session') >= 0 || m.indexOf('jwt') >= 0 || m.indexOf('expired') >= 0) msg('Přihlášení na tomhle zařízení vypršelo. Načti stránku znovu a přihlas se.', true);
-      else if (m.indexOf('row-level') >= 0 || m.indexOf('policy') >= 0 || m.indexOf('unauthorized') >= 0) msg('Nahrání fotky server odmítl. Načti stránku znovu — když to bude trvat, napiš nám.', true);
+      else if (m.indexOf('row-level') >= 0 || m.indexOf('policy') >= 0 || m.indexOf('unauthorized') >= 0) {
+        // Přesný důvod od serveru ukážeme taky — bez něj se tahle chyba nedá dohledat.
+        var detail = String((e && (e.message || e.error)) || '').slice(0, 90);
+        msg('Nahrání fotky server odmítl' + (detail ? ' (' + detail + ')' : '') + '. Napiš nám to prosím i s touhle hláškou.', true);
+      }
       else if (m.indexOf('maximum allowed size') >= 0 || m.indexOf('too large') >= 0 || m.indexOf('413') >= 0) msg('Fotka je pro server moc velká. Zkus menší rozlišení.', true);
       else if (m.indexOf('mime') >= 0) msg('Tenhle formát fotky server nepřijímá. Ulož ji jako JPG a zkus to znovu.', true);
       else msg('Fotku se nepovedlo nahrát. Zkus to prosím znovu.', true);
@@ -249,12 +250,13 @@
   ];
   var FOCUS_EXPERIENCES = [
     { id: 'start', label: 'Začínám' }, { id: 'practice', label: 'Tvořím pro sebe' },
-    { id: 'clients', label: 'Mám zakázky' }, { id: 'fulltime', label: 'Živím se tím' }
+    { id: 'clients', label: 'Mám zakázky' }, { id: 'fulltime', label: 'Živím se tím' },
+    { id: 'jine', label: 'Něco jiného' }
   ];
   var FOCUS_BLOCKERS = [
     { id: 'klienti', label: 'Málo poptávek / klientů' }, { id: 'cena', label: 'Nízké ceny / neumím říct o víc' },
     { id: 'portfolio', label: 'Slabé portfolio / positioning' }, { id: 'cas', label: 'Chaos / nemám systém' },
-    { id: 'zacatek', label: 'Úplný začátek, nevím kde začít' }
+    { id: 'zacatek', label: 'Úplný začátek, nevím kde začít' }, { id: 'jine', label: 'Něco jiného' }
   ];
   function bizGet() { try { return JSON.parse(localStorage.getItem(BIZ_KEY) || '{}') || {}; } catch (e) { return {}; } }
 
@@ -281,8 +283,16 @@
         '</div>' +
         '<label class="set-label">Kde jsi teď</label>' +
         '<div class="set-focus-chips" data-group="experience">' + chips(FOCUS_EXPERIENCES, b.experience || '', 'experience', false) + '</div>' +
+        '<div id="set-exp-other-wrap"' + (b.experience === 'jine' ? '' : ' hidden') + '>' +
+          '<label class="set-label" for="set-exp-other">Napiš, kde jsi</label>' +
+          '<input class="set-input" id="set-exp-other" maxlength="120" placeholder="Např. vracím se po pauze, měním obor…" value="' + esc(b.experienceOther || '') + '">' +
+        '</div>' +
         '<label class="set-label">Co teď nejvíc řešíš</label>' +
         '<div class="set-focus-chips" data-group="blocker">' + chips(FOCUS_BLOCKERS, b.blocker || '', 'blocker', false) + '</div>' +
+        '<div id="set-blk-other-wrap"' + (b.blocker === 'jine' ? '' : ' hidden') + '>' +
+          '<label class="set-label" for="set-blk-other">Napiš, co řešíš</label>' +
+          '<input class="set-input" id="set-blk-other" maxlength="120" placeholder="Např. nestíhám editovat, bojím se oslovit klienty…" value="' + esc(b.blockerOther || '') + '">' +
+        '</div>' +
         '<div class="set-bar"><span class="set-msg" id="set-focus-msg"></span><button class="set-save" id="set-focus-save">Uložit zaměření</button></div>' +
       '</div>';
     wireFocus();
@@ -301,10 +311,14 @@
           host.querySelectorAll('[data-focus="' + kind + '"]').forEach(function (o) { o.classList.remove('on'); });
           btn.classList.add('on');
         }
-        // „Něco jiného" → zobraz textové pole
-        var jine = host.querySelector('[data-focus="industries"][data-id="jine"]');
-        var wrap = document.getElementById('set-focus-other-wrap');
-        if (wrap) wrap.hidden = !(jine && jine.classList.contains('on'));
+        // „Něco jiného" → zobraz textové pole (u všech tří otázek)
+        function prepni(vyber, wrapId) {
+          var chip = host.querySelector(vyber), wrap = document.getElementById(wrapId);
+          if (wrap) wrap.hidden = !(chip && chip.classList.contains('on'));
+        }
+        prepni('[data-focus="industries"][data-id="jine"]', 'set-focus-other-wrap');
+        prepni('[data-focus="experience"][data-id="jine"]', 'set-exp-other-wrap');
+        prepni('[data-focus="blocker"][data-id="jine"]', 'set-blk-other-wrap');
       });
     });
     document.getElementById('set-focus-save').addEventListener('click', function () {
@@ -317,7 +331,13 @@
       var blkOn = host.querySelector('[data-focus="blocker"].on');
       b.blocker = blkOn ? blkOn.getAttribute('data-id') : '';
       var otherEl = document.getElementById('set-focus-other');
+      var expOther = document.getElementById('set-exp-other');
+      var blkOther = document.getElementById('set-blk-other');
       b.industryOther = (b.industries.indexOf('jine') >= 0 && otherEl) ? otherEl.value.trim() : '';
+      b.experienceOther = (b.experience === 'jine' && expOther) ? expOther.value.trim() : '';
+      b.blockerOther = (b.blocker === 'jine' && blkOther) ? blkOther.value.trim() : '';
+      if (b.experience === 'jine' && !b.experienceOther) { if (fmsg) { fmsg.textContent = 'Napiš prosím, kde se právě nacházíš.'; fmsg.style.color = '#ff6b6b'; } btn.disabled = false; expOther && expOther.focus(); return; }
+      if (b.blocker === 'jine' && !b.blockerOther) { if (fmsg) { fmsg.textContent = 'Napiš prosím, co teď řešíš.'; fmsg.style.color = '#ff6b6b'; } btn.disabled = false; blkOther && blkOther.focus(); return; }
       try { localStorage.setItem(BIZ_KEY, JSON.stringify(b)); } catch (e) {}
       try { if (A.saveProfile) A.saveProfile(b); } catch (e2) {}
       if (fmsg) { fmsg.textContent = 'Uloženo ✓'; fmsg.style.color = 'var(--text-mute)'; }

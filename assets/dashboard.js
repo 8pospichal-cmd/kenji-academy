@@ -71,16 +71,27 @@
     { id: 'start', label: 'Začínám' },
     { id: 'practice', label: 'Tvořím pro sebe' },
     { id: 'clients', label: 'Mám zakázky' },
-    { id: 'fulltime', label: 'Živím se tím' }
+    { id: 'fulltime', label: 'Živím se tím' },
+    { id: 'jine', label: 'Něco jiného' }
   ];
   function experienceLabel(id) { for (var i = 0; i < EXPERIENCES.length; i++) if (EXPERIENCES[i].id === id) return EXPERIENCES[i].label; return EXPERIENCES[0].label; }
+  // Když si člověk zvolil „Něco jiného", pracujeme dál s tím, co sám napsal.
+  function experienceText(b) {
+    b = b || {};
+    return (b.experience === 'jine' && (b.experienceOther || '').trim()) ? b.experienceOther.trim() : experienceLabel(b.experience);
+  }
+  function blockerText(b) {
+    b = b || {};
+    return (b.blocker === 'jine' && (b.blockerOther || '').trim()) ? b.blockerOther.trim() : blocker(b.blocker).focus;
+  }
 
   var BLOCKERS = [
     { id: 'klienti', label: 'Málo poptávek / klientů', focus: 'získávání klientů' },
     { id: 'cena', label: 'Nízké ceny / neumím říct o víc', focus: 'ceny a nabídka' },
     { id: 'portfolio', label: 'Slabé portfolio / positioning', focus: 'portfolio a positioning' },
     { id: 'cas', label: 'Chaos / nemám systém', focus: 'systém a čas' },
-    { id: 'zacatek', label: 'Úplný začátek, nevím kde začít', focus: 'rozjezd' }
+    { id: 'zacatek', label: 'Úplný začátek, nevím kde začít', focus: 'rozjezd' },
+    { id: 'jine', label: 'Něco jiného', focus: 'to, co tě zrovna brzdí' }
   ];
   function blocker(id) { for (var i = 0; i < BLOCKERS.length; i++) if (BLOCKERS[i].id === id) return BLOCKERS[i]; return BLOCKERS[0]; }
 
@@ -190,7 +201,7 @@
     return '<section class="co-card co-learning-hub" data-tour="database">' +
       '<div class="co-card-head"><div><span class="co-learning-kicker">DATABÁZE PRO TEBE</span><h2 class="co-card-title">' + (last ? 'Pokračuj, kde jsi skončil' : 'Začni jedním správným krokem') + '</h2></div><span class="co-count">' + read.length + ' / ' + total + '</span></div>' +
       '<div class="co-learning-main">' +
-        '<div class="co-learning-reason"><span>' + (last ? 'ROZDĚLANÝ ČLÁNEK' : 'DOPORUČENO PRO TVŮJ CÍL') + '</span><p>' + (last ? 'Nemusíš znovu hledat. Navážeme přesně tam, kde jsi přestal.' : 'Teď řešíš <strong>' + esc(blocker(b.blocker).focus) + '</strong>. Tohle je nejkratší cesta k dalšímu posunu.') + '</p></div>' +
+        '<div class="co-learning-reason"><span>' + (last ? 'ROZDĚLANÝ ČLÁNEK' : 'DOPORUČENO PRO TVŮJ CÍL') + '</span><p>' + (last ? 'Nemusíš znovu hledat. Navážeme přesně tam, kde jsi přestal.' : 'Teď řešíš <strong>' + esc(blockerText(b)) + '</strong>. Tohle je nejkratší cesta k dalšímu posunu.') + '</p></div>' +
         (primary ? '<a class="co-learning-primary" href="' + esc(articleUrl(primary, !!last)) + '"><span class="co-content-icon">' + esc(primary.icon) + '</span><span class="co-content-main"><strong>' + esc(primary.title) + '</strong><span>' + esc(primary.desc) + '</span></span><span class="co-content-arrow">→</span></a>' : '') +
       '</div>' +
       (last ? '<div class="co-content-progress"><i style="width:' + primaryProgress + '%"></i></div>' : '') +
@@ -221,8 +232,8 @@
     todosSet(tasks);
   }
   function contextualAiPrompt(task, b) {
-    var intro = 'Jsem ' + (industryNames(b) || 'vizuální tvůrce') + ', jsem ve fázi „' + experienceLabel(b.experience) + '“';
-    var focus = b.blocker ? ' a teď řeším ' + blocker(b.blocker).focus : '';
+    var intro = 'Jsem ' + (industryNames(b) || 'vizuální tvůrce') + ', jsem ve fázi „' + experienceText(b) + '“';
+    var focus = b.blocker ? ' a teď řeším ' + blockerText(b) : '';
     var income = b.income ? '. Můj příjem z tvorby je ' + incomeLabel(b.income) : '';
     return intro + focus + income + '. Můj aktuální úkol je: „' + task.text + '“. Dej mi konkrétní postup na tento týden, stručně a prakticky.';
   }
@@ -358,7 +369,7 @@
   }
 
   function activationTasks(b) {
-    var aiPrompt = 'Jsem ' + (industryNames(b) || 'vizuální tvůrce') + ', jsem ve fázi „' + experienceLabel(b.experience) + '“ a teď řeším ' + blocker(b.blocker).focus + '. Pomoz mi vybrat jeden konkrétní krok, který zvládnu tento týden.';
+    var aiPrompt = 'Jsem ' + (industryNames(b) || 'vizuální tvůrce') + ', jsem ve fázi „' + experienceText(b) + '“ a teď řeším ' + blockerText(b) + '. Pomoz mi vybrat jeden konkrétní krok, který zvládnu tento týden.';
     var rec = (FOCUS_ARTICLES[b.blocker] || []).map(article).filter(function (item) { return item && isFree(item.slug); })[0] || article('expozice');
     var ai = jget('kenji_ai_v1', {}) || {};
     var aiDone = !!(ai.convos && ai.convos.some(function (c) { return c.msgs && c.msgs.some(function (m) { return m.role === 'user'; }); }));
@@ -366,9 +377,15 @@
       { key: 'profile', title: 'Doplň svůj profil', sub: 'Přidej fotku, jméno, Instagram a dvě věty o sobě.', href: 'nastaveni.html', xp: 20, done: localStorage.getItem('kenji_task_profile') === '1', icon: 'camera' },
       { key: 'read', title: 'Projdi první článek', sub: rec ? rec.title : 'Otevři doporučený článek.', href: rec ? rec.url : 'clanky/expozice.html', xp: 20, done: readSlugs().length > 0, icon: 'file' },
       { key: 'ai', title: 'Polož první dotaz Kenji AI', sub: 'Dostaneš konkrétní krok pro tento týden.', href: aiUrl(aiPrompt), xp: 20, done: aiDone || tourCheckpointDone('ai'), icon: 'sparkles' },
-      { key: 'intro', title: 'Představ se komunitě', sub: 'Nahraj fotku a napiš, kdo jsi, jak dlouho tvoříš, co fotíš/natáčíš a co čekáš od Academy.', href: 'prispevky.html?category=predstav-se&intro=1', xp: 350, done: localStorage.getItem('kenji_task_intro') === '1', icon: 'user' },
+      // „Představ se" je kanál Academy — Free členovi ho nenabízíme, server by ho odmítl.
+      { key: 'intro', title: 'Představ se komunitě', sub: 'Nahraj fotku a napiš, kdo jsi, jak dlouho tvoříš, co fotíš/natáčíš a co čekáš od Academy.', href: 'prispevky.html?category=predstav-se&intro=1', xp: 350, done: localStorage.getItem('kenji_task_intro') === '1', icon: 'user', academyOnly: true },
       { key: 'feedback', title: 'Nahraj práci na Foto feedback', sub: 'Sdílej fotku nebo video své tvorby a řekni, s čím chceš poradit — komunita ti dá zpětnou vazbu.', href: 'prispevky.html?category=foto-feedback&onboarding=1', xp: 100, done: localStorage.getItem('kenji_task_community') === '1', icon: 'camera' }
-    ];
+    ].filter(function (task) { return !task.academyOnly || isAcademyMember(); });
+  }
+
+  function isAcademyMember() {
+    var A = window.KenjiAuth;
+    return !!(A && typeof A.isAcademy === 'function' && A.isAcademy());
   }
 
   function reconcileActivationXp(b) {
@@ -673,7 +690,7 @@
       h += '<div class="onb-industry-grid">' + INDUSTRIES.map(function (x) {
         return '<button type="button" class="onb-choice' + (p.industries.indexOf(x.id) >= 0 ? ' active' : '') + '" data-onb="industries" data-id="' + x.id + '">' + uiIcon(industryIcons[x.id]) + '<span>' + esc(x.label) + '</span><b>✓</b></button>';
       }).join('') + '</div>';
-      if (p.industries.indexOf('jine') >= 0) h += '<label class="onb-other"><span>Napiš svůj obor</span><input type="text" class="onb-other-input" maxlength="80" value="' + esc(p.industryOther || '') + '" placeholder="Např. dron, dokument, architektura…"></label>';
+      if (p.industries.indexOf('jine') >= 0) h += otherField('industryOther', 'Napiš svůj obor', p.industryOther, 'Např. dron, dokument, architektura…');
       h += '</div>';
     } else if (onbStep === 2) {
       var expDesc = {
@@ -690,11 +707,14 @@
             '<span class="onb-level-bars" aria-hidden="true">' + bars + '</span>' +
             '<span class="onb-level-main"><b>LEVEL 0' + (i + 1) + '</b><strong>' + esc(x.label) + '</strong><small>' + esc(expDesc[x.id]) + '</small></span>' +
             '<span class="onb-level-check" aria-hidden="true">✓</span></button>';
-        }).join('') + '</div></div>';
+        }).join('') + '</div>' +
+        (p.experience === 'jine' ? otherField('experienceOther', 'Napiš, kde jsi', p.experienceOther, 'Např. vracím se po pauze, měním obor…') : '') +
+        '</div>';
     } else if (onbStep === 3) {
       var incomeShort = { '0-10': 'do 10k', '10-30': '10–30k', '30-60': '30–60k', '60-100': '60–100k', '100+': '100k+' };
       h += '<div class="onb-screen"><p class="onb-step">03 · CO TEĎ ŘEŠÍŠ</p><h1>Co teď nejvíc řešíš?</h1><p class="onb-lead">Vyber jednu věc. Podle ní dostaneš první konkrétní kroky.</p>' +
         '<div class="onb-blocker-grid">' + BLOCKERS.map(function (x) { return '<button type="button" class="onb-choice' + (p.blocker === x.id ? ' active' : '') + '" data-onb="blocker" data-id="' + x.id + '">' + uiIcon(blockerIcons[x.id]) + '<span>' + esc(x.label) + '</span><b>✓</b></button>'; }).join('') + '</div>' +
+        (p.blocker === 'jine' ? otherField('blockerOther', 'Napiš, co řešíš', p.blockerOther, 'Např. nestíhám editovat, bojím se oslovit klienty…') : '') +
         '<div class="onb-income-v2"><div class="onb-income-head"><strong>Kolik ti tvorba běžně přinese za měsíc?</strong><span>Nepovinné · zpřesní doporučení</span></div>' +
         '<div class="onb-income-pills" role="radiogroup" aria-label="Měsíční příjem z tvorby">' +
         '<button type="button" class="onb-pill' + (!p.income ? ' active' : '') + '" data-onb="income" data-id="">Neuvádět</button>' +
@@ -706,6 +726,12 @@
       (onbStep < 3 ? '<button type="button" class="onb-next" data-act="onb-next">Pokračovat →</button>' : '<button type="button" class="onb-next" data-act="onb-save">' + (editingProfile ? 'Uložit změny' : 'Vytvořit profil zdarma →') + '</button>') + '</div>' +
       (editingProfile ? '<button type="button" class="onb-cancel" data-act="onb-cancel">Zrušit úpravy</button>' : '') + '</section>';
     return h;
+  }
+
+  // Volitelné doplňující pole u možnosti „Něco jiného" — používá se ve všech třech krocích.
+  function otherField(key, label, value, placeholder) {
+    return '<label class="onb-other" data-other-for="' + key + '"><span>' + esc(label) + '</span>' +
+      '<input type="text" class="onb-other-input" data-other-key="' + key + '" maxlength="120" value="' + esc(value || '') + '" placeholder="' + esc(placeholder) + '"></label>';
   }
 
   // ---------- Utily ----------
@@ -755,6 +781,19 @@
           b.classList.toggle('active', on);
           if (b.hasAttribute('aria-checked')) b.setAttribute('aria-checked', on ? 'true' : 'false');
         });
+        if (key === 'experience' || key === 'blocker') {
+          var otherKey = key + 'Other';
+          var scr2 = el.closest('.onb-screen');
+          var existing = scr2 && scr2.querySelector('[data-other-for="' + otherKey + '"]');
+          if (id === 'jine' && scr2 && !existing) {
+            var wrap = document.createElement('div');
+            wrap.innerHTML = key === 'experience'
+              ? otherField(otherKey, 'Napiš, kde jsi', target[otherKey], 'Např. vracím se po pauze, měním obor…')
+              : otherField(otherKey, 'Napiš, co řešíš', target[otherKey], 'Např. nestíhám editovat, bojím se oslovit klienty…');
+            var grid = scr2.querySelector(key === 'experience' ? '.onb-levels' : '.onb-blocker-grid') || el.parentElement;
+            grid.after(wrap.firstChild);
+          } else if (id !== 'jine' && existing) { existing.remove(); }
+        }
       }
       if (editingProfile) bizSet(target); else { pendOnb = target; jset(ONB_DRAFT, pendOnb); }
       tactile(7);
@@ -768,6 +807,7 @@
       if (onbStep === 1 && (!Array.isArray(navTarget.industries) || !navTarget.industries.length)) { flash('Vyber aspoň jeden obor.'); return; }
       if (onbStep === 1 && navTarget.industries.indexOf('jine') >= 0 && !(navTarget.industryOther || '').trim()) { flash('Napiš prosím, čemu se věnuješ.'); return; }
       if (onbStep === 2 && !navTarget.experience) { flash('Vyber, kde se právě nacházíš.'); return; }
+      if (onbStep === 2 && navTarget.experience === 'jine' && !(navTarget.experienceOther || '').trim()) { flash('Napiš prosím, kde se právě nacházíš.'); return; }
       onbStep = Math.min(3, onbStep + 1); if (!editingProfile) { pendOnb._step = onbStep; jset(ONB_DRAFT, pendOnb); } track('onboarding_step_complete', { step: onbStep - 1 }); render(); return;
     }
     if (act === 'onb-back') { onbStep = Math.max(1, onbStep - 1); if (!editingProfile) { pendOnb._step = onbStep; jset(ONB_DRAFT, pendOnb); } render(); return; }
@@ -779,6 +819,8 @@
       target2.industry = target2.industries[0];
       if (!target2.experience) { flash('Vyber, kde se právě nacházíš.'); return; }
       if (!target2.blocker) { flash('Vyber, co tě nejvíc brzdí.'); return; }
+      if (target2.experience === 'jine' && !(target2.experienceOther || '').trim()) { flash('Napiš prosím, kde se právě nacházíš.'); return; }
+      if (target2.blocker === 'jine' && !(target2.blockerOther || '').trim()) { flash('Napiš prosím, co teď řešíš.'); return; }
       var firstTime = !editingProfile && !jget(ONB_DONE, false);
       bizSet(target2);
       jset(ONB_DONE, true);
@@ -885,7 +927,7 @@
     var other = e.target.closest('.onb-other-input');
     if (!other) return;
     var target = editingProfile ? bizGet() : pendOnb;
-    target.industryOther = other.value;
+    target[other.getAttribute('data-other-key') || 'industryOther'] = other.value;
     if (editingProfile) bizSet(target); else { pendOnb = target; jset(ONB_DRAFT, pendOnb); }
   });
 
