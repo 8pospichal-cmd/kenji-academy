@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tvoje přihlášení do Academy</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;">
+  <!-- náhled ve schránce, sám se nezobrazí -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Klikni na odkaz a jsi v Kenji Academy.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0a0a;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background:#141414;border:1px solid #262626;border-radius:16px;">
+        <tr><td style="padding:36px 32px 0;">
+          <img src="https://kenjiacademy.cz/assets/logo-kenji.png" alt="Kenji Academy" width="170" height="29" style="display:block;border:0;outline:none;width:170px;height:29px;">
+        </td></tr>
+        <tr><td style="padding:26px 32px 0;">
+          <h1 style="margin:0;font:700 25px/1.2 Helvetica,Arial,sans-serif;color:#ffffff;">Tvoje přihlášení do Academy</h1>
+        </td></tr>
+        <tr><td style="padding:14px 32px 0;">
+          <p style="margin:0;font:400 15px/1.65 Helvetica,Arial,sans-serif;color:#a8a8a8;">Klikni na tlačítko a jsi uvnitř. Bez hesla, bez vyplňování.</p>
+        </td></tr>
+        <tr><td style="padding:26px 32px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+            <td align="center" bgcolor="#ffffff" style="border-radius:10px;">
+              <a href="{{ .ConfirmationURL }}" style="display:block;padding:15px 26px;font:700 15px/1 Helvetica,Arial,sans-serif;color:#0a0a0a;text-decoration:none;">Přihlásit se →</a>
+            </td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="padding:20px 32px 0;">
+          <p style="margin:0;font:400 12.5px/1.6 Helvetica,Arial,sans-serif;color:#7a7a7a;">
+            Tlačítko nefunguje? Zkopíruj si tuhle adresu do prohlížeče:<br>
+            <span style="color:#ff9a5c;word-break:break-all;">{{ .ConfirmationURL }}</span>
+          </p>
+        </td></tr>
+        <tr><td style="padding:22px 32px 32px;">
+          <div style="border-top:1px solid #262626;padding-top:18px;">
+            <p style="margin:0;font:400 12.5px/1.6 Helvetica,Arial,sans-serif;color:#6f6f6f;">Odkaz platí krátce a jde použít jen jednou. Pokud ses o přihlášení nepokoušel, tenhle e-mail klidně smaž — bez kliknutí se nic nestane.<br><br><strong style="color:#a8a8a8;font-weight:600;">Nechceš čekat na e-mail pokaždé?</strong> Po přihlášení si v Nastavení můžeš nastavit heslo a příště budeš uvnitř hned.</p>
+          </div>
+        </td></tr>
+      </table>
+      <p style="margin:18px 0 0;font:400 11.5px/1.6 Helvetica,Arial,sans-serif;color:#5a5a5a;">
+        Kenji Academy · <a href="https://kenjiacademy.cz" style="color:#7a7a7a;">kenjiacademy.cz</a>
+      </p>
+    </td></tr>
+  </table>
+</body>
+</html>

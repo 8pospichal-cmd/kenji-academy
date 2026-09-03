@@ -29,7 +29,7 @@
   };
 
   // Stránky přístupné BEZ přihlášení (gate je nezamkne) — ať si lze přečíst Zásady před souhlasem
-  const PUBLIC_PAGES = ['academy.html', 'platba-uspesna.html', 'platba-zrusena.html', 'zasady-ochrany-udaju.html', 'obchodni-podminky.html', 'cookies.html', '404.html'];
+  const PUBLIC_PAGES = ['academy.html', 'platba-uspesna.html', 'platba-zrusena.html', 'zasady-ochrany-udaju.html', 'obchodni-podminky.html', 'cookies.html', '404.html', 'obnova-hesla.html'];
 
   const isLive = !!(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);
 
@@ -324,6 +324,42 @@
     return { ok: true };
   }
 
+  // Přihlášení heslem. Heslo je NEPOVINNÉ zrychlení — kdo si ho nenastavil, jede dál odkazem.
+  // Supabase na neexistující i bezheslový účet vrací stejné `invalid_credentials`, proto to
+  // volajícímu hlásíme zvlášť, ať můžeme nabídnout odkaz místo hlášky „špatné heslo".
+  async function signInWithPassword(email, password) {
+    const sb = await getSupabase();
+    if (!sb) return { ok: false, err: 'offline' };
+    const { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (error) {
+      const code = String(error.code || error.message || '');
+      return { ok: false, noPassword: /invalid_credentials|Invalid login/i.test(code), err: error.message };
+    }
+    return { ok: true, session: data && data.session };
+  }
+
+  // Zapomenuté heslo → Supabase pošle odkaz na obnovu, který přistane na obnova-hesla.html.
+  // Adresu je nutné mít povolenou v Supabase → Authentication → URL Configuration.
+  async function requestPasswordReset(email) {
+    const sb = await getSupabase();
+    if (!sb) return { ok: false, err: 'offline' };
+    const target = new URL(ROOT + 'obnova-hesla.html', location.href).href;
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: target });
+    if (error) { console.warn('reset hesla', error); return { ok: false, err: error.message }; }
+    return { ok: true };
+  }
+
+  // Nastavení/změna hesla běží na už ověřené session → NEPOSÍLÁ žádný e-mail.
+  // Příznak si ukládáme do user_metadata, ať víme, komu heslo nabízet.
+  async function setAccountPassword(password) {
+    const sb = await getSupabase();
+    if (!sb) return { ok: false, err: 'Přihlášení není dostupné.' };
+    const { error } = await sb.auth.updateUser({ password: password, data: { has_password: true } });
+    if (error) return { ok: false, err: error.message };
+    if (user) { user.hasPassword = true; saveUser(user); }
+    return { ok: true };
+  }
+
   // Počká na první auth stav (session ze storage nebo z URL po návratu z odkazu).
   function getInitialSession(sb) {
     return new Promise((resolve) => {
@@ -355,7 +391,7 @@
       const merged = mergeProgress({ read: getLocalRead(), quiz: getLocalQuiz() }, { read: server.read, quiz: server.quiz });
       setLocalRead(merged.read); setLocalQuiz(merged.quiz);
     }
-    saveUser({ email: vEmail, instagram: prevIg, tier: tier, auth: 'email', name: name });
+    saveUser({ email: vEmail, instagram: prevIg, tier: tier, auth: 'email', name: name, hasPassword: !!meta.has_password });
     user = loadUser();
     // Onboarding profil ze serveru natáhneme ještě teď (během rozmazaného bootu),
     // aby dashboard po odhalení věděl, že profil je hotový, a onboarding znovu nespustil.
@@ -449,6 +485,9 @@
             <p class="kg-form-sub">${saveplan ? 'Zadej e-mail. Pošleme ti přihlašovací odkaz a tvůj plán pod ním zůstane uložený.' : 'Zadej e-mail — pošleme ti přihlašovací odkaz. Klikneš a jsi uvnitř. Bez hesla, jeden krok.'}</p>
             <label class="kg-label" for="kg-email">E-mail</label>
             <input class="kg-input" id="kg-email" type="email" placeholder="tvuj@email.cz" autocomplete="email">
+            <label class="kg-label kg-label-pw" for="kg-password">Heslo <span>nepovinné</span></label>
+            <input class="kg-input" id="kg-password" type="password" placeholder="Máš heslo? Zadej ho a jsi hned uvnitř" autocomplete="current-password">
+            <div class="kg-pw-hint" id="kg-pw-hint">Heslo nemusíš mít. Když pole necháš prázdné, pošleme ti přihlašovací odkaz do e-mailu. <button type="button" class="kg-forgot" id="kg-forgot">Zapomněl jsem heslo</button></div>
             <label class="kg-consent"><input type="checkbox" id="kg-consent"> <span>Beru na vědomí zpracování e-mailu pro vytvoření a správu profilu. <a href="${ROOT}${escapeHtml(CONFIG.privacyUrl)}" target="_blank" rel="noopener">Jak pracujeme s údaji</a></span></label>
             <button class="kg-btn" id="kg-submit">Poslat přihlašovací odkaz →</button>
             <div class="kg-error" id="kg-error" hidden></div>
@@ -482,33 +521,75 @@
       closeGate();
     });
 
+    // Zapomenuté heslo → odkaz na obnovu. Potřebuje jen platný e-mail v poli výš.
+    const forgotBtn = document.getElementById('kg-forgot');
+    if (forgotBtn) forgotBtn.addEventListener('click', async function () {
+      const mail = normEmail(emailEl.value);
+      if (!validEmail(mail)) { err('Nejdřív vyplň e-mail — pošleme na něj odkaz pro nastavení nového hesla.'); emailEl.focus(); return; }
+      errEl.hidden = true;
+      forgotBtn.disabled = true; forgotBtn.textContent = 'Posílám…';
+      const out = await requestPasswordReset(mail);
+      forgotBtn.textContent = out.ok ? 'Odkaz je v e-mailu ✓' : 'Nepovedlo se odeslat';
+      if (!out.ok) forgotBtn.disabled = false;
+    });
+
     const sentEl = document.getElementById('kg-sent');
+
+    // Popisek tlačítka se řídí tím, jestli je vyplněné heslo — ať je jasné, co se stane.
+    const pwEl = document.getElementById('kg-password');
+    const linkLabel = saveplan ? 'Poslat přihlašovací odkaz →' : 'Poslat přihlašovací odkaz →';
+    function syncBtnLabel() {
+      if (btn.disabled) return;
+      btn.textContent = pwEl && pwEl.value ? 'Přihlásit se →' : linkLabel;
+    }
+    if (pwEl) pwEl.addEventListener('input', syncBtnLabel);
 
     async function submit() {
       const email = normEmail(emailEl.value);
       if (!validEmail(email)) { err('Zadej platný e-mail.'); emailEl.focus(); return; }
       if (!consentEl.checked) { err('Potvrď, že ses seznámil se zpracováním údajů.'); return; }
       errEl.hidden = true;
-      btn.disabled = true; btn.textContent = 'Posílám…';
+      const password = pwEl ? pwEl.value : '';
 
       // Localhost (vývoj): magic link nefunguje → okamžitý vstup jako free, ať jde testovat.
       if (!isLive || IS_LOCAL) {
+        btn.disabled = true; btn.textContent = 'Posílám…';
         saveUser({ email: email, instagram: '', tier: 'free' });
         location.href = ROOT + 'index.html';
         return;
       }
 
-      // Produkce: jediná cesta dovnitř je ověřený odkaz (magic link).
+      // Vyplněné heslo → vstup bez e-mailu.
+      if (password) {
+        btn.disabled = true; btn.textContent = 'Přihlašuji…';
+        const login = await signInWithPassword(email, password);
+        if (login.ok && login.session) {
+          await adoptSession(login.session);
+          location.href = gateRedirectTo || (ROOT + 'index.html');
+          return;
+        }
+        btn.disabled = false; syncBtnLabel();
+        err(login.noPassword
+          ? 'Heslo nesedí — nebo si ho k tomuhle účtu ještě nenastavil. Nech pole prázdné a pošleme ti přihlašovací odkaz.'
+          : 'Přihlášení se nepovedlo. Zkus to prosím znovu.');
+        return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Posílám…';
+      // Bez hesla: jediná cesta dovnitř je ověřený odkaz (magic link).
       const res = await sendMagicLink(email);
       if (res.ok) {
         document.getElementById('kg-sent-email').textContent = email;
         emailEl.style.display = 'none';
+        if (pwEl) pwEl.style.display = 'none';
+        var pwLbl = document.querySelector('.kg-label-pw'); if (pwLbl) pwLbl.style.display = 'none';
+        var pwHint = document.getElementById('kg-pw-hint'); if (pwHint) pwHint.style.display = 'none';
         consentEl.closest('.kg-consent').style.display = 'none';
         btn.style.display = 'none';
         var lbl = document.querySelector('#kg-pane-lead .kg-label'); if (lbl) lbl.style.display = 'none';
         sentEl.hidden = false;
       } else {
-        btn.disabled = false; btn.textContent = 'Poslat přihlašovací odkaz →';
+        btn.disabled = false; syncBtnLabel();
         err('E-mail s odkazem se teď nepovedlo odeslat. Zkus to prosím za chvíli.');
       }
     }
@@ -1093,6 +1174,12 @@
     updateUserProfile: updateUserProfile,
     saveProfile: saveProfileRemote,   // dashboard po dokončení onboardingu pošle profil na server
     getProfile: getProfileRemote,
+    setPassword: setAccountPassword,
+    requestPasswordReset: requestPasswordReset,
+    // Chybový hash z odkazu mažeme hned při startu, tak ho vystavíme — jinak by ho
+    // stránka pro obnovu hesla už nenašla a čekala na session, která nikdy nepřijde.
+    authLinkFailed: function () { return !!authLinkError; },
+    hasPassword: function () { return !!(user && user.hasPassword); },
     requestMagicLink: function (email, opts) {
       if (opts && opts.redirect) { try { gateRedirectTo = new URL(opts.redirect, location.href).href; } catch (e) {} }
       return sendMagicLink(email);

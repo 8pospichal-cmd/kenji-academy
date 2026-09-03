@@ -53,6 +53,7 @@
       '<div class="set-bar"><span class="set-msg" id="set-msg"></span><button class="set-save" id="set-save">Uložit profil</button></div>' +
     '</div>' +
     '<div id="set-focus"></div>' +
+    '<div id="set-password"></div>' +
     '<div class="set-card set-guide">' +
       '<div class="set-guide-copy"><div class="set-card-title">Úvodní průvodce</div>' +
       '<p class="set-hint">Kenji ti znovu ukáže dashboard, databázi, kurzy, AI, komunitu a profil.</p></div>' +
@@ -100,38 +101,89 @@
   document.getElementById('set-ig').addEventListener('change', function () { legacyPrefillDone = false; tryLegacyPrefill(); });
 
   // ---------- UPLOAD FOTKY ----------
-  async function sessionUid() {
-    try {
-      var c = await getSB(); if (!c) return '';
-      var r = await c.auth.getSession();
-      return (r && r.data && r.data.session && r.data.session.user && r.data.session.user.id) || '';
-    } catch (e) { return ''; }
+  // Bucket „avatars" přijímá jen JPG/PNG/WebP do 3 MB — držíme se toho i na klientovi,
+  // ať člověk nedostane až od serveru nesrozumitelnou chybu.
+  var AVATAR_MIME = /^image\/(jpeg|png|webp)$/;
+  var AVATAR_MAX = 3 * 1024 * 1024;
+  var EXT_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+
+  // iPhone umí poslat HEIC a některé androidí prohlížeče neposílají typ vůbec —
+  // proto se ptáme i na příponu, ne jen na MIME.
+  function looksLikeImage(f) {
+    if (/^image\//.test(f.type || '')) return true;
+    return /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || '');
   }
+  function uploadMime(f) {
+    if (AVATAR_MIME.test(f.type || '')) return f.type;
+    var ext = String(f.name || '').split('.').pop().toLowerCase();
+    return EXT_MIME[ext] || '';
+  }
+
+  // Vrátí platnou session; když je token prošlý, jednou ji obnoví.
+  async function freshSession() {
+    var c = await getSB(); if (!c) return null;
+    var r = await c.auth.getSession();
+    var session = r && r.data ? r.data.session : null;
+    if (!session) {
+      try { var r2 = await c.auth.refreshSession(); session = r2 && r2.data ? r2.data.session : null; } catch (e) {}
+    }
+    return session;
+  }
+
   fileInput.addEventListener('change', async function () {
     var f = fileInput.files[0]; if (!f) return;
-    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { msg('Nahraj fotku ve formátu JPG, PNG nebo WebP.', true); fileInput.value = ''; return; }
-    if (f.size > 20 * 1024 * 1024) { msg('Fotka je moc velká (max 20 MB).', true); fileInput.value = ''; return; }
+    if (!looksLikeImage(f)) { msg('Vyber prosím obrázek (JPG, PNG nebo WebP).', true); fileInput.value = ''; return; }
+    if (f.size > 25 * 1024 * 1024) { msg('Fotka je moc velká (max 25 MB).', true); fileInput.value = ''; return; }
     msg('Zpracovávám fotku…', false);
     try {
       var small = window.KenjiImage ? await window.KenjiImage.compress(f, { maxDim: 512, quality: 0.86 }) : f;
+
+      // Zmenšení mohlo selhat (např. HEIC, které prohlížeč neumí dekódovat) a vrátit originál.
+      var mime = uploadMime(small);
+      if (!mime) {
+        msg('Tenhle formát fotky prohlížeč neumí zpracovat. Ulož ji prosím jako JPG a zkus to znovu.', true);
+        fileInput.value = ''; return;
+      }
+      if (small.size > AVATAR_MAX) {
+        msg('Fotka je i po zmenšení moc velká. Zkus ji prosím uložit v menším rozlišení.', true);
+        fileInput.value = ''; return;
+      }
+
       var c = await getSB();
-      var uid = await sessionUid();
-      if (!c || !uid) throw new Error('Unauthorized session');
+      var session = await freshSession();
+      var uid = session && session.user ? session.user.id : '';
+      if (!c || !uid) throw new Error('no-session');
+
       // Okamžitý lokální náhled, ať uživatel vidí výběr hned.
       try { avatarEl.innerHTML = '<img src="' + URL.createObjectURL(small) + '" alt="">'; } catch (e0) {}
       msg('Nahrávám fotku…', false);
-      var ext = /png/.test(small.type) ? 'png' : (/jpeg/.test(small.type) ? 'jpg' : 'webp');
+
+      var ext = mime === 'image/png' ? 'png' : (mime === 'image/jpeg' ? 'jpg' : 'webp');
       var path = uid + '/' + Date.now() + '.' + ext;
-      var up = await c.storage.from('avatars').upload(path, small, { contentType: small.type, upsert: true });
+      var up = await c.storage.from('avatars').upload(path, small, { contentType: mime, upsert: true });
+
+      // Prošlý token se projeví jako chyba oprávnění — obnov session a zkus to ještě jednou.
+      if (up.error && /jwt|expired|unauthorized|row-level|policy/i.test(String(up.error.message || ''))) {
+        var again = await freshSession();
+        if (again && again.user) {
+          path = again.user.id + '/' + Date.now() + '.' + ext;
+          up = await c.storage.from('avatars').upload(path, small, { contentType: mime, upsert: true });
+        }
+      }
       if (up.error) throw up.error;
+
       pendingAvatar = c.storage.from('avatars').getPublicUrl(path).data.publicUrl;
       msg('Fotka připravená — nezapomeň uložit.', false);
     } catch (e) {
       console.warn('avatar', e);
       var m = String((e && e.message) || '').toLowerCase();
       if (m.indexOf('bucket not found') >= 0) msg('Úložiště fotek zatím není na serveru aktivní.', true);
-      else if (m.indexOf('unauthorized') >= 0 || m.indexOf('jwt') >= 0 || m.indexOf('session') >= 0 || m.indexOf('row-level') >= 0) msg('Platnost přihlášení vypršela. Obnov stránku a přihlas se znovu.', true);
+      else if (m.indexOf('no-session') >= 0 || m.indexOf('jwt') >= 0 || m.indexOf('expired') >= 0) msg('Přihlášení na tomhle zařízení vypršelo. Načti stránku znovu a přihlas se.', true);
+      else if (m.indexOf('row-level') >= 0 || m.indexOf('policy') >= 0 || m.indexOf('unauthorized') >= 0) msg('Nahrání fotky server odmítl. Načti stránku znovu — když to bude trvat, napiš nám.', true);
+      else if (m.indexOf('maximum allowed size') >= 0 || m.indexOf('too large') >= 0 || m.indexOf('413') >= 0) msg('Fotka je pro server moc velká. Zkus menší rozlišení.', true);
+      else if (m.indexOf('mime') >= 0) msg('Tenhle formát fotky server nepřijímá. Ulož ji jako JPG a zkus to znovu.', true);
       else msg('Fotku se nepovedlo nahrát. Zkus to prosím znovu.', true);
+      fileInput.value = '';
     }
   });
 
@@ -274,6 +326,55 @@
   }
 
   renderFocus();
+
+  // ---------- HESLO (nepovinné zrychlení přihlášení) ----------
+  // Heslo se nastavuje na už ověřené session, takže neposílá žádný potvrzovací e-mail.
+  // Kdo si ho nenastaví, přihlašuje se dál odkazem — nic ho k tomu nenutí.
+  function renderPassword() {
+    var box = document.getElementById('set-password');
+    if (!box) return;
+    var has = !!(A.hasPassword && A.hasPassword());
+    box.innerHTML =
+      '<div class="set-card">' +
+        '<div class="set-card-title">Přihlašování</div>' +
+        '<p class="set-hint">' + (has
+          ? 'Heslo máš nastavené — příště se přihlásíš rovnou, bez čekání na e-mail. Tady si ho můžeš změnit.'
+          : 'Teď se přihlašuješ odkazem z e-mailu. Nastav si heslo a příště budeš uvnitř hned. Odkaz ti bude fungovat dál — třeba když heslo zapomeneš.') + '</p>' +
+        '<label class="set-label" for="set-pw">' + (has ? 'Nové heslo' : 'Heslo') + '</label>' +
+        '<input class="set-input" id="set-pw" type="password" autocomplete="new-password" placeholder="Alespoň 8 znaků">' +
+        '<label class="set-label" for="set-pw2">Heslo pro kontrolu</label>' +
+        '<input class="set-input" id="set-pw2" type="password" autocomplete="new-password" placeholder="Zadej ho ještě jednou">' +
+        '<div class="set-bar"><span class="set-msg" id="set-pw-msg"></span>' +
+        '<button class="set-save" id="set-pw-save">' + (has ? 'Změnit heslo' : 'Nastavit heslo') + '</button></div>' +
+      '</div>';
+    wirePassword();
+  }
+
+  function wirePassword() {
+    var btn = document.getElementById('set-pw-save');
+    var pw = document.getElementById('set-pw');
+    var pw2 = document.getElementById('set-pw2');
+    var pmsg = document.getElementById('set-pw-msg');
+    if (!btn) return;
+    function say(text, isErr) { if (pmsg) { pmsg.textContent = text; pmsg.style.color = isErr ? '#ff6b6b' : 'var(--text-mute)'; } }
+    btn.addEventListener('click', async function () {
+      var value = pw.value, again = pw2.value;
+      if (value.length < 8) { say('Heslo musí mít aspoň 8 znaků.', true); pw.focus(); return; }
+      if (value !== again) { say('Hesla se neshodují.', true); pw2.focus(); return; }
+      if (!A.setPassword) { say('Přihlášení není dostupné.', true); return; }
+      btn.disabled = true; say('Ukládám…');
+      var res = await A.setPassword(value);
+      btn.disabled = false;
+      if (res && res.ok) {
+        renderPassword();   // překreslí kartu → zprávu musíme napsat do nového prvku
+        var fresh = document.getElementById('set-pw-msg');
+        if (fresh) { fresh.textContent = 'Heslo je nastavené ✓'; fresh.style.color = 'var(--text-mute)'; }
+      }
+      else { say((res && res.err) || 'Heslo se nepovedlo uložit.', true); }
+    });
+  }
+
+  renderPassword();
 
   // ---------- ADMIN PANEL ----------
   function renderAdmin() {
