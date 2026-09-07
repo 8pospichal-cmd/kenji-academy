@@ -37,7 +37,14 @@
   const freeSlugs = window.KENJI_FREE_SLUGS || [];
   const inArticle = /\/clanky\//.test(location.pathname);
   const ROOT = inArticle ? '../' : '';
-  const currentFile = location.pathname.split('/').pop() || 'index.html';
+  // Netlify servíruje i adresy bez přípony (/presety vedle /presety.html).
+  // Bez sjednocení by neseděly veřejné stránky, zvýraznění v menu ani obcházení
+  // nákupního modalu — všechno se porovnává právě s tímhle názvem.
+  const currentFile = (function () {
+    const f = location.pathname.split('/').pop();
+    if (!f) return 'index.html';
+    return f.indexOf('.') >= 0 ? f : f + '.html';
+  })();
 
   const READ_KEY = 'kenji_read_v1';
   const QUIZ_KEY = 'kenji_quiz_v1';
@@ -1122,7 +1129,7 @@
       } catch (e) {}
     }
     const tourScript = document.createElement('script');
-    tourScript.src = ROOT + 'assets/tour.js?v=20260902-kp-v1';
+    tourScript.src = ROOT + 'assets/tour.js?v=20260907-cistaurl-v1';
     tourScript.dataset.kenjiTour = '1';
     document.body.appendChild(tourScript);
   }

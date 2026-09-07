@@ -18,7 +18,14 @@
   const ROOT = inArticle ? '../' : '';
 
   // Aktuální stránka (pro zvýraznění aktivní položky)
-  const currentFile = location.pathname.split('/').pop() || 'index.html';
+  // Netlify servíruje i adresy bez přípony (/presety vedle /presety.html).
+  // Bez sjednocení by neseděly veřejné stránky, zvýraznění v menu ani obcházení
+  // nákupního modalu — všechno se porovnává právě s tímhle názvem.
+  const currentFile = (function () {
+    const f = location.pathname.split('/').pop();
+    if (!f) return 'index.html';
+    return f.indexOf('.') >= 0 ? f : f + '.html';
+  })();
 
   function navTier() {
     const override = (location.search.match(/[?&]tier=(free|knihovna|academy)/) || [])[1];

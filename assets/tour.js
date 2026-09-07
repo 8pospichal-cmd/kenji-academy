@@ -11,7 +11,12 @@
   var params = new URLSearchParams(location.search);
   var explicitStart = params.get('tour') === '1' && !params.has('tourStep');
   var requestedStep = params.has('tourStep') ? Number(params.get('tourStep')) : NaN;
-  var currentFile = location.pathname.split('/').pop() || 'index.html';
+  // Netlify servíruje i adresy bez přípony — průvodce jinak neví, na které stránce je.
+  var currentFile = (function () {
+    var f = location.pathname.split('/').pop();
+    if (!f) return 'index.html';
+    return f.indexOf('.') >= 0 ? f : f + '.html';
+  })();
   var inArticle = /\/clanky\//.test(location.pathname);
   var prefix = inArticle ? '../' : '';
   var active = false;
