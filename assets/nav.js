@@ -343,7 +343,7 @@
             <span class="icon">${uiIcon('calculator')}</span>
             <span>Kalkulačka hodinovky</span>
           </a>
-          <a href="${ROOT}presety.html" class="sidebar-link${currentFile === 'presety.html' ? ' active' : ''}">
+          <a href="${ROOT}moje-presety.html" class="sidebar-link${currentFile === 'moje-presety.html' ? ' active' : ''}">
             <span class="icon">${uiIcon('palette')}</span>
             <span>Moje presety</span>
           </a>

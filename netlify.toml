@@ -55,6 +55,20 @@
   to = "/assets/favicon.svg"
   status = 200
 
+# „Presety" v množném čísle je to, co lidi přirozeně napíšou — ať jim to
+# ukáže prodejní stránku. Stránka ke stažení má vlastní adresu /moje-presety.
+[[redirects]]
+  from = "/presety"
+  to = "/preset"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/presety.html"
+  to = "/preset"
+  status = 301
+  force = true
+
 # Netlify publikuje celý kořen repa, takže bez těchto pravidel jsou veřejně čitelné
 # i SQL migrace, interní dokumentace a node_modules. force = true je nutné —
 # jinak by se statický soubor doručil dřív, než se pravidlo uplatní.

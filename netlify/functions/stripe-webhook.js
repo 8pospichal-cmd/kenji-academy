@@ -12,7 +12,7 @@ function response(statusCode, body) {
 // (stejná doména jako přihlašovací odkazy). Když klíč chybí, jen se to přeskočí —
 // nedoručený e-mail nikdy nesmí shodit webhook a zablokovat přidělení přístupu.
 function presetEmailHtml(siteUrl) {
-  const odkaz = `${siteUrl}/presety.html`;
+  const odkaz = `${siteUrl}/moje-presety.html`;
   return `<!DOCTYPE html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tvoje presety jsou připravené</title></head>
 <body style="margin:0;padding:0;background:#0a0a0a;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Presety máš odemčené — tady je najdeš.</div>
