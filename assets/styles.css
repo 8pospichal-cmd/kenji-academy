@@ -4137,6 +4137,26 @@ body.kenji-gated .kenji-help { display: none !important; }
 .community-reconnect-btn:disabled { opacity: .65; cursor: default; }
 @media (max-width: 560px) { .community-reconnect { padding: 12px 14px; } .community-reconnect-btn { width: 100%; } }
 
+/* Stránka „Moje presety" — seznam souborů ke stažení. */
+.pres-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.pres-head h2 { margin: 0 0 4px; font: 400 clamp(24px,3.4vw,32px)/1 'Bebas Neue', sans-serif; color: var(--text-strong); }
+.pres-head p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--text-dim); }
+.pres-all { min-height: 42px; padding: 0 18px; border: 0; border-radius: 10px; background: var(--orange); color: #0a0a0a; font: 800 14px/1 'Inter', sans-serif; cursor: pointer; }
+.pres-all:hover:not(:disabled) { filter: brightness(1.08); }
+.pres-all:disabled { opacity: .65; cursor: default; }
+.pres-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pres-item { display: flex; align-items: center; gap: 13px; padding: 13px 15px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+.pres-ico { flex: 0 0 auto; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: rgba(255,107,26,.12); color: var(--orange); font-size: 15px; }
+.pres-name { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.pres-name strong { color: var(--text-strong); font-size: 14px; overflow-wrap: anywhere; }
+.pres-name small { color: var(--text-mute); font-size: 12px; }
+.pres-dl { flex: 0 0 auto; min-height: 38px; padding: 0 15px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg-elevated); color: var(--text); font: 600 13px/1 'Inter', sans-serif; cursor: pointer; }
+.pres-dl:hover:not(:disabled) { border-color: var(--orange); color: var(--orange); }
+.pres-dl:disabled { opacity: .65; cursor: default; }
+.pres-note { margin-top: 18px; font-size: 13px; line-height: 1.6; color: var(--text-mute); }
+.pres-note a { color: var(--orange-bright); }
+@media (max-width: 560px) { .pres-all { width: 100%; } .pres-item { flex-wrap: wrap; } .pres-dl { width: 100%; } }
+
 /* Upozornění na nové příspěvky — malé, decentní, nepřekáží. */
 .kenji-badge {
   display: inline-flex; align-items: center; justify-content: center;

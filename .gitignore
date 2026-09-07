@@ -15,3 +15,7 @@ node_modules/
 # Dočasné soubory
 scratchpad/
 *.tmp
+
+# Placený produkt — presety patří do soukromého Supabase Storage, ne na web.
+# Netlify publikuje celý kořen repa, takže odsud by je stáhl kdokoli zdarma.
+/presets/

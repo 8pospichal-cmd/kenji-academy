@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");if(!localStorage.getItem("kenji_user"))document.documentElement.classList.add("kenji-preboot");}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kenji AI</title>
-<meta name="description" content="Kenji AI — zeptej se na cokoliv okolo focení, techniky, editace a byznysu tvůrce. Zdarma.">
+<title>Moje presety | Kenji Academy</title>
+<meta name="robots" content="noindex,nofollow">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <meta name="theme-color" content="#0a0a0a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,18 +28,31 @@
   <aside class="sidebar" id="sidebar"></aside>
 
   <main class="main">
-    <div class="main-inner ai-main-inner">
-      <div id="ai-root" class="ai-root"></div>
+    <div class="main-inner">
+
+      <div class="breadcrumbs">
+        <a href="index.html">Databáze</a>
+        <span class="separator">/</span>
+        <span class="current">Moje presety</span>
+      </div>
+
+      <section class="article-hero">
+        <div class="article-hero-label">KENJI ACADEMY • PRESETY</div>
+        <h1>Kenjiho <span class="highlight">presety.</span></h1>
+        <p class="article-hero-sub">Pro Lightroom (počítač i mobil) a Photoshop přes Camera RAW. Stáhni si je a máš je napořád.</p>
+      </section>
+
+      <div id="presety-root"><div class="feed-loading">Načítám tvoje presety…</div></div>
+
     </div>
   </main>
 </div>
 
 <script src="assets/articles.js?v=20260824-value-v1"></script>
-<script src="assets/courses.js?v=20260824-ai-retry-v1"></script>
 <script src="assets/nav.js?v=20260903-komunita-v1"></script>
-<script src="assets/notify.js?v=20260903-komunita-v1"></script>
 <script src="assets/auth.js?v=20260907-presety-v1"></script>
+<script src="assets/notify.js?v=20260903-komunita-v1"></script>
 <script src="assets/script.js?v=20260907-presety-v1"></script>
-<script src="assets/kenji-ai.js?v=20260903-jine-v1"></script>
+<script src="assets/presety.js?v=20260907-presety-v1"></script>
 </body>
 </html>

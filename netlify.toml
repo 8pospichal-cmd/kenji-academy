@@ -55,6 +55,58 @@
   to = "/assets/favicon.svg"
   status = 200
 
+# Netlify publikuje celý kořen repa, takže bez těchto pravidel jsou veřejně čitelné
+# i SQL migrace, interní dokumentace a node_modules. force = true je nutné —
+# jinak by se statický soubor doručil dřív, než se pravidlo uplatní.
+[[redirects]]
+  from = "/supabase/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/node_modules/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/tools/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/_source/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/_originals/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/kenji-deploy/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Interní poznámky v Markdownu (CONTEXT.md, STAV_PROJEKTU.md, návody k nastavení).
+[[redirects]]
+  from = "/*.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
 # 404 fallback
 [[redirects]]
   from = "/*"

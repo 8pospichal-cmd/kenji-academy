@@ -9,9 +9,12 @@ function response(statusCode, body) {
 
 async function grantAccess(session) {
   const email = session.customer_details && session.customer_details.email;
-  const tier = session.metadata && session.metadata.tier;
+  const meta = session.metadata || {};
+  const tier = meta.tier;
+  const presets = meta.presets === '1';
 
-  if (!email || !tier) return;
+  // Presety se kupují i samostatně — ty nemají tier, ale přístup přidělit musíme.
+  if (!email || (!tier && !presets)) return;
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.warn('Payment succeeded, but Supabase service credentials are missing.');
     return;
@@ -20,8 +23,9 @@ async function grantAccess(session) {
   const endpoint = `${process.env.SUPABASE_URL}/rest/v1/users`;
   const body = {
     email: email.toLowerCase(),
-    tier,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    ...(tier ? { tier } : {}),
+    ...(presets ? { has_presets: true } : {})
   };
 
   const res = await fetch(endpoint, {
@@ -41,7 +45,7 @@ async function grantAccess(session) {
   }
 
   // Použitý slevový kupón → zvýšit počítadlo (best-effort, neblokuje grant).
-  const coupon = session.metadata && session.metadata.coupon;
+  const coupon = meta.coupon;
   if (coupon) {
     try {
       await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/increment_coupon_use`, {

@@ -29,7 +29,7 @@
   };
 
   // Stránky přístupné BEZ přihlášení (gate je nezamkne) — ať si lze přečíst Zásady před souhlasem
-  const PUBLIC_PAGES = ['academy.html', 'platba-uspesna.html', 'platba-zrusena.html', 'zasady-ochrany-udaju.html', 'obchodni-podminky.html', 'cookies.html', '404.html', 'obnova-hesla.html'];
+  const PUBLIC_PAGES = ['academy.html', 'platba-uspesna.html', 'platba-zrusena.html', 'zasady-ochrany-udaju.html', 'obchodni-podminky.html', 'cookies.html', '404.html', 'obnova-hesla.html', 'preset.html'];
 
   const isLive = !!(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);
 

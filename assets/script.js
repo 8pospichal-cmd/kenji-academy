@@ -129,6 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || 'Platbu se nepodařilo připravit.');
+      // Testovací klíč vypadá v pokladně stejně jako ostrý, ale nestrhne peníze.
+      // Radši se zeptáme, než by web tiše „prodával" nanečisto.
+      if (data.testMode && !confirm('POZOR: Platební brána běží v TESTOVACÍM režimu — peníze se nestrhnou.\n\nPokračovat?')) {
+        link.textContent = originalText;
+        link.removeAttribute('aria-busy');
+        return;
+      }
       window.location.href = data.url;
     } catch (error) {
       link.textContent = originalText;

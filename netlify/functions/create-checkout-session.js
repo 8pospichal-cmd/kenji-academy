@@ -16,7 +16,8 @@ const PRODUCTS = {
   presets: {
     envPrice: 'STRIPE_PRICE_PRESETS',
     fallbackName: 'Kenjiho presety',
-    fallbackAmount: 105000
+    fallbackAmount: 105000,
+    grantsPresets: true          // nedává tier, jen odemkne stažení presetů
   }
 };
 
@@ -90,7 +91,7 @@ exports.handler = async function handler(event) {
     return json(400, { error: 'Invalid JSON payload' });
   }
 
-  const productKey = payload.product === 'databaze' ? 'databaze' : 'academy';
+  const productKey = Object.prototype.hasOwnProperty.call(PRODUCTS, payload.product) ? payload.product : 'academy';
   const product = PRODUCTS[productKey];
   const origin = originFromEvent(event);
   const lineItems = [lineItemFor(product)];
@@ -116,8 +117,9 @@ exports.handler = async function handler(event) {
 
     const meta = {
       product: productKey,
-      tier: product.tier,
       source: payload.source || 'academy-page',
+      ...(product.tier ? { tier: product.tier } : {}),
+      ...(product.grantsPresets || payload.includePresets ? { presets: '1' } : {}),
       ...(appliedCoupon ? { coupon: appliedCoupon } : {})
     };
 
@@ -138,7 +140,11 @@ exports.handler = async function handler(event) {
     else params.allow_promotion_codes = true;
 
     const session = await stripe.checkout.sessions.create(params);
-    return json(200, { url: session.url });
+    // Testovací klíč vypadá při nákupu úplně stejně jako ostrý, jen nestrhne peníze.
+    // Ať to nikdy neběží nepovšimnuto, řekneme to klientovi i do logu.
+    const testMode = String(process.env.STRIPE_SECRET_KEY || '').startsWith('sk_test_');
+    if (testMode) console.warn('POZOR: Stripe bezi v TESTOVACIM rezimu — platby se nestrhavaji.');
+    return json(200, { url: session.url, testMode: testMode });
   } catch (error) {
     console.error('Stripe checkout error:', error);
     return json(500, { error: 'Checkout session could not be created' });
