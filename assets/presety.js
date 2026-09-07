@@ -81,7 +81,8 @@
 
   function renderList(soubory) {
     if (!soubory.length) {
-      ROOT.innerHTML = '<div class="feed-empty"><strong>Presety se připravují.</strong><span>Máš je zaplacené, ale soubory se ještě nahrávají. Zkus to prosím za chvíli.</span></div>' + videaMarkup();
+      ROOT.innerHTML = '<div class="feed-empty"><strong>Presety se připravují.</strong>' +
+        '<span>Máš je zaplacené, ale v úložišti zatím nejsou žádné soubory. Zkus to prosím za chvíli — nebo nám napiš.</span></div>' + videaMarkup();
       wireVidea();
       return;
     }
@@ -146,6 +147,33 @@
     });
   }
 
+  // Supabase list() vrací jen jednu úroveň. Když někdo nahraje presety do složky,
+  // v kořeni je vidět jen ta složka — proto se do ní podíváme taky.
+  async function najdiSoubory(client, prefix, hloubka) {
+    hloubka = hloubka || 0;
+    var res = await client.storage.from('presety').list(prefix, { limit: 100, sortBy: { column: 'name', order: 'asc' } });
+    if (res.error) throw res.error;
+    var polozky = res.data || [];
+    var vysledek = [];
+    for (var i = 0; i < polozky.length; i++) {
+      var f = polozky[i];
+      if (!f.name || f.name.charAt(0) === '.') continue;          // .emptyFolderPlaceholder apod.
+      var cesta = prefix ? prefix + '/' + f.name : f.name;
+      var jeSlozka = !f.id && !(f.metadata && f.metadata.size);
+      if (jeSlozka) {
+        if (hloubka < 2) vysledek = vysledek.concat(await najdiSoubory(client, cesta, hloubka + 1));
+        continue;
+      }
+      vysledek.push({
+        nazev: f.name,
+        popis: (/\.zip$/i.test(f.name) ? 'Všechny presety v jednom balíčku' : 'Preset pro Lightroom i Photoshop') +
+               (f.metadata && f.metadata.size ? ' · ' + kb(f.metadata.size) : ''),
+        cesta: cesta
+      });
+    }
+    return vysledek;
+  }
+
   async function start() {
     A = window.KenjiAuth || A;
     if (IS_LOCAL) {
@@ -159,18 +187,7 @@
       if (opravneni.error) throw opravneni.error;
       if (!opravneni.data) { renderPaywall(); return; }
 
-      var seznam = await client.storage.from('presety').list('', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
-      if (seznam.error) throw seznam.error;
-      var soubory = (seznam.data || [])
-        .filter(function (f) { return f.name && f.name.indexOf('.') > 0; })
-        .map(function (f) {
-          return {
-            nazev: f.name,
-            popis: (/\.zip$/i.test(f.name) ? 'Všechny presety v jednom balíčku' : 'Preset pro Lightroom i Photoshop') +
-                   (f.metadata && f.metadata.size ? ' · ' + kb(f.metadata.size) : ''),
-            cesta: f.name
-          };
-        });
+      var soubory = await najdiSoubory(client, '');
       renderList(soubory);
     } catch (e) {
       console.warn('presety', e);
