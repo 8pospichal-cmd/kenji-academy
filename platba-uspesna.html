@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20260907-videa-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20260907-videa-v2">
 </head>
 <body>
 <main class="checkout-state">
@@ -19,8 +19,8 @@
     <div class="checkout-badge" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5 11-12"/></svg>
     </div>
-    <p class="academy-kicker">Platba proběhla · máš plný přístup</p>
-    <h1>Vítej v Kenji Academy. 🎉</h1>
+    <p class="academy-kicker" id="cs-kicker">Platba proběhla · máš plný přístup</p>
+    <h1 id="cs-title">Vítej v Kenji Academy. 🎉</h1>
 
     <!-- Přihlášený uživatel → rovnou do aplikace -->
     <div id="cs-logged" hidden>
@@ -60,6 +60,18 @@
 
   // Po nákupu presetů pošli člověka rovnou ke stažení, ne na dashboard.
   var koupilPresety = /(^|[?&])(product|produkt)=presets/.test(location.search);
+  // U presetů upravíme i text pro nepřihlášeného — jinak mluví o vstupu do Academy.
+  if (koupilPresety) {
+    // Kdo koupil presety, nekoupil Academy — nadpis tomu musí odpovídat.
+    document.title = 'Presety jsou tvoje — platba proběhla';
+    var kicker = document.getElementById('cs-kicker');
+    if (kicker) kicker.textContent = 'Platba proběhla · presety jsou tvoje';
+    var titulek = document.getElementById('cs-title');
+    if (titulek) titulek.textContent = 'Presety máš. 🎉';
+    var uvod = loginBox.querySelector('.checkout-lead');
+    if (uvod) uvod.innerHTML = 'Presety máš zaplacené. Zbývá jediný krok — přihlas se <strong>stejným e-mailem, který jsi zadal u platby</strong>. Pošleme ti odkaz a hned se dostaneš ke stažení.';
+  }
+
   function showLogged() {
     loginBox.hidden = true; loggedBox.hidden = false;
     if (koupilPresety) {
@@ -88,7 +100,8 @@
     if (!window.KenjiAuth || !window.KenjiAuth.requestMagicLink) { err('Přihlášení se teď nepodařilo načíst. Zkus stránku obnovit.'); return; }
     submitEl.disabled = true; submitEl.textContent = 'Posílám…';
     try {
-      var res = await window.KenjiAuth.requestMagicLink(email, { redirect: 'index.html' });
+      // Kdo koupil presety, má se po přihlášení dostat rovnou ke stažení, ne na dashboard.
+      var res = await window.KenjiAuth.requestMagicLink(email, { redirect: koupilPresety ? 'presety.html' : 'index.html' });
       if (res && res.ok) {
         document.getElementById('cs-sent-email').textContent = email;
         form.hidden = true; sentEl.hidden = false;
