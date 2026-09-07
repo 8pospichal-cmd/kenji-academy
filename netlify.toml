@@ -100,9 +100,58 @@
   status = 404
   force = true
 
-# Interní poznámky v Markdownu (CONTEXT.md, STAV_PROJEKTU.md, návody k nastavení).
+# Interní poznámky v Markdownu — Netlify neumí vzor "/*.md", proto výčet.
+
 [[redirects]]
-  from = "/*.md"
+  from = "/CONTEXT.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/KENJI_AI_SETUP.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/STAV_PROJEKTU.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/STRIPE_SETUP.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SUPABASE_KUPONY.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SUPABASE_PRISPEVKY.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SUPABASE_PROFILY.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SUPABASE_SETUP.md"
   to = "/404.html"
   status = 404
   force = true
