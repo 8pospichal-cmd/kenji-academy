@@ -15,6 +15,19 @@
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
   function kb(bytes) { return bytes ? Math.max(1, Math.round(bytes / 1024)) + ' kB' : ''; }
 
+  // Stránka se otevře komukoli — zamčené je až samotné stažení.
+  function renderHost() {
+    ROOT.innerHTML =
+      '<div class="pres-gate">' +
+        '<h2>Ke stažení se dostaneš po přihlášení</h2>' +
+        '<p>Presety jsou navázané na tvůj účet, ne na tenhle prohlížeč. Přihlas se stejným e-mailem, kterým jsi platil — soubory pak máš kdykoli po ruce, i na jiném počítači.</p>' +
+        '<div class="pres-gate-actions">' +
+          '<a class="pres-gate-cta" href="index.html">Přihlásit se</a>' +
+          '<a class="pres-gate-alt" href="preset.html">Ještě je nemám — koupit za 982 Kč →</a>' +
+        '</div>' +
+      '</div>';
+  }
+
   function renderPaywall() {
     ROOT.innerHTML =
       '<div class="paywall"><div class="paywall-lock">🔒</div>' +
@@ -176,6 +189,8 @@
 
   async function start() {
     A = window.KenjiAuth || A;
+    // Nepřihlášený vidí uvítací obrazovku i v dev režimu — ať jde otestovat.
+    if (!A.isLoggedIn || !A.isLoggedIn()) { renderHost(); return; }
     if (IS_LOCAL) {
       renderList([{ nazev: 'Ukazka.xmp', popis: 'Lokální náhled — soubory jsou jen na serveru', cesta: 'ukazka.xmp' }]);
       return;
@@ -183,6 +198,8 @@
     try {
       var client = await A.getSupabase();
       if (!client) { renderError('Přihlášení teď není dostupné.'); return; }
+      var session = A.liveSession ? await A.liveSession() : null;
+      if (!session) { renderHost(); return; }   // účet je lokálně, ale relace vypršela
       var opravneni = await client.rpc('my_presets');
       if (opravneni.error) throw opravneni.error;
       if (!opravneni.data) { renderPaywall(); return; }
