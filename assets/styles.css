@@ -4137,6 +4137,17 @@ body.kenji-gated .kenji-help { display: none !important; }
 .community-reconnect-btn:disabled { opacity: .65; cursor: default; }
 @media (max-width: 560px) { .community-reconnect { padding: 12px 14px; } .community-reconnect-btn { width: 100%; } }
 
+/* Prodejní stránka presetů pro NEPŘIHLÁŠENÉHO návštěvníka.
+   Členská navigace by ho jen mátla — vidí čistou prodejní stránku. */
+.pp-guest .pp-only-member { display: none !important; }
+.pp-guest .sidebar,
+.pp-guest .sidebar-overlay,
+.pp-guest .menu-toggle,
+.pp-guest .bottom-nav { display: none !important; }
+.pp-guest .layout { grid-template-columns: minmax(0, 1fr) !important; }
+.pp-guest .main { padding-left: 0; padding-right: 0; }
+.pp-guest body, .pp-guest.has-bottom-nav body { padding-bottom: 0 !important; }
+
 /* Stránka „Moje presety" — seznam souborů ke stažení. */
 .pres-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .pres-head h2 { margin: 0 0 4px; font: 400 clamp(24px,3.4vw,32px)/1 'Bebas Neue', sans-serif; color: var(--text-strong); }

@@ -336,6 +336,10 @@
             <span class="icon">${uiIcon('calculator')}</span>
             <span>Kalkulačka hodinovky</span>
           </a>
+          <a href="${ROOT}presety.html" class="sidebar-link${currentFile === 'presety.html' ? ' active' : ''}">
+            <span class="icon">${uiIcon('palette')}</span>
+            <span>Moje presety</span>
+          </a>
         </nav>
       </div>`;
 
@@ -1355,10 +1359,13 @@
   // Globální interceptor: každý „koupit / do Academy" spouštěč → místo skoku na
   // prodejní stránku otevři modal. Běží v capture fázi, ať předběhne checkout v script.js.
   document.addEventListener('click', function (e) {
-    if (currentFile === 'academy.html') return; // prodejní stránka: rovnou Stripe
+    // Prodejní stránky konkrétního produktu vedou rovnou do Stripe — modal nabízí
+    // Academy/Databázi, což by tam jen mátlo a odvádělo od nákupu.
+    if (currentFile === 'academy.html' || currentFile === 'preset.html') return;
     const t = e.target.closest('[data-checkout-product], a[href$="academy.html"], [data-upgrade]');
     if (!t) return;
     if (t.closest('.upg-modal')) return; // tlačítka uvnitř modalu → nech projít na Stripe (script.js)
+    if (t.hasAttribute('data-direct-checkout')) return; // výslovně: rovnou do pokladny
     e.preventDefault();
     e.stopPropagation();
     openUpgradeModal(t.getAttribute('data-upgrade') || '');

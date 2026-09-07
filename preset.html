@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+<script>(function(){try{if(localStorage.getItem("kenji_theme")==="light")document.documentElement.setAttribute("data-theme","light");if(!localStorage.getItem("kenji_user"))document.documentElement.classList.add("pp-guest");}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kenjiho presety — úpravy fotek na jedno kliknutí | Kenji Academy</title>
-<meta name="description" content="Moje nejaktuálnější presety pro Lightroom i Photoshop, laděné 10+ let. Barvy a nálada, co tvoje fotky posunou na první dobrou. Video návod v ceně. 1 050 Kč jednorázově.">
+<meta name="description" content="Devět presetů, kterými barvím vlastní zakázky. Lightroom i Photoshop, video návod v ceně. Zaplatíš jednou, máš je napořád. Teď za 982 Kč místo 1 227 Kč.">
 
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <meta property="og:type" content="product">
 <meta property="og:title" content="Kenjiho presety">
-<meta property="og:description" content="Úpravy fotek jako profík — na jedno kliknutí. Lightroom i Photoshop, 10+ presetů, video návod v ceně.">
+<meta property="og:description" content="Devět presetů pro Lightroom i Photoshop. Patnáct let ladění na jeden klik, video návod v ceně.">
 <meta property="og:image" content="assets/preset/hero.webp">
 <meta property="og:locale" content="cs_CZ">
 <meta name="theme-color" content="#0a0a0a">
@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20260907-presety-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20260907-presety-v4">
 
 <style>
 /* ===== KENJIHO PRESETY — scopnuto pod .preset-page ===== */
@@ -32,19 +32,24 @@
 .pp-hero-media img { width:100%; height:100%; object-fit:cover; display:block; }
 .pp-h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(44px,7vw,72px); line-height:.98; letter-spacing:-.5px; margin:0 0 14px; }
 .pp-h1 .hl { color:var(--orange); }
-.pp-lead { font-size:16px; color:var(--text-dim); line-height:1.65; margin:0 0 20px; }
+.pp-lead { font-size:17px; color:var(--text-dim); line-height:1.7; margin:0 0 22px; max-width:46ch; }
 .pp-lead b { color:var(--text); }
-.pp-social { display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+.pp-social { display:flex; align-items:center; gap:9px; margin:7px 0 0; flex-wrap:wrap; }
 .pp-stars { color:#ffb300; letter-spacing:2px; font-size:15px; }
 .pp-social-txt { font-size:13.5px; color:var(--text-dim); }
 .pp-social-txt b { color:var(--text); }
-.pp-price-row { display:flex; align-items:baseline; gap:10px; margin-bottom:16px; }
-.pp-price { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:.5px; color:var(--text); line-height:1; }
-.pp-price-note { font-size:13px; color:var(--text-mute); }
+.pp-price-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:12px; margin-bottom:0; }
+.pp-price { font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,6vw,52px); letter-spacing:.5px; color:var(--text-strong); line-height:1; }
+.pp-price-was { font-size:19px; color:var(--text-mute); text-decoration:line-through; text-decoration-thickness:1.5px; }
+/* Odznak je krátký, ať se dá přečíst na jeden pohled (chyba 6 z rozboru). */
+.pp-badge { display:inline-flex; align-items:center; height:26px; padding:0 10px; border-radius:100px;
+  background:rgba(52,211,153,.14); border:1px solid rgba(52,211,153,.4); color:#34d399;
+  font:800 12.5px/1 'Inter',sans-serif; letter-spacing:.02em; }
+.pp-price-note { font-size:13.5px; color:var(--text-mute); margin:10px 0 20px; }
 .pp-cta { display:inline-flex; align-items:center; gap:10px; padding:15px 26px; border-radius:14px; text-decoration:none;
-  font-size:16px; font-weight:800; letter-spacing:-.01em; color:#fff;
-  background:linear-gradient(180deg,#ff9a3d 0%,var(--orange) 55%,#e8620c 100%);
-  box-shadow:0 12px 28px -10px rgba(255,122,26,.7), inset 0 1px 0 rgba(255,255,255,.3);
+  font-size:16.5px; font-weight:800; letter-spacing:-.01em; color:#fff;
+  background:linear-gradient(180deg,#ff8a2b 0%,var(--orange) 60%,#ec6a10 100%);
+  box-shadow:0 10px 24px -12px rgba(255,122,26,.55), inset 0 1px 0 rgba(255,255,255,.22);
   transition:transform .15s ease, box-shadow .15s ease; }
 .pp-cta:hover { transform:translateY(-2px); box-shadow:0 18px 34px -10px rgba(255,122,26,.8), inset 0 1px 0 rgba(255,255,255,.3); }
 .pp-cta svg { width:18px; height:18px; }
@@ -52,12 +57,12 @@
 .pp-guarantee svg { width:15px; height:15px; color:#34d399; flex-shrink:0; }
 
 /* SEKCE */
-.pp-section { margin:64px 0; }
+.pp-section { margin:72px 0; }
 .pp-sec-head { text-align:center; max-width:620px; margin:0 auto 34px; }
 .pp-kicker { font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--orange); margin-bottom:12px; }
 .pp-h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,5vw,44px); line-height:1.03; letter-spacing:-.3px; margin:0 0 12px; }
 .pp-h2 .hl { color:var(--orange); }
-.pp-p { font-size:15.5px; color:var(--text-dim); line-height:1.7; }
+.pp-p { font-size:15.5px; color:var(--text-dim); line-height:1.78; }
 .pp-p b { color:var(--text); }
 
 /* CO TO JE */
@@ -68,9 +73,11 @@
 
 /* FEATURES */
 .pp-features { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-.pp-feat { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--pp-rad-sm); padding:22px 18px; text-align:center; transition:border-color .15s ease, transform .15s ease; }
+.pp-feat { background:var(--bg-card); border:1px solid rgba(255,255,255,.07); border-radius:var(--pp-rad-sm); padding:24px 18px; text-align:center; transition:border-color .15s ease, transform .15s ease; }
 .pp-feat:hover { border-color:rgba(255,107,26,.4); transform:translateY(-2px); }
-.pp-feat-ico { font-size:30px; margin-bottom:12px; line-height:1; }
+.pp-feat-ico { display:flex; align-items:center; justify-content:center; width:44px; height:44px; margin:0 auto 14px;
+  border-radius:12px; background:rgba(255,107,26,.1); border:1px solid rgba(255,107,26,.22); color:var(--orange); }
+.pp-feat-ico svg { width:21px; height:21px; }
 .pp-feat-t { font-weight:800; font-size:15px; margin-bottom:7px; letter-spacing:-.01em; }
 .pp-feat-p { font-size:13px; color:var(--text-dim); line-height:1.55; }
 
@@ -89,7 +96,7 @@
 
 /* RECENZE */
 .pp-reviews { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.pp-review { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--pp-rad-sm); padding:22px 24px; }
+.pp-review { background:var(--bg-card); border:1px solid rgba(255,255,255,.07); border-radius:var(--pp-rad-sm); padding:24px 26px; }
 .pp-review-stars { color:#ffb300; letter-spacing:2px; font-size:14px; margin-bottom:12px; }
 .pp-review-txt { font-size:15px; color:var(--text); line-height:1.6; margin-bottom:16px; }
 .pp-review-who { display:flex; align-items:center; gap:11px; }
@@ -99,7 +106,7 @@
 
 /* FAQ */
 .pp-faq { max-width:720px; margin:0 auto; }
-.pp-faq details { border:1px solid var(--border); border-radius:var(--pp-rad-sm); background:var(--bg-card); margin-bottom:10px; overflow:hidden; }
+.pp-faq details { border:1px solid rgba(255,255,255,.07); border-radius:var(--pp-rad-sm); background:var(--bg-card); margin-bottom:10px; overflow:hidden; }
 .pp-faq summary { padding:17px 20px; font-weight:700; font-size:15px; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:14px; }
 .pp-faq summary::-webkit-details-marker { display:none; }
 .pp-faq summary::after { content:'+'; color:var(--orange); font-size:22px; font-weight:400; transition:transform .2s ease; line-height:1; }
@@ -111,7 +118,25 @@
 .pp-final { text-align:center; background:linear-gradient(180deg,var(--bg-card),var(--bg-elevated)); border:1px solid var(--border); border-radius:var(--pp-rad); padding:44px 28px; }
 .pp-final .pp-h2 { margin-bottom:10px; }
 .pp-final .pp-p { max-width:520px; margin:0 auto 24px; }
-.pp-final-price { display:flex; align-items:baseline; gap:10px; justify-content:center; margin-bottom:20px; }
+.pp-final-price { display:flex; align-items:baseline; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:0; }
+.pp-social-center { justify-content:center; margin:9px 0 20px; }
+
+/* Lepká lišta s cenou a tlačítkem */
+.pp-sticky { position:fixed; left:0; right:0; bottom:0; z-index:60; padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));
+  background:rgba(12,12,12,.93); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  border-top:1px solid rgba(255,255,255,.09); transform:translateY(105%); transition:transform .25s ease; }
+.pp-sticky.is-on { transform:translateY(0); }
+/* Přihlášený člen má dole vlastní navigaci — dvě lišty přes sebe by se bily.
+   Lepká lišta je proto jen pro návštěvníka, který přišel nakoupit. */
+:root:not(.pp-guest) .pp-sticky { display:none; }
+.pp-sticky-in { max-width:940px; margin:0 auto; display:flex; align-items:center; gap:14px; }
+.pp-sticky-price { display:flex; align-items:baseline; gap:8px; flex:0 0 auto; }
+.pp-sticky-price strong { font-family:'Bebas Neue',sans-serif; font-size:28px; line-height:1; color:var(--text-strong); }
+.pp-sticky-price span { font-size:13px; color:var(--text-mute); text-decoration:line-through; }
+.pp-sticky-cta { flex:1; display:flex; align-items:center; justify-content:center; min-height:50px; padding:0 20px; border-radius:12px;
+  background:linear-gradient(180deg,#ff8a2b 0%,var(--orange) 60%,#ec6a10 100%); color:#fff; font:800 15.5px/1 'Inter',sans-serif;
+  text-decoration:none; box-shadow:0 8px 20px -12px rgba(255,122,26,.6); }
+@media (prefers-reduced-motion: reduce) { .pp-sticky { transition:none; } }
 
 @media (max-width:820px) {
   .pp-hero { grid-template-columns:1fr; gap:22px; }
@@ -142,7 +167,7 @@
   <main class="main">
     <div class="main-inner">
 
-      <div class="breadcrumbs">
+      <div class="breadcrumbs pp-only-member">
         <a href="index.html">Databáze</a>
         <span class="separator">/</span>
         <span class="current">Kenjiho presety</span>
@@ -155,22 +180,24 @@
           <div>
             <div class="eyebrow">PRESET · LIGHTROOM + PHOTOSHOP</div>
             <h1 class="pp-h1">Kenjiho <span class="hl">presety.</span></h1>
-            <p class="pp-lead">Chceš úpravy jako profík, ale nechce se ti sedět hodiny nad každou fotkou? <b>Tyhle presety jsou zkratka.</b> Jeden klik a fotka má barvy i náladu, co ji posunou na úplně jinej level. 🔥</p>
+            <p class="pp-lead">Moje heboučký presety, pokud chceš šetřit čas.</p>
+            <div class="pp-price-row">
+              <span class="pp-price">982 Kč</span>
+              <span class="pp-price-was">1 227 Kč</span>
+              <span class="pp-badge">−20 %</span>
+            </div>
             <div class="pp-social">
               <span class="pp-stars">★★★★★</span>
               <span class="pp-social-txt"><b>97 lidí</b> už koupilo</span>
             </div>
-            <div class="pp-price-row">
-              <span class="pp-price">1 050 Kč</span>
-              <span class="pp-price-note">jednorázově · napořád tvoje</span>
-            </div>
-            <a class="pp-cta" href="#" data-checkout-product="presets" data-cta-location="preset-page">
-              Chci Kenjiho presety
+            <div class="pp-price-note">Jednorázově · ušetříš 245 Kč · napořád tvoje</div>
+            <a class="pp-cta" href="#" data-checkout-product="presets" data-direct-checkout data-cta-location="preset-page">
+              Koupit za 982 Kč
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
             <div class="pp-guarantee">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              Získáš ihned po zaplacení · video návod v ceně
+              Máš je hned po zaplacení · video návod v ceně
             </div>
           </div>
           <div class="pp-hero-media">
@@ -182,22 +209,22 @@
         <section class="pp-section">
           <div class="pp-sec-head">
             <div class="pp-kicker">Co to vlastně je</div>
-            <h2 class="pp-h2">Moje úpravy zabalené <span class="hl">do jednoho kliknutí.</span></h2>
+            <h2 class="pp-h2">Patnáct let hledání <span class="hl">na jeden klik.</span></h2>
           </div>
           <div class="pp-what">
-            <p class="pp-p">Deset a víc let jsem laděl, jak mají moje fotky vypadat — kontrast, tóny pleti, ta správná nálada, kterou lidi na mých fotkách poznají. <b>Tyhle presety jsou přesně ten postup</b>, jen zabalený tak, abys ho měl na jeden klik.</p>
-            <p class="pp-p">Nahodíš preset na svoji fotku a máš <b>90 % práce hotový</b>. Zbytek si během vteřin doladíš podle světla — a jedeš dál. Žádné hodiny u počítače, žádné hádání, proč to „nějak nesedí".</p>
-            <div class="pp-bonus">🎁 <b>+ BONUS:</b> video návod, kde ti přesně ukážu, jak presety nainstalovat a používat v Lightroomu i Photoshopu. Žádné tápání — jen si to pustíš a máš hotovo.</div>
+            <p class="pp-p">Fotím přes patnáct let a celou tu dobu jsem si ladil, jak mají moje fotky vypadat. Kontrast, tóny pleti, ta nálada, podle který lidi poznají, že je to moje. Většina pokusů skončila v koši — tyhle zůstaly. <b>Používám je na vlastní zakázky, každý týden.</b></p>
+            <p class="pp-p">Klikneš a máš <b>devadesát procent práce za sebou</b>. Zbytek doladíš podle světla za pár vteřin. Nebudu ti tvrdit, že už nikdy nic nešáhneš — ale přestaneš civět do obrazovky a přemýšlet, proč to pořád „nějak nesedí".</p>
+            <div class="pp-bonus">🎁 <b>+ BONUS:</b> video, kde ti ukážu instalaci v Lightroomu i Photoshopu a jak s nima pracuju já. Pustíš si to, klikáš se mnou, za deset minut jedeš.</div>
           </div>
         </section>
 
         <!-- FEATURES -->
         <section class="pp-section">
           <div class="pp-features">
-            <div class="pp-feat"><div class="pp-feat-ico">📷</div><div class="pp-feat-t">Lightroom i Photoshop</div><div class="pp-feat-p">Dostaneš obě verze — na počítači i v mobilní appce jsi pokrytý.</div></div>
-            <div class="pp-feat"><div class="pp-feat-ico">🎞️</div><div class="pp-feat-t">10+ presetů na všechno</div><div class="pp-feat-p">Portréty, svatby, produkt, venku i ve studiu. Vybereš podle nálady.</div></div>
-            <div class="pp-feat"><div class="pp-feat-ico">⚡</div><div class="pp-feat-t">Rychlejší workflow</div><div class="pp-feat-p">Míň času nad editací = víc času (a peněz) na focení. Galerie odbavíš raz dva.</div></div>
-            <div class="pp-feat"><div class="pp-feat-ico">♾️</div><div class="pp-feat-t">Navždycky tvoje</div><div class="pp-feat-p">Zaplatíš jednou, používáš napořád. Žádné předplatné, žádný háček.</div></div>
+            <div class="pp-feat"><div class="pp-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.7l1-1.7A1 1 0 0 1 9 3.8h6a1 1 0 0 1 .8.5l1 1.7h1.7A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.6"/></svg></div><div class="pp-feat-t">Lightroom i Photoshop</div><div class="pp-feat-p">Obě verze v ceně. Na počítači i v mobilu, ať upravuješ kdekoli.</div></div>
+            <div class="pp-feat"><div class="pp-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg></div><div class="pp-feat-t">9 presetů, každý jiný</div><div class="pp-feat-p">Od teplých svatebních tónů po syrovou černobílou. Venku i ve studiu.</div></div>
+            <div class="pp-feat"><div class="pp-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z"/></svg></div><div class="pp-feat-t">Rychlejší workflow</div><div class="pp-feat-p">Čas nad Lightroomem ti nikdo nezaplatí. Focení jo.</div></div>
+            <div class="pp-feat"><div class="pp-feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 8.5a3.5 3.5 0 1 0 0 7c2.5 0 3.5-2 5.5-3.5s3-3.5 5.5-3.5a3.5 3.5 0 1 1 0 7c-2.5 0-3.5-2-5.5-3.5S9 8.5 6.5 8.5z"/></svg></div><div class="pp-feat-t">Navždycky tvoje</div><div class="pp-feat-p">Zaplatíš jednou a máš je. Žádné předplatné, žádný háček.</div></div>
           </div>
         </section>
 
@@ -205,8 +232,8 @@
         <section class="pp-section">
           <div class="pp-sec-head">
             <div class="pp-kicker">Před a po</div>
-            <h2 class="pp-h2">Podívej se, co <span class="hl">udělají.</span></h2>
-            <p class="pp-p">Stejná fotka. Vlevo originál z foťáku, vpravo po nahození presetu. Přetáhni posuvník.</p>
+            <h2 class="pp-h2">Nemusíš mi věřit. <span class="hl">Podívej se.</span></h2>
+            <p class="pp-p">Stejná fotka. Vlevo syrový RAW z foťáku, vpravo po nahození presetu. Chytni posuvník a přetáhni.</p>
           </div>
           <div class="pp-ba-grid">
             <div class="ba" data-ba style="--p:50%">
@@ -241,7 +268,7 @@
         <section class="pp-section">
           <div class="pp-sec-head">
             <div class="pp-kicker">Recenze</div>
-            <h2 class="pp-h2">Co na ně říkají <span class="hl">ostatní.</span></h2>
+            <h2 class="pp-h2">Co říkají <span class="hl">kluci, co je používají.</span></h2>
           </div>
           <div class="pp-reviews">
             <div class="pp-review">
@@ -266,15 +293,15 @@
           <div class="pp-faq">
             <details open>
               <summary>Co dostanu po zaplacení?</summary>
-              <div class="pp-faq-a">Všechny Kenjiho presety pro Lightroom i Photoshop, <b>video návod</b> k instalaci a použití a ukázky na reálných fotkách. Přístup dostaneš hned po zaplacení.</div>
+              <div class="pp-faq-a">Všech <b>devět presetů</b> pro Lightroom i Photoshop a <b>video návod</b> k instalaci. Hned po zaplacení se ti odemknou v Academy v sekci <b>Moje presety</b> — stáhneš si je odtamtud kdykoli znovu, i za dva roky na novém počítači.</div>
             </details>
             <details>
               <summary>V jakých programech je použiju?</summary>
-              <div class="pp-faq-a">V <b>Adobe Lightroom</b> (na počítači i v mobilní aplikaci) a v <b>Adobe Photoshopu</b> (přes Camera RAW). Video návod tě provede instalací v obou — zvládne to i úplný začátečník.</div>
+              <div class="pp-faq-a">V <b>Lightroomu</b> na počítači i v mobilu a v <b>Photoshopu</b> přes Camera RAW. Instalace je pár kliků a video tě tím provede — zvládneš to, i když jsi v Lightroomu poprvé.</div>
             </details>
             <details>
               <summary>Co když si nebudu vědět rady?</summary>
-              <div class="pp-faq-a">Nenechám tě v tom. Napiš nám na <a href="https://www.instagram.com/kenjiacademycz" target="_blank" rel="noopener">Instagram @kenjiacademycz</a> nebo do WhatsApp skupiny Kenji Academy a poradíme ti, ať to rozjedeš.</div>
+              <div class="pp-faq-a">Nenechám tě v tom. Napiš mi na <a href="https://www.instagram.com/kenjiacademycz" target="_blank" rel="noopener">Instagram @kenjiacademycz</a> nebo do WhatsApp skupiny Academy a rozchodíme to spolu.</div>
             </details>
           </div>
         </section>
@@ -282,14 +309,19 @@
         <!-- FINAL CTA -->
         <section class="pp-section">
           <div class="pp-final">
-            <h2 class="pp-h2">Přestaň řešit barvy. <span class="hl">Začni fotit.</span></h2>
-            <p class="pp-p">Deset let mé práce s barvou na jeden klik. Nahodíš, doladíš, odevzdáš — a vypadá to jako od profíka.</p>
+            <h2 class="pp-h2">Míň klikání. <span class="hl">Víc focení.</span></h2>
+            <p class="pp-p">Devět presetů, kterými barvím vlastní zakázky. Nahodíš, doladíš, odevzdáš — a máš víkend zpátky.</p>
             <div class="pp-final-price">
-              <span class="pp-price">1 050 Kč</span>
-              <span class="pp-price-note">jednorázově · napořád tvoje</span>
+              <span class="pp-price">982 Kč</span>
+              <span class="pp-price-was">1 227 Kč</span>
+              <span class="pp-badge">−20 %</span>
             </div>
-            <a class="pp-cta" href="#" data-checkout-product="presets" data-cta-location="preset-page">
-              Chci Kenjiho presety
+            <div class="pp-social pp-social-center">
+              <span class="pp-stars">★★★★★</span>
+              <span class="pp-social-txt"><b>97 lidí</b> už koupilo</span>
+            </div>
+            <a class="pp-cta" href="#" data-checkout-product="presets" data-direct-checkout data-cta-location="preset-page">
+              Koupit za 982 Kč
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
             <div class="pp-guarantee" style="justify-content:center; margin-top:14px;">
@@ -304,15 +336,35 @@
   </main>
 </div>
 
-<script src="assets/articles.js?v=20260824-value-v1"></script>
+<!-- Lepká lišta: rozhodnutí padne často až u recenzí, tlačítko musí být po ruce. -->
+<div class="pp-sticky" id="pp-sticky" hidden>
+  <div class="pp-sticky-in">
+    <div class="pp-sticky-price"><strong>982 Kč</strong><span>1 227 Kč</span></div>
+    <a class="pp-sticky-cta" href="#" data-checkout-product="presets" data-direct-checkout data-cta-location="preset-sticky">Koupit presety</a>
+  </div>
+</div>
+
+<script src="assets/articles.js?v=20260907-presety-v2"></script>
 <script src="assets/courses.js?v=20260824-ai-retry-v1"></script>
-<script src="assets/nav.js?v=20260903-komunita-v1"></script>
+<script src="assets/nav.js?v=20260907-presety-v4"></script>
 <script src="assets/notify.js?v=20260903-komunita-v1"></script>
 <script src="assets/auth.js?v=20260907-presety-v1"></script>
 <script src="assets/script.js?v=20260907-presety-v1"></script>
 <script>
 // Interaktivní před/po posuvník
 (function () {
+  // Lišta se ukáže, teprve když hlavní tlačítko odscrolluje pryč — dokud je vidět,
+  // byla by jen navíc.
+  (function () {
+    var lista = document.getElementById('pp-sticky');
+    var hlavni = document.querySelector('.pp-hero .pp-cta');
+    if (!lista || !hlavni || !('IntersectionObserver' in window)) return;
+    lista.hidden = false;
+    new IntersectionObserver(function (zaznamy) {
+      lista.classList.toggle('is-on', !zaznamy[0].isIntersecting);
+    }, { rootMargin: '-10px 0px 0px 0px' }).observe(hlavni);
+  })();
+
   document.querySelectorAll('[data-ba]').forEach(function (ba) {
     function setFromClientX(clientX) {
       var r = ba.getBoundingClientRect();

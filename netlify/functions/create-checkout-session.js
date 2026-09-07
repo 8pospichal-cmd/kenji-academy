@@ -16,7 +16,7 @@ const PRODUCTS = {
   presets: {
     envPrice: 'STRIPE_PRICE_PRESETS',
     fallbackName: 'Kenjiho presety',
-    fallbackAmount: 105000,
+    fallbackAmount: 98200,      // 982 Kč (zvýhodněná cena, běžně 1 227 Kč)
     grantsPresets: true          // nedává tier, jen odemkne stažení presetů
   }
 };
@@ -126,7 +126,7 @@ exports.handler = async function handler(event) {
     const params = {
       mode: 'payment',
       line_items: lineItems,
-      success_url: `${origin}/platba-uspesna.html?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/platba-uspesna.html?product=${productKey}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/platba-zrusena.html`,
       customer_email: payload.email || undefined,
       billing_address_collection: 'auto',

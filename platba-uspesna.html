@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20260907-presety-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20260907-presety-v4">
 </head>
 <body>
 <main class="checkout-state">
@@ -26,7 +26,7 @@
     <div id="cs-logged" hidden>
       <p class="checkout-lead">Jsi uvnitř. Klikni a pojď si to prohlédnout — kurzy, komunita, databáze i Kenji AI jsou teď tvoje.</p>
       <div class="checkout-actions">
-        <a class="academy-cta" href="index.html">Vstoupit do Academy →</a>
+        <a class="academy-cta" href="index.html" id="cs-go">Vstoupit do Academy →</a>
       </div>
     </div>
 
@@ -58,7 +58,17 @@
   var errEl = document.getElementById('cs-error');
   var sentEl = document.getElementById('cs-sent');
 
-  function showLogged() { loginBox.hidden = true; loggedBox.hidden = false; }
+  // Po nákupu presetů pošli člověka rovnou ke stažení, ne na dashboard.
+  var koupilPresety = /(^|[?&])(product|produkt)=presets/.test(location.search);
+  function showLogged() {
+    loginBox.hidden = true; loggedBox.hidden = false;
+    if (koupilPresety) {
+      var odkaz = document.getElementById('cs-go');
+      if (odkaz) { odkaz.href = 'presety.html'; odkaz.textContent = 'Stáhnout presety →'; }
+      var text = loggedBox.querySelector('.checkout-lead');
+      if (text) text.textContent = 'Hotovo. Presety máš odemčené — stáhneš si je kdykoli v sekci Moje presety.';
+    }
+  }
 
   // Když je uživatel už přihlášený (zaplatil přihlášený), ukaž rovnou vstup do aplikace.
   function checkLogged() {

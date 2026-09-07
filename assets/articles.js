@@ -500,9 +500,9 @@ const KENJI_PRESET_PROMO = {
   url:    'preset.html',                 // interní landing page (koupě vede ven přes CTA)
   image:  'assets/preset.webp',          // ostrá, NErozmazaná
   kicker: 'KENJIHO PRESETY',
-  title:  '10+ let laděné k dokonalosti.',
-  text:   'Tyhle presety jsou moje nejaktuálnější — barvy a nálada, co tvoje fotky posunou na první dobrou. 🔥',
-  bonus:  '+ BONUS: video, jak je nainstalovat a používat 📚',
+  title:  'Patnáct let ladění na jeden klik.',
+  text:   'Devět presetů, kterými barvím vlastní zakázky. Nahodíš, doladíš, odevzdáš — a máš víkend zpátky. 🔥',
+  bonus:  '+ BONUS: video, jak je nainstalovat a jak s nima pracuju 📚',
   button: 'Koupit Kenjiho presety',
   // kde se ukáže + jak umístit (vyhýbá se kolizi s video playerem na témže článku)
   slugs: {
