@@ -125,7 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product, source: 'site-cta', coupon: window.kenjiCoupon() || undefined })
+        // Přihlášenému předvyplníme e-mail účtu. Kdyby u platby napsal jiný,
+        // přístup by se zapsal na něj a ve svém účtu by ho nenašel.
+        body: JSON.stringify({
+          product,
+          source: 'site-cta',
+          email: (window.KenjiAuth && window.KenjiAuth.getUser && (window.KenjiAuth.getUser() || {}).email) || undefined,
+          coupon: window.kenjiCoupon() || undefined
+        })
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || 'Platbu se nepodařilo připravit.');
