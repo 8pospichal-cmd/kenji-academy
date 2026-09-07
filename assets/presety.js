@@ -27,9 +27,62 @@
     ROOT.innerHTML = '<div class="feed-empty"><strong>Presety se nepovedlo načíst.</strong><span>' + esc(text || 'Obnov stránku a zkus to prosím znovu.') + '</span></div>';
   }
 
+  var VIDEA = {
+    navod: { id: 'xMXkbrzV9YE', titul: 'Jak používat moje presety', delka: '3:15',
+             popis: 'Instalace v Lightroomu i Photoshopu a jak s nima pracuju. Pusť si to jako první.' },
+    bonusy: [
+      { id: '2roIGGba7TI', titul: 'Úprava fotek s Kenjim', delka: '1:24:12',
+        popis: 'Celý můj postup od RAWu po hotovou fotku. Vidíš každý krok i proč ho dělám.' },
+      { id: 'AsRC8uOHOrk', titul: 'Color grading v Lightroomu a Photoshopu', delka: '2:08:04',
+        popis: 'Editing session naživo — práce s barvou do hloubky, včetně otázek od diváků.' }
+    ]
+  };
+
+  function prehravac(v, velky) {
+    return '<div class="pres-video' + (velky ? ' is-hero' : '') + '" data-yt="' + esc(v.id) + '">' +
+      '<button class="pres-video-play" type="button" aria-label="Přehrát: ' + esc(v.titul) + '">' +
+        '<img src="https://i.ytimg.com/vi/' + esc(v.id) + '/hqdefault.jpg" alt="" loading="lazy">' +
+        '<span class="pres-video-btn" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span>' +
+        '<span class="pres-video-time">' + esc(v.delka) + '</span>' +
+      '</button>' +
+      '<div class="pres-video-meta"><strong>' + esc(v.titul) + '</strong><small>' + esc(v.popis) + '</small></div>' +
+    '</div>';
+  }
+
+  function videaMarkup() {
+    return '<div class="pres-block">' +
+      '<div class="pres-block-head"><h2>Video návod</h2><p>Nemusíš nic hádat — projdeme to spolu krok za krokem.</p></div>' +
+      prehravac(VIDEA.navod, true) +
+    '</div>' +
+    '<div class="pres-block">' +
+      '<div class="pres-block-head"><h2>Bonusy k presetům <span class="pres-tag">zdarma</span></h2>' +
+      '<p>Dvě dlouhá videa, kde upravuju fotky odshora dolů. Presety jsou zkratka — tohle je to, co za nimi stojí.</p></div>' +
+      '<div class="pres-video-grid">' + VIDEA.bonusy.map(function (v) { return prehravac(v, false); }).join('') + '</div>' +
+    '</div>';
+  }
+
+  // Náhled → prehrávač až na kliknutí.
+  function wireVidea() {
+    ROOT.querySelectorAll('.pres-video').forEach(function (box) {
+      var tlacitko = box.querySelector('.pres-video-play');
+      if (!tlacitko) return;
+      tlacitko.addEventListener('click', function () {
+        var id = box.getAttribute('data-yt');
+        var ramec = document.createElement('iframe');
+        ramec.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0';
+        ramec.title = box.querySelector('.pres-video-meta strong').textContent;
+        ramec.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture';
+        ramec.allowFullscreen = true;
+        ramec.loading = 'lazy';
+        tlacitko.replaceWith(ramec);
+      });
+    });
+  }
+
   function renderList(soubory) {
     if (!soubory.length) {
-      ROOT.innerHTML = '<div class="feed-empty"><strong>Presety se připravují.</strong><span>Máš je zaplacené, ale soubory se ještě nahrávají. Zkus to prosím za chvíli.</span></div>';
+      ROOT.innerHTML = '<div class="feed-empty"><strong>Presety se připravují.</strong><span>Máš je zaplacené, ale soubory se ještě nahrávají. Zkus to prosím za chvíli.</span></div>' + videaMarkup();
+      wireVidea();
       return;
     }
     ROOT.innerHTML =
@@ -41,8 +94,10 @@
           '<span class="pres-name"><strong>' + esc(f.nazev) + '</strong><small>' + esc(f.popis) + '</small></span>' +
           '<button class="pres-dl" type="button" data-stahnout="' + esc(f.cesta) + '">Stáhnout</button></li>';
       }).join('') + '</ul>' +
-      '<p class="pres-note">Nevíš si rady s instalací? Napiš nám na <a href="https://www.instagram.com/kenjiacademycz" target="_blank" rel="noopener">Instagram</a> a poradíme.</p>';
+      '<p class="pres-note">Nevíš si rady s instalací? Napiš nám na <a href="https://www.instagram.com/kenjiacademycz" target="_blank" rel="noopener">Instagram</a> a poradíme.</p>' +
+      videaMarkup();
     wire(soubory);
+    wireVidea();
   }
 
   async function stahni(client, cesta, nazev) {
