@@ -4145,7 +4145,9 @@ body.kenji-gated .kenji-help { display: none !important; }
 .pp-guest .menu-toggle,
 .pp-guest .bottom-nav { display: none !important; }
 .pp-guest .layout { grid-template-columns: minmax(0, 1fr) !important; }
-.pp-guest .main { padding-left: 0; padding-right: 0; }
+/* Bez postranního menu chceme širší plochu, ale odsazení musí zůstat —
+   jinak se text na telefonu nalepí na okraj displeje. */
+.pp-guest .main { padding-left: clamp(20px, 5vw, 56px); padding-right: clamp(20px, 5vw, 56px); }
 .pp-guest body, .pp-guest.has-bottom-nav body { padding-bottom: 0 !important; }
 
 /* Stránka „Moje presety" — seznam souborů ke stažení. */

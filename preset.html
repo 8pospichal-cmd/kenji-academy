@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=20260907-verejna-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20260907-mobil-v1">
 
 <style>
 /* ===== KENJIHO PRESETY — scopnuto pod .preset-page ===== */
@@ -55,7 +55,7 @@
 .pp-cta svg { width:18px; height:18px; }
 .pp-guarantee { font-size:13px; color:var(--text-dim); margin-top:12px; display:flex; align-items:center; gap:7px; }
 .pp-guarantee svg { width:15px; height:15px; color:#34d399; flex-shrink:0; }
-.pp-have { display:inline-block; margin-top:14px; font-size:13px; color:var(--text-mute); text-decoration:underline; text-underline-offset:3px; }
+.pp-have { display:inline-flex; align-items:center; min-height:44px; margin-top:6px; font-size:13.5px; color:var(--text-mute); text-decoration:underline; text-underline-offset:3px; }
 .pp-have:hover { color:var(--text); }
 
 /* SEKCE */
@@ -141,6 +141,9 @@
 @media (prefers-reduced-motion: reduce) { .pp-sticky { transition:none; } }
 
 @media (max-width:820px) {
+  /* Na telefonu je 16:9 na posouzení úpravy málo — vyšší poměr ukáže víc fotky. */
+  .ba { aspect-ratio:4/3; }
+  .ba-knob { width:44px; height:44px; }
   .pp-hero { grid-template-columns:1fr; gap:22px; }
   .pp-hero-media { order:-1; }
   .pp-features { grid-template-columns:1fr 1fr; }
