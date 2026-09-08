@@ -28,14 +28,6 @@
       '</div>';
   }
 
-  function renderPaywall() {
-    ROOT.innerHTML =
-      '<div class="paywall"><div class="paywall-lock">🔒</div>' +
-      '<h2 class="paywall-title">Presety zatím nemáš</h2>' +
-      '<p class="paywall-text">Kenjiho presety pro Lightroom i Photoshop jsou samostatný balíček. Po zaplacení se ti tady rovnou objeví ke stažení.</p>' +
-      '<div class="paywall-actions"><a class="paywall-cta" href="preset.html">Prohlédnout presety →</a></div></div>';
-  }
-
   function renderError(text) {
     ROOT.innerHTML = '<div class="feed-empty"><strong>Presety se nepovedlo načíst.</strong><span>' + esc(text || 'Obnov stránku a zkus to prosím znovu.') + '</span></div>';
   }
@@ -192,6 +184,8 @@
     // Nepřihlášený vidí uvítací obrazovku i v dev režimu — ať jde otestovat.
     if (!A.isLoggedIn || !A.isLoggedIn()) { renderHost(); return; }
     if (IS_LOCAL) {
+      // ?presety=0 simuluje člověka bez nákupu, ať jde chování ověřit i lokálně.
+      if (/[?&]presety=0/.test(location.search)) { location.replace('preset.html'); return; }
       renderList([{ nazev: 'Ukazka.xmp', popis: 'Lokální náhled — soubory jsou jen na serveru', cesta: 'ukazka.xmp' }]);
       return;
     }
@@ -202,7 +196,7 @@
       if (!session) { renderHost(); return; }   // účet je lokálně, ale relace vypršela
       var opravneni = await client.rpc('my_presets');
       if (opravneni.error) throw opravneni.error;
-      if (!opravneni.data) { renderPaywall(); return; }
+      if (!opravneni.data) { location.replace('preset.html'); return; }
 
       var soubory = await najdiSoubory(client, '');
       renderList(soubory);
