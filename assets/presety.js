@@ -2,7 +2,7 @@
 // KENJI ACADEMY — stažení zakoupených presetů
 // ============================================
 // Soubory leží v soukromém Supabase bucketu „presety". Stáhne je jen ten, kdo
-// má nákup zapsaný (nebo je členem Academy) — hlídá to politika na úložišti,
+// má nákup zapsaný — presety jsou samostatný produkt, členství v Academy na ně
 // takže se to nedá obejít úpravou stránky.
 // ============================================
 (function () {
