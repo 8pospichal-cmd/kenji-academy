@@ -3,15 +3,17 @@
 const E = require('./_ecomail');
 
 async function status() {
-  const [list, pipelines, webhook] = await Promise.all([
+  const [list, pipelines, webhook, segments] = await Promise.all([
     E.ecomail(`/lists/${encodeURIComponent(process.env.ECOMAIL_LIST_ID)}`),
     E.ecomail('/pipelines'),
-    E.ecomail('/account/settings/webhook').catch(function () { return null; })
+    E.ecomail('/account/settings/webhook').catch(function () { return null; }),
+    E.listSegments().catch(function () { return []; })
   ]);
   const currentWebhookUrl = webhook && (webhook.url || (webhook.webhook && webhook.webhook.url) || (webhook.data && webhook.data.url));
   const expectedWebhookUrl = webhookUrl();
   return {
     list,
+    segments,
     pipelines: Array.isArray(pipelines) ? pipelines : (pipelines && (pipelines.pipelines || pipelines.data)) || [],
     webhook: {
       configured: !!currentWebhookUrl,
@@ -53,6 +55,51 @@ exports.handler = async function handler(event) {
       const tag = String(body.tag || '').trim().toLowerCase();
       if (!/^[a-z0-9][a-z0-9-]{1,49}$/.test(tag)) return E.json(400, { error: 'Štítek smí mít jen malá písmena, čísla a pomlčky (2–50 znaků).' });
       return E.json(200, Object.assign({ ok: true, tag }, await E.tagSafeAudience(tag)));
+    }
+    // Sdílené načtení sekvence a kroku pro akce nad jedním e-mailem.
+    async function loadStep() {
+      const sequenceId = String(body.sequenceId || '');
+      const stepId = String(body.stepId || '');
+      if (!/^[0-9a-f-]{36}$/i.test(sequenceId) || !stepId) return null;
+      const sequences = await E.supabase(`email_sequences?id=eq.${encodeURIComponent(sequenceId)}&select=*&limit=1`);
+      const sequence = Array.isArray(sequences) ? sequences[0] : null;
+      const steps = sequence && Array.isArray(sequence.steps) ? sequence.steps : [];
+      const index = steps.findIndex(function (step) { return String(step.id) === stepId; });
+      if (!sequence || index < 0) return null;
+      return { sequence, steps, index, step: steps[index] };
+    }
+    async function patchStep(ctx, patch) {
+      ctx.steps[ctx.index] = Object.assign({}, ctx.step, patch);
+      await E.supabase(`email_sequences?id=eq.${encodeURIComponent(ctx.sequence.id)}`, {
+        method: 'PATCH', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ steps: ctx.steps, updated_at: new Date().toISOString() })
+      });
+    }
+    if (body.action === 'send-test') {
+      const ctx = await loadStep();
+      if (!ctx) return E.json(404, { error: 'E-mail nenalezen' });
+      if (!String(ctx.step.subject || '').trim() || !String(ctx.step.body || '').trim()) return E.json(400, { error: 'Chybí předmět nebo tělo e-mailu' });
+      const result = await E.sendTestEmail(ctx.sequence, ctx.step, admin.email);   // vždy jen na přihlášeného admina
+      return E.json(200, { ok: true, to: admin.email, result });
+    }
+    if (body.action === 'create-campaign') {
+      const ctx = await loadStep();
+      if (!ctx) return E.json(404, { error: 'E-mail nenalezen' });
+      if (!String(ctx.step.subject || '').trim() || !String(ctx.step.body || '').trim()) return E.json(400, { error: 'Chybí předmět nebo tělo e-mailu' });
+      const segmentId = String(body.segmentId || '').replace(/[^0-9a-z_-]/gi, '');
+      const created = await E.createCampaign(ctx.sequence, ctx.step, segmentId || null);
+      await patchStep(ctx, { ecomail_campaign_id: created.id, ecomail_segment_id: segmentId || null, ecomail_campaign_created_at: new Date().toISOString(), ecomail_campaign_sent_at: null });
+      return E.json(200, { ok: true, campaignId: created.id });
+    }
+    if (body.action === 'send-campaign') {
+      const ctx = await loadStep();
+      if (!ctx) return E.json(404, { error: 'E-mail nenalezen' });
+      if (!ctx.step.ecomail_campaign_id) return E.json(400, { error: 'Nejdřív vytvoř koncept kampaně' });
+      if (ctx.step.ecomail_campaign_sent_at) return E.json(400, { error: 'Tahle kampaň už byla odeslána' });
+      if (String(body.confirm || '') !== 'ODESLAT') return E.json(400, { error: 'Chybí potvrzení' });
+      await E.sendCampaign(ctx.step.ecomail_campaign_id);
+      await patchStep(ctx, { ecomail_campaign_sent_at: new Date().toISOString() });
+      return E.json(200, { ok: true });
     }
     if (body.action === 'export-template') {
       const sequenceId = String(body.sequenceId || '');

@@ -323,4 +323,63 @@ async function tagSafeAudience(tag) {
   return { tagged, safe_total: safe.length, generated_at: audit.generated_at };
 }
 
-module.exports = { json, email, validEmail, requiredEnv, discoveryEnv, supabase, verifiedUser, userRow, adminUser, ecomail, contactData, canMarket, emailTemplateHtml, syncContact, syncContacts, unsubscribe, trackerEvent, listSubscribers, auditAudience, tagSafeAudience };
+// ---------------- JEDNORÁZOVÁ KAMPAŇ ----------------
+// Test jde přes transakční API na jednu adresu; ostrá kampaň se založí jako koncept
+// v Ecomailu a odešle se zvlášť. Odeslání je nevratné, proto je to samostatná akce.
+
+async function listSegments() {
+  const data = await ecomail(`/lists/${encodeURIComponent(process.env.ECOMAIL_LIST_ID)}`);
+  const raw = data && data.list && data.list.segments ? data.list.segments : (data && data.segments) || {};
+  const arr = Array.isArray(raw) ? raw : Object.keys(raw).map(function (k) { return raw[k]; });
+  return arr.filter(Boolean).map(function (sg) { return { id: String(sg.id || ''), name: String(sg.name || sg.id || '') }; }).filter(function (sg) { return sg.id; });
+}
+
+function senderOf(sequence) {
+  return {
+    from_name: String(sequence.from_name || 'Kenji').trim(),
+    from_email: email(sequence.from_email),
+    reply_to: email(sequence.reply_to || sequence.from_email)
+  };
+}
+
+async function sendTestEmail(sequence, step, toEmail) {
+  const sender = senderOf(sequence);
+  if (!validEmail(sender.from_email)) throw new Error('Chybí platná adresa odesílatele.');
+  const html = emailTemplateHtml(sequence, step).replace(/\*\|UNSUB\|\*/g, 'https://kenjiacademy.cz/nastaveni.html');
+  return ecomail('/transactional/send-message', {
+    method: 'POST',
+    body: JSON.stringify({ message: {
+      subject: '[TEST] ' + String(step.subject || ''),
+      from_name: sender.from_name, from_email: sender.from_email, reply_to: sender.reply_to,
+      html: html, text: String(step.body || ''),
+      to: [{ email: email(toEmail) }],
+      options: { click_tracking: false, open_tracking: false }
+    } })
+  });
+}
+
+async function createCampaign(sequence, step, segmentId) {
+  const sender = senderOf(sequence);
+  if (!validEmail(sender.from_email)) throw new Error('Chybí platná adresa odesílatele.');
+  const listId = Number(process.env.ECOMAIL_LIST_ID);
+  const recipients = segmentId ? { segments: [{ id: String(segmentId), list: listId }] } : [listId];
+  const data = await ecomail('/campaigns', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: `[Kenji] ${sequence.name} — ${step.subject}`,
+      from_name: sender.from_name, from_email: sender.from_email, reply_to: sender.reply_to,
+      subject: String(step.subject || ''),
+      html_text: emailTemplateHtml(sequence, step),
+      recepient_lists: recipients
+    })
+  });
+  const id = data && (data.id || (data.data && data.data.id));
+  if (!id) throw new Error('Ecomail nevrátil ID kampaně');
+  return { id: id, data: data };
+}
+
+async function sendCampaign(campaignId) {
+  return ecomail(`/campaign/${encodeURIComponent(campaignId)}/send`);
+}
+
+module.exports = { json, email, validEmail, requiredEnv, discoveryEnv, supabase, verifiedUser, userRow, adminUser, ecomail, contactData, canMarket, emailTemplateHtml, syncContact, syncContacts, unsubscribe, trackerEvent, listSubscribers, auditAudience, tagSafeAudience, listSegments, sendTestEmail, createCampaign, sendCampaign };

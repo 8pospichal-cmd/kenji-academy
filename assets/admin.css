@@ -280,3 +280,13 @@
 @media (max-width: 900px) { .admin-audience-stats { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 560px) { .admin-audience-tag .admin-row-actions { flex-direction: column; align-items: stretch; } .admin-audience-tag-input { width: 100%; } }
 .admin-audience-tag .admin-button { white-space: nowrap; }
+
+/* ---- Jednorázová kampaň z editoru ---- */
+.admin-email-builder-state .admin-row-actions { margin-top: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.admin-email-picker { max-width: 260px; font-size: 12px; }
+.admin-campaign { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--admin-line); }
+.admin-campaign h3 { margin: 0; color: #e7e7e2; font-size: 14px; font-weight: 600; }
+.admin-campaign label { display: block; margin-top: 10px; color: #777; font-size: 11px; }
+.admin-campaign select { margin-top: 5px; width: 100%; }
+.admin-campaign-actions { margin-top: 12px; flex-wrap: wrap; }
+.admin-campaign-actions .admin-button { white-space: nowrap; }
