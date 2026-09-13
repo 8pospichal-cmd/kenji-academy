@@ -14,9 +14,14 @@ const MIME = {
 };
 
 http.createServer((req, res) => {
-  let urlPath = decodeURIComponent(req.url.split('?')[0]);
+  let urlPath;
+  try { urlPath = decodeURIComponent(req.url.split('?')[0]); }
+  catch (e) { res.writeHead(400); res.end('Bad request'); return; }
   if (urlPath === '/') urlPath = '/index.html';
-  let filePath = path.join(ROOT, urlPath);
+  let filePath = path.resolve(ROOT, '.' + urlPath);
+  if (filePath !== ROOT && !filePath.startsWith(ROOT + path.sep)) {
+    res.writeHead(403); res.end('Forbidden'); return;
+  }
   // pretty URL: /clanky/slug -> /clanky/slug.html
   if (!fs.existsSync(filePath) && !path.extname(filePath)) filePath += '.html';
   fs.readFile(filePath, (err, data) => {
@@ -28,4 +33,4 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
     res.end(data);
   });
-}).listen(PORT, () => console.log('Kenji náhled běží na http://localhost:' + PORT));
+}).listen(PORT, '127.0.0.1', () => console.log('Kenji náhled běží na http://localhost:' + PORT));

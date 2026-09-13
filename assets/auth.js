@@ -156,6 +156,13 @@
         p_claimed_email: claimedEmail || null
       });
       if (result.error) throw result.error;
+      const marketingActions = {
+        onboarding_completed: 'onboarding.completed', quiz_completed: 'quiz.completed',
+        audit_completed: 'audit.completed', hourly_calculator_completed: 'hourly_calculator.completed'
+      };
+      if (marketingActions[eventName] && isLoggedIn()) {
+        sendMarketingEvent(marketingActions[eventName], properties || {}).catch(function () {});
+      }
       return result.data;
     } catch (e) {
       console.warn('analytics event', e);
@@ -350,6 +357,16 @@
     return session;
   }
 
+  async function sendMarketingEvent(action, value) {
+    const session = await liveSession();
+    if (!session || !session.access_token) return null;
+    return fetch(ROOT + '.netlify/functions/ecomail-event', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: action, value: value || {} })
+    });
+  }
+
   // Přihlášení heslem. Heslo je NEPOVINNÉ zrychlení — kdo si ho nenastavil, jede dál odkazem.
   // Supabase na neexistující i bezheslový účet vrací stejné `invalid_credentials`, proto to
   // volajícímu hlásíme zvlášť, ať můžeme nabídnout odkaz místo hlášky „špatné heslo".
@@ -419,6 +436,31 @@
     }
     saveUser({ email: vEmail, instagram: prevIg, tier: tier, auth: 'email', name: name, hasPassword: !!meta.has_password });
     user = loadUser();
+    // Marketing je oddělený od vytvoření účtu. Zapíšeme ho až po ověření e-mailu
+    // a jen tehdy, když jej člověk ve vstupní bráně výslovně zaškrtl.
+    try {
+      const pending = JSON.parse(localStorage.getItem('kenji_marketing_pending_v1') || 'null');
+      if (pending && normEmail(pending.email) === vEmail && pending.enabled === true) {
+        const client = await getSupabase();
+        if (client) {
+          const saved = await client.rpc('set_email_preferences', {
+            p_marketing_enabled: true,
+            p_preferences: { weekly_challenge: true, community_digest: true, webinars: true, academy_news: true },
+            p_source: 'signup_gate'
+          });
+          if (!saved.error) {
+            localStorage.removeItem('kenji_marketing_pending_v1');
+            try {
+              await fetch(ROOT + '.netlify/functions/ecomail-event', {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'user.verified' })
+              });
+            } catch (e) {}
+          }
+        }
+      }
+    } catch (e) { console.warn('marketing consent sync', e); }
     // Onboarding profil ze serveru natáhneme ještě teď (během rozmazaného bootu),
     // aby dashboard po odhalení věděl, že profil je hotový, a onboarding znovu nespustil.
     try { await reconcileProfile(); } catch (e) {}
@@ -515,6 +557,7 @@
             <input class="kg-input" id="kg-password" type="password" placeholder="Máš heslo? Zadej ho a jsi hned uvnitř" autocomplete="current-password">
             <div class="kg-pw-hint" id="kg-pw-hint">Heslo nemusíš mít. Když pole necháš prázdné, pošleme ti přihlašovací odkaz do e-mailu. <button type="button" class="kg-forgot" id="kg-forgot">Zapomněl jsem heslo</button></div>
             <label class="kg-consent"><input type="checkbox" id="kg-consent"> <span>Beru na vědomí zpracování e-mailu pro vytvoření a správu profilu. <a href="${ROOT}${escapeHtml(CONFIG.privacyUrl)}" target="_blank" rel="noopener">Jak pracujeme s údaji</a></span></label>
+            <label class="kg-consent kg-consent-marketing"><input type="checkbox" id="kg-marketing"> <span>Chci dostávat praktické úkoly, týdenní výzvy a novinky z Kenji Academy. Odhlásit se můžu kdykoli.</span></label>
             <button class="kg-btn" id="kg-submit">Poslat přihlašovací odkaz →</button>
             <div class="kg-error" id="kg-error" hidden></div>
             <div class="kg-sent" id="kg-sent" hidden>
@@ -528,6 +571,7 @@
 
     const emailEl = document.getElementById('kg-email');
     const consentEl = document.getElementById('kg-consent');
+    const marketingEl = document.getElementById('kg-marketing');
     const errEl = document.getElementById('kg-error');
     const btn = document.getElementById('kg-submit');
 
@@ -576,6 +620,10 @@
       if (!consentEl.checked) { err('Potvrď, že ses seznámil se zpracováním údajů.'); return; }
       errEl.hidden = true;
       const password = pwEl ? pwEl.value : '';
+      try {
+        if (marketingEl && marketingEl.checked) localStorage.setItem('kenji_marketing_pending_v1', JSON.stringify({ email: email, enabled: true, createdAt: Date.now() }));
+        else localStorage.removeItem('kenji_marketing_pending_v1');
+      } catch (e) {}
 
       // Localhost (vývoj): magic link nefunguje → okamžitý vstup jako free, ať jde testovat.
       if (!isLive || IS_LOCAL) {
@@ -611,6 +659,7 @@
         var pwLbl = document.querySelector('.kg-label-pw'); if (pwLbl) pwLbl.style.display = 'none';
         var pwHint = document.getElementById('kg-pw-hint'); if (pwHint) pwHint.style.display = 'none';
         consentEl.closest('.kg-consent').style.display = 'none';
+        if (marketingEl) marketingEl.closest('.kg-consent').style.display = 'none';
         btn.style.display = 'none';
         var lbl = document.querySelector('#kg-pane-lead .kg-label'); if (lbl) lbl.style.display = 'none';
         sentEl.hidden = false;

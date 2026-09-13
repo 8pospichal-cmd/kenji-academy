@@ -1,4 +1,5 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
+const Ecomail = require('./_ecomail');
 
 function response(statusCode, body) {
   return {
@@ -124,6 +125,18 @@ async function grantAccess(session) {
   if (presets) {
     try { await sendPresetEmail(email); }
     catch (e) { console.warn('e-mail o presetech se neodeslal:', e.message); }
+  }
+
+  // Nákup promítni i do marketingového profilu, ale jen pokud už má člověk
+  // platný marketingový souhlas. Selhání Ecomailu nikdy nesmí zdržet přístup.
+  if (Ecomail.requiredEnv()) {
+    try {
+      const row = await Ecomail.userRow(email);
+      if (Ecomail.canMarket(row)) {
+        await Ecomail.syncContact(row);
+        await Ecomail.trackerEvent(row, 'purchase.completed', { tier: tier || '', presets: presets });
+      }
+    } catch (e) { console.warn('Ecomail purchase sync failed:', e.message); }
   }
 
   // Použitý slevový kupón → zvýšit počítadlo (best-effort, neblokuje grant).

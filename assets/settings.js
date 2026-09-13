@@ -10,6 +10,7 @@
   var A = window.KenjiAuth || {};
   var user = A.getUser ? A.getUser() : null;
   var ADMIN_EMAILS = ['8pospichal@gmail.com'];
+  var IS_LOCAL = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname);
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function initials(h) { h = (h || '?').replace(/^@/, ''); return (h[0] || '?').toUpperCase(); }
@@ -53,6 +54,7 @@
       '<div class="set-bar"><span class="set-msg" id="set-msg"></span><button class="set-save" id="set-save">Uložit profil</button></div>' +
     '</div>' +
     '<div id="set-focus"></div>' +
+    '<div id="set-emails"></div>' +
     '<div id="set-password"></div>' +
     '<div class="set-card set-guide">' +
       '<div class="set-guide-copy"><div class="set-card-title">Úvodní průvodce</div>' +
@@ -235,6 +237,7 @@
         else localStorage.removeItem('kenji_task_profile');
       } catch (e2) {}
       try { document.dispatchEvent(new CustomEvent('kenji:profile-complete')); } catch (e3) {}
+      emailApi('profile.updated', { profile_complete: true });
       msg('Uloženo ✓', false);
     } catch (e) { console.warn('save_profile', e); msg('Uložení se nepovedlo — zkontroluj, že běží databáze.', true); }
     btn.disabled = false;
@@ -340,12 +343,77 @@
       if (b.blocker === 'jine' && !b.blockerOther) { if (fmsg) { fmsg.textContent = 'Napiš prosím, co teď řešíš.'; fmsg.style.color = '#ff6b6b'; } btn.disabled = false; blkOther && blkOther.focus(); return; }
       try { localStorage.setItem(BIZ_KEY, JSON.stringify(b)); } catch (e) {}
       try { if (A.saveProfile) A.saveProfile(b); } catch (e2) {}
+      emailApi('profile.updated', { business_profile: true });
       if (fmsg) { fmsg.textContent = 'Uloženo ✓'; fmsg.style.color = 'var(--text-mute)'; }
       btn.disabled = false;
     });
   }
 
   renderFocus();
+
+  // ---------- E-MAILY (marketing je dobrovolný a oddělený od účtu) ----------
+  var EMAIL_DEFAULTS = { weekly_challenge: true, community_digest: true, webinars: true, academy_news: true };
+  function emailApi(action, value) {
+    return freshSession().then(function (session) {
+      if (!session || !session.access_token || !window.fetch) return null;
+      return fetch('/.netlify/functions/ecomail-event', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, value: value || {} })
+      }).catch(function () { return null; });
+    });
+  }
+  function renderEmails(data) {
+    var box = document.getElementById('set-emails'); if (!box) return;
+    data = data || {};
+    var enabled = !!data.marketing_enabled;
+    var prefs = Object.assign({}, EMAIL_DEFAULTS, data.preferences || {});
+    function row(id, title, note, checked) {
+      return '<label class="set-email-row"><input type="checkbox" data-email-pref="'+id+'"'+(checked?' checked':'')+(enabled?'':' disabled')+'><span><strong>'+title+'</strong><small>'+note+'</small></span></label>';
+    }
+    box.innerHTML = '<div class="set-card set-email-card">' +
+      '<div class="set-card-title">E-maily ode mě</div>' +
+      '<p class="set-hint">Praktické věci k tvorbě a byznysu. Přihlašovací odkazy a důležité zprávy k účtu chodí vždy.</p>' +
+      '<label class="set-email-master"><input type="checkbox" id="set-email-enabled"'+(enabled?' checked':'')+'><span><strong>Chci dostávat užitečné e-maily</strong><small>Odhlásit se můžeš kdykoli jedním kliknutím.</small></span></label>' +
+      '<div class="set-email-options"'+(enabled?'':' hidden')+'>' +
+        row('weekly_challenge','Týdenní výzva','Jeden konkrétní úkol pro tvoji tvorbu nebo byznys.',prefs.weekly_challenge) +
+        row('community_digest','Co se děje v komunitě','Výběr diskuzí a výsledků, ne každý jednotlivý příspěvek.',prefs.community_digest) +
+        row('webinars','Webináře','Pozvánky a připomenutí živých vysílání.',prefs.webinars) +
+        row('academy_news','Novinky z Academy','Nové lekce, funkce a důležité změny.',prefs.academy_news) +
+      '</div>' +
+      '<div class="set-bar"><span class="set-msg" id="set-email-msg"></span><button class="set-save" id="set-email-save">Uložit e-maily</button></div>' +
+    '</div>';
+    wireEmails();
+  }
+  function wireEmails() {
+    var master = document.getElementById('set-email-enabled');
+    var options = document.querySelector('.set-email-options');
+    var btn = document.getElementById('set-email-save');
+    var emsg = document.getElementById('set-email-msg');
+    if (!master || !btn) return;
+    master.addEventListener('change', function () {
+      options.hidden = !master.checked;
+      options.querySelectorAll('input').forEach(function (input) { input.disabled = !master.checked; });
+    });
+    btn.addEventListener('click', async function () {
+      var prefs = {};
+      document.querySelectorAll('[data-email-pref]').forEach(function (input) { prefs[input.getAttribute('data-email-pref')] = input.checked; });
+      btn.disabled = true; emsg.textContent = 'Ukládám…'; emsg.style.color = 'var(--text-mute)';
+      try {
+        if (!IS_LOCAL) await rpc('set_email_preferences', { p_marketing_enabled: master.checked, p_preferences: prefs, p_source: 'settings' });
+        await emailApi('preferences.updated', { enabled: master.checked });
+        emsg.textContent = master.checked ? 'Uloženo ✓' : 'Marketingové e-maily jsou vypnuté ✓';
+      } catch (err) {
+        console.warn('email preferences', err); emsg.textContent = 'Nastavení se nepovedlo uložit.'; emsg.style.color = '#ff6b6b';
+      }
+      btn.disabled = false;
+    });
+  }
+  (async function loadEmails() {
+    if (IS_LOCAL) { renderEmails({ marketing_enabled: true, preferences: EMAIL_DEFAULTS }); return; }
+    try { renderEmails(await rpc('get_email_preferences')); }
+    catch (e) { console.warn('get_email_preferences', e); renderEmails({ marketing_enabled: false, preferences: EMAIL_DEFAULTS }); }
+  })();
 
   // ---------- HESLO (nepovinné zrychlení přihlášení) ----------
   // Heslo se nastavuje na už ověřené session, takže neposílá žádný potvrzovací e-mail.

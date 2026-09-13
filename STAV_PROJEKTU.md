@@ -1,6 +1,6 @@
 # Stav projektu Kenji Academy
 
-> **Aktualizováno:** 2. 9. 2026  
+> **Aktualizováno:** 10. 9. 2026
 > Tento dokument je aktuální zdroj pravdy pro další práci. Starší soubory `README.md` a `CONTEXT.md` popisují dřívější MVP a nemusí odpovídat současnému stavu.
 
 ## Přehled projektu
@@ -46,6 +46,8 @@ V uživatelském rozhraní používáme slovo **databáze**, nikoliv **knihovna*
 - **Supabase Edge Function** pro Kenji AI
 - **Netlify Functions** pro vytvoření Stripe Checkout Session a zpracování webhooku
 - **Stripe** pro připravované platby Databáze a Academy
+- **Resend** pouze pro transakční e-maily, zejména přihlašovací odkazy a zprávy po nákupu
+- **Ecomail** pro marketingové sekvence, týdenní výzvy, komunitní souhrny, webináře a produktové novinky
 - **Netlify** jako cílový hosting
 
 ### Lokální vývoj a nástroje
@@ -118,6 +120,10 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 
 - `netlify/functions/create-checkout-session.js` - zakládá Stripe Checkout Session.
 - `netlify/functions/stripe-webhook.js` - přijímá potvrzení platby a mění přístup.
+- `netlify/functions/ecomail-event.js` - bezpečně synchronizuje přihlášeného uživatele a jeho produktové události do Ecomailu.
+- `netlify/functions/ecomail-admin.js` - načítá stav Ecomailu, spouští ruční synchronizaci kontaktů s doloženým souhlasem a nastavuje zabezpečený statistický webhook.
+- `netlify/functions/ecomail-webhook.js` - ukládá doručení, otevření, prokliky, odhlášení, spam a bounce události zpět do Supabase.
+- `netlify/functions/_ecomail.js` - neveřejná sdílená serverová vrstva pro ověření JWT a Ecomail API.
 - `supabase/functions/kenji-ai/index.ts` - serverová funkce Kenji AI.
 - `supabase/migrations/20260824090000_ai_user_quota.sql` - serverově vynucený uživatelský limit Kenji AI v klouzavém 24hodinovém okně.
 - `supabase/migrations/20260824150000_ai_lead_quota.sql` - rozšíření kvóty Kenji AI o oddělenou neprůhlednou identitu pro Free lead relaci bez zpřístupnění účtu, profilu nebo placeného tieru.
@@ -255,9 +261,23 @@ Primární HTML stránky používají explicitní cache verze u sdílených asse
 - Obchodní podmínky a zásady ochrany osobních údajů jsou samostatné veřejné stránky bez aplikační navigace, přihlášení a dashboardových skriptů. Používají jednoduchý textový layout a po otevření z registrační brány uživatele nepřenesou do aplikace.
 - Podmínky pokrývají digitální obsah a služby, jednorázový i rozdělený způsob platby, technické požadavky, aktualizace, odstoupení, reklamace, komunitu, AI, licenci a aktuální ADR u České obchodní inspekce. Neobsahují zrušený evropský ODR odkaz.
 - Zásady popisují skutečně používaná data a služby včetně Supabase, Netlify, Stripe, Resend, YouTube a externích poskytovatelů Kenji AI. Povinný registrační checkbox potvrzuje seznámení se zpracováním pro účet; nejde o vynucený souhlas s marketingem.
+- Marketingové e-maily jsou oddělené od účtu i transakčních zpráv. Ecomail dostává jen ověřené uživatele s výslovným dobrovolným souhlasem; preference pro týdenní výzvy, komunitní souhrny, webináře a novinky lze kdykoli změnit v Nastavení. Resend dál obsluhuje přihlašovací odkazy a transakční zprávy.
+- Admin má samostatný pohled Emailing se stavem souhlasů, synchronizace, základními výsledky doručení a seznamem automatizací. Obsahuje editor sedmidenní sekvence s pořadím, prodlevou, předmětem, preheaderem, tělem, CTA a živým náhledem. Koncepty se ukládají do Supabase a jednotlivé hotové e-maily lze vytvořit nebo aktualizovat jako šablony v Ecomailu; tato akce nic nerozesílá. Synchronizace kontaktů nikdy nereaktivuje odhlášené nebo nedoručitelné adresy.
 - Sdílená patička uvádí pouze `© [rok] Kenji`, nikoli dřívější společnost.
 
+### Lokální kontrola sedmidenní e-mailové sekvence (10. 9. 2026)
+
+- Dokončena kontrola editoru a HTML šablon na šířkách 320, 375, 390, 430, 768 a 1440 px; opraven tabletový overflow, mobilní formuláře a zalamování. Simulován 200% text editoru na 320 a 768 px. Fyzická zařízení a e-mailové klienty zbývá otestovat při autorizované interní rozesílce.
+- Plné texty lokálního demo editoru odpovídají SQL seed sekvenci. Opraven výpočet hodinovky, dva CTA směřují na Free funkce, den 7 neobnovuje onboarding. Časování je popsáno jako dny od začátku (0–6).
+- Ke schválení je lokální přehled `http://localhost:4321/.claude/email-review/index.html` a texty `.claude/email-review/TEXTY_KE_SCHVALENI.md`. Podrobnosti a zbývající kroky jsou v `EMAIL_MARKETING_HANDOFF.md`.
+- Nadále platí zákaz commitu, pushe, nasazení i posílání přes Ecomail bez výslovného povolení.
+
 ## Rozpracované a následující kroky
+
+- Proměnné `ECOMAIL_API_KEY`, `ECOMAIL_LIST_ID=4` a `ECOMAIL_WEBHOOK_SECRET` byly podle uživatele vloženy v Netlify, ale půjdou ověřit až po nasazení funkcí. Před produkčním použitím aplikovat migraci `20260910120000_email_marketing.sql` a v adminu nastavit statistický webhook.
+- V Ecomailu ověřit odesílací doménu a adresu `ahoj@kenji.cz`, vytvořit automatizaci se sedmi e-mailovými kroky a jednodenními prodlevami, vložit do ní šablony vytvořené z adminu a její ID uložit k sekvenci. Ecomail API umí automatizaci načíst a spustit, ale její strukturu je nutné sestavit v editoru Ecomailu.
+- Před ostrým spuštěním poslat všechny e-maily na interní testovací adresy, ověřit mobilní zobrazení a odhlašovací odkaz, spustit malý testovací segment a teprve podle doručení, odhlášení a spam complaintů rozšířit publikum.
+- Před první rozesílkou ručně prověřit právní titul historických kontaktů, blacklist/odhlášení a nejprve odeslat testovací segment. Kontakty bez doloženého souhlasu se z Kenji Academy automaticky nesynchronizují.
 
 ### 1. Dokončit prodejní stránku `academy.html`
 
