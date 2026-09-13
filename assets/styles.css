@@ -9116,3 +9116,31 @@ body.upg-modal-open { overflow: hidden; }
   .legal-document h2 { margin-top: 34px; }
   .legal-document p { font-size: 14px; line-height: 1.72; }
 }
+
+/* ---- Prodejní stránka: mobilní hlavička = logo + ☰, odkazy v rozbalovacím menu ---- */
+.academy-menu-toggle { display: none; }
+@media (max-width: 760px) {
+  .academy-sale-top { position: relative; flex-wrap: nowrap; justify-content: space-between; }
+  .academy-menu-toggle {
+    display: inline-flex; flex-direction: column; justify-content: center; gap: 5px;
+    width: 44px; height: 44px; margin-left: auto; padding: 0 10px;
+    border: 1px solid rgba(255,255,255,.14); border-radius: 8px; background: rgba(255,255,255,.05);
+    cursor: pointer; flex: 0 0 auto;
+  }
+  .academy-menu-toggle span { display: block; height: 2px; border-radius: 2px; background: var(--text-strong); transition: transform .2s ease, opacity .2s ease; }
+  .academy-sale-top.menu-open .academy-menu-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .academy-sale-top.menu-open .academy-menu-toggle span:nth-child(2) { opacity: 0; }
+  .academy-sale-top.menu-open .academy-menu-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .academy-sale-top .academy-top-actions {
+    display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 60;
+    flex-direction: column; align-items: stretch; gap: 0;
+    padding: 6px 12px 14px; background: rgba(8,8,8,.98);
+    border-bottom: 1px solid rgba(255,255,255,.09); box-shadow: 0 18px 40px rgba(0,0,0,.45);
+  }
+  .academy-sale-top.menu-open .academy-top-actions { display: flex; }
+  .academy-sale-top .academy-top-actions .academy-top-login {
+    display: block; width: 100%; padding: 15px 6px; text-align: left; font-size: 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08); border-radius: 0;
+  }
+  .academy-sale-top .academy-top-actions .academy-top-cta { display: inline-flex; margin: 12px 0 0; min-height: 46px; font-size: .84rem; }
+}

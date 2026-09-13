@@ -108,13 +108,15 @@ function escapeHtml(value) {
 }
 
 function emailTemplateHtml(sequence, step) {
+  const plain = !!((sequence && sequence.plain) || (step && step.plain));   // bez loga a nadpisu — působí jako osobní e-mail
+  const contentPad = plain ? '32px 32px 34px' : '20px 32px 34px';
   const paragraphs = String(step.body || '').split(/\n\s*\n/).filter(Boolean).map(function (part) {
     return `<p style="margin:0 0 20px;color:#292927;font:17px/1.65 Arial,sans-serif;">${escapeHtml(part).replace(/\n/g, '<br>')}</p>`;
   }).join('');
   const cta = step.cta_label && /^https:\/\//i.test(String(step.cta_url || ''))
     ? `<p style="margin:30px 0;"><a href="${escapeHtml(step.cta_url)}" style="display:inline-block;padding:15px 22px;background:#ff6b1a;color:#fff;text-decoration:none;font:bold 16px/1.2 Arial,sans-serif;border-radius:6px;">${escapeHtml(step.cta_label)}</a></p>`
     : '';
-  return `<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(step.subject)}</title><style>@media(max-width:480px){.email-content{padding:20px!important}.email-headline{font-size:26px!important}}</style></head><body style="margin:0;background:#f3f3f1;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(step.preheader || '')}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f3f1;"><tr><td align="center" style="padding:28px 12px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="table-layout:fixed;max-width:640px;background:#fff;overflow-wrap:anywhere;word-wrap:break-word;border:1px solid #deded9;"><tr><td style="padding:28px 32px 8px;color:#111;font:bold 22px/1 Arial,sans-serif;">kenji<span style="font-weight:normal;">academy</span></td></tr><tr><td class="email-content" style="padding:20px 32px 34px;"><h1 class="email-headline" style="margin:0 0 22px;color:#111;font:bold 32px/1.15 Arial,sans-serif;">${escapeHtml(step.headline || step.subject)}</h1>${paragraphs}${cta}<p style="margin:26px 0 0;color:#292927;font:17px/1.6 Arial,sans-serif;">Měj se,<br><strong>Kenji</strong></p></td></tr><tr><td style="padding:20px 32px;border-top:1px solid #ecece8;color:#777;font:12px/1.6 Arial,sans-serif;">Tento e-mail dostáváš, protože ses přihlásil/a k užitečným e-mailům Kenji Academy. <a href="*|UNSUB|*" style="color:#777;">Odhlásit se</a></td></tr></table></td></tr></table></body></html>`;
+  return `<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(step.subject)}</title><style>@media(max-width:480px){.email-content{padding:20px!important}.email-headline{font-size:26px!important}}</style></head><body style="margin:0;background:#f3f3f1;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(step.preheader || '')}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f3f1;"><tr><td align="center" style="padding:28px 12px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="table-layout:fixed;max-width:640px;background:#fff;overflow-wrap:anywhere;word-wrap:break-word;border:1px solid #deded9;">${plain ? '' : '<tr><td style="padding:28px 32px 8px;color:#111;font:bold 22px/1 Arial,sans-serif;">kenji<span style="font-weight:normal;">academy</span></td></tr>'}<tr><td class="email-content" style="padding:${contentPad};">${plain ? '' : '<h1 class="email-headline" style="margin:0 0 22px;color:#111;font:bold 32px/1.15 Arial,sans-serif;">' + escapeHtml(step.headline || step.subject) + '</h1>'}${paragraphs}${cta}<p style="margin:26px 0 0;color:#292927;font:17px/1.6 Arial,sans-serif;">Měj se,<br><strong>Kenji</strong></p></td></tr><tr><td style="padding:20px 32px;border-top:1px solid #ecece8;color:#777;font:12px/1.6 Arial,sans-serif;">Tento e-mail dostáváš, protože ses přihlásil/a k užitečným e-mailům Kenji Academy. <a href="*|UNSUB|*" style="color:#777;">Odhlásit se</a></td></tr></table></td></tr></table></body></html>`;
 }
 
 async function syncContact(row) {
@@ -328,10 +330,12 @@ async function tagSafeAudience(tag) {
 // v Ecomailu a odešle se zvlášť. Odeslání je nevratné, proto je to samostatná akce.
 
 async function listSegments() {
-  const data = await ecomail(`/lists/${encodeURIComponent(process.env.ECOMAIL_LIST_ID)}`);
-  const raw = data && data.list && data.list.segments ? data.list.segments : (data && data.segments) || {};
+  // /lists/{id}/segments vrací i počet kontaktů; když selže, spadne se na /lists/{id}.
+  let raw = null;
+  try { const d = await ecomail(`/lists/${encodeURIComponent(process.env.ECOMAIL_LIST_ID)}/segments`); raw = d && (d.segments || d.data || d); } catch (_) { raw = null; }
+  if (!raw) { const data = await ecomail(`/lists/${encodeURIComponent(process.env.ECOMAIL_LIST_ID)}`); raw = data && data.list && data.list.segments ? data.list.segments : (data && data.segments) || {}; }
   const arr = Array.isArray(raw) ? raw : Object.keys(raw).map(function (k) { return raw[k]; });
-  return arr.filter(Boolean).map(function (sg) { return { id: String(sg.id || ''), name: String(sg.name || sg.id || '') }; }).filter(function (sg) { return sg.id; });
+  return arr.filter(function (sg) { return sg && (sg.id || sg.name); }).map(function (sg) { return { id: String(sg.id || ''), name: String(sg.name || sg.id || ''), count: sg.count != null ? Number(sg.count) : null }; }).filter(function (sg) { return sg.id; });
 }
 
 function senderOf(sequence) {
@@ -349,7 +353,7 @@ async function sendTestEmail(sequence, step, toEmail) {
   return ecomail('/transactional/send-message', {
     method: 'POST',
     body: JSON.stringify({ message: {
-      subject: '[TEST] ' + String(step.subject || ''),
+      subject: String(step.subject || ''),
       from_name: sender.from_name, from_email: sender.from_email, reply_to: sender.reply_to,
       html: html, text: String(step.body || ''),
       to: [{ email: email(toEmail) }],
@@ -362,7 +366,8 @@ async function createCampaign(sequence, step, segmentId) {
   const sender = senderOf(sequence);
   if (!validEmail(sender.from_email)) throw new Error('Chybí platná adresa odesílatele.');
   const listId = Number(process.env.ECOMAIL_LIST_ID);
-  const recipients = segmentId ? { segments: [{ id: String(segmentId), list: listId }] } : [listId];
+  const ids = (Array.isArray(segmentId) ? segmentId : [segmentId]).filter(Boolean).map(String);
+  const recipients = ids.length ? { segments: ids.map(function (id) { return { id: id, list: listId }; }) } : [listId];
   const data = await ecomail('/campaigns', {
     method: 'POST',
     body: JSON.stringify({
