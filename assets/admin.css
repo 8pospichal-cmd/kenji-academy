@@ -290,3 +290,38 @@
 .admin-campaign select { margin-top: 5px; width: 100%; }
 .admin-campaign-actions { margin-top: 12px; flex-wrap: wrap; }
 .admin-campaign-actions .admin-button { white-space: nowrap; }
+
+/* ---- Emailing: seznam e-mailů, editor jednotlivého e-mailu ---- */
+.admin-email-list { margin-top: 18px; }
+.admin-email-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid var(--admin-line); }
+.admin-email-row.is-active { background: rgba(255,107,26,.05); margin: 0 -14px; padding-inline: 14px; }
+.admin-email-row-main { min-width: 0; }
+.admin-email-row-main strong { display: block; color: #e7e7e2; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.admin-email-row-main small { display: block; margin-top: 3px; color: #777; font-size: 11px; }
+.admin-email-row-stats { color: #9c9ca3 !important; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.admin-email-row-side { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+.admin-email-seqs { margin-top: 18px; border-top: 1px solid var(--admin-line); padding-top: 10px; }
+.admin-email-seqs > summary, .admin-audience-wrap > summary { cursor: pointer; color: #9a9a9a; font-size: 12px; padding: 8px 0; list-style: none; }
+.admin-email-seqs > summary::before, .admin-audience-wrap > summary::before { content: '▸ '; }
+.admin-email-seqs[open] > summary::before, .admin-audience-wrap[open] > summary::before { content: '▾ '; }
+.admin-audience-wrap { margin-top: 18px; }
+.admin-email-plain { display: flex; align-items: center; gap: 8px; color: #9a9a9a; font-size: 12px; }
+.admin-email-plain input { width: auto; margin: 0; }
+/* jednotlivý e-mail: bez časové osy, prodlevy, publika a automatizace */
+.admin-email-builder.is-single .admin-email-timeline,
+.admin-email-builder.is-single .admin-email-delay,
+.admin-email-builder.is-single .admin-email-compose-top > span,
+.admin-email-builder.is-single [data-sequence-field="audience"],
+.admin-email-builder.is-single [data-sequence-field="ecomail_pipeline_id"],
+.admin-email-builder.is-single [data-sequence-field="name"],
+.admin-email-builder.is-single [data-email-export] { display: none; }
+.admin-email-builder.is-single .admin-email-settings label:has([data-sequence-field="audience"]),
+.admin-email-builder.is-single .admin-email-settings label:has([data-sequence-field="ecomail_pipeline_id"]),
+.admin-email-builder.is-single .admin-email-settings label:has([data-sequence-field="name"]) { display: none; }
+.admin-email-builder.is-single .admin-email-workspace { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+@media (max-width: 760px) { .admin-email-row { flex-direction: column; align-items: stretch; } .admin-email-row-side { justify-content: space-between; } }
+@media (max-width: 1180px) { .admin-email-builder.is-single .admin-email-workspace { grid-template-columns: minmax(0,1fr); } }
+.admin-email-compose label.admin-email-plain { flex-direction: row; align-items: center; gap: 9px; text-transform: none; letter-spacing: 0; font: 400 12px/1.4 'Inter',sans-serif; color: #9a9a9a; margin-bottom: 13px; }
+.admin-email-compose label.admin-email-plain input { width: 16px; height: 16px; accent-color: #ff6b1a; }
+.admin-email-builder.is-single .admin-email-settings label:has([data-sequence-field="status"]) { display: none; }
+.admin-email-builder.is-single .admin-email-settings:not(:has(label:not([style*="display: none"]))) { display: none; }

@@ -75,6 +75,15 @@ exports.handler = async function handler(event) {
         body: JSON.stringify({ steps: ctx.steps, updated_at: new Date().toISOString() })
       });
     }
+    if (body.action === 'campaign-stats') {
+      // Statistiky odeslaných kampaní pro seznam e-mailů v adminu (jen čtení).
+      const ids = (Array.isArray(body.ids) ? body.ids : []).map(String).filter(function (id) { return /^\d{1,12}$/.test(id); }).slice(0, 50);
+      const stats = {};
+      await Promise.all(ids.map(async function (id) {
+        try { const r = await E.ecomail('/campaigns/' + id + '/stats'); stats[id] = (r && r.stats) || r || null; } catch (_) { stats[id] = null; }
+      }));
+      return E.json(200, { ok: true, stats });
+    }
     if (body.action === 'send-test') {
       const ctx = await loadStep();
       if (!ctx) return E.json(404, { error: 'E-mail nenalezen' });
