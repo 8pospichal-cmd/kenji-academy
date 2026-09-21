@@ -12,6 +12,9 @@ node_modules/
 # Netlify lokální
 .netlify/
 
+# Lokální schvalovací náhledy pro Codex / Claude — nejsou součást webu
+/.claude/
+
 # Dočasné soubory
 scratchpad/
 *.tmp

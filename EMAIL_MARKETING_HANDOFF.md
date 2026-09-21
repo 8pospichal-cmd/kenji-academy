@@ -149,3 +149,9 @@ neplatný tvar → duplicita → testovací adresa (test/demo/example/mailinator
 - Štítky: `7dni-ok` = smí dostat sekvenci; `vlna-1/2/3`; `clen-academy` = vyloučit; `crm-dm-aktivni` = počkat; zdroje `zdroj-crm-2026-09`, `zdroj-kenji-2026-09`; role `kenji-free`, `kenji-databaze`, `crm-zakaznik`, `crm-zapojeny`, `crm-studeny`.
 - Rozhodnutí uživatele: posílat všem bez ohledu na doložený souhlas; odhlášení řeší příjemce. Pojistky zůstávají: odhlášení v každém e-mailu, nikdy nereaktivovat odhlášené/bounced, členům Academy a lidem v ručním DM sekvenci neposílat.
 - Migrace `20260910120000_email_marketing.sql` je v produkci aplikovaná (export obsahoval sloupec `marketing_consent_at`).
+
+## Poučení z 14. 9. 2026 — Ecomail a segmenty
+
+- Kampaň s více segmenty v `recepient_lists.segments` Ecomail odešle **jen na první segment**. Proto jedna kampaň = jeden segment (skript `tools/ecomail-send.js` to od 14. 9. dělá sám; admin editor to musí dostat do měsíčního balíku).
+- Před založením nových konceptů vždy ověřit stav v Ecomailu (API `/campaigns/{id}`), ne jen lokální soubor — kampaň 73 byla odeslána ručně z Ecomailu 13. 9., lokální záznam to nevěděl a vznikl duplikát (77).
+- Uživateli posílat vždy jen jeden příkaz k odeslání na zprávu; „na zítra" až zítra.

@@ -111,7 +111,8 @@ function emailTemplateHtml(sequence, step) {
   const plain = !!((sequence && sequence.plain) || (step && step.plain));   // bez loga a nadpisu — působí jako osobní e-mail
   const contentPad = plain ? '32px 32px 34px' : '20px 32px 34px';
   const paragraphs = String(step.body || '').split(/\n\s*\n/).filter(Boolean).map(function (part) {
-    return `<p style="margin:0 0 20px;color:#292927;font:17px/1.65 Arial,sans-serif;">${escapeHtml(part).replace(/\n/g, '<br>')}</p>`;
+    const formatted = escapeHtml(part).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    return `<p style="margin:0 0 20px;color:#292927;font:17px/1.65 Arial,sans-serif;">${formatted}</p>`;
   }).join('');
   const cta = step.cta_label && /^https:\/\//i.test(String(step.cta_url || ''))
     ? `<p style="margin:30px 0;"><a href="${escapeHtml(step.cta_url)}" style="display:inline-block;padding:15px 22px;background:#ff6b1a;color:#fff;text-decoration:none;font:bold 16px/1.2 Arial,sans-serif;border-radius:6px;">${escapeHtml(step.cta_label)}</a></p>`

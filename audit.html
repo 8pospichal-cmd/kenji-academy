@@ -332,8 +332,8 @@
         <div class="gate-page" id="gate-page">
           <div class="gate-eyebrow">Ještě jeden krok</div>
           <div class="gate-card">
-            <h2 class="gate-title">Tvůj audit je připravený.<br>Kam ho máme poslat?</h2>
-            <p class="gate-sub">Zadej svůj e-mail a Instagram — výsledky se ti odemknou okamžitě. Žádný spam, jen tvůj osobní audit.</p>
+            <h2 class="gate-title">Tvůj audit je připravený.<br>Odemkni si výsledek.</h2>
+            <p class="gate-sub">Zadej svůj e-mail a Instagram — výsledek se ti hned zobrazí tady. Žádný spam, jen tvůj osobní audit.</p>
             <div class="gate-preview" id="gate-preview"></div>
             <div class="gate-fields">
               <div class="field-wrap" style="margin-bottom:0">
@@ -417,7 +417,7 @@
 <script src="assets/articles.js?v=20260907-presety-v2"></script>
 <script src="assets/nav.js?v=20260907-adresy-v1"></script>
 <script src="assets/notify.js?v=20260903-komunita-v1"></script>
-<script src="assets/auth.js?v=20260910-email-v1"></script>
+<script src="assets/auth.js?v=20260921-audit-v1"></script>
 <script src="assets/script.js?v=20260907-email-v1"></script>
 <script>
 // ============================================
@@ -495,6 +495,13 @@ function prevStep(from){
 function goToGate(){
   if(!S.brake){ alert('Vyber co tě drží zpátky'); return; }
   document.getElementById('wizard').style.display='none';
+  var u=window.KenjiAuth && window.KenjiAuth.getUser && window.KenjiAuth.getUser();
+  if(u && u.email){
+    document.getElementById('inp-email').value=u.email;
+    if(u.instagram) document.getElementById('inp-ig').value='@'+String(u.instagram).replace(/^@+/, '');
+    submitGate();
+    return;
+  }
   document.getElementById('gate-page').classList.add('active');
   var current=S.cena*S.zakazky, potential=calcPotential(current), gap=(potential-current)*12;
   document.getElementById('gate-preview').innerHTML=
@@ -503,12 +510,23 @@ function goToGate(){
     '<div class="gp-item">Ztraceno ročně<span class="gp-val">'+fmtFull(gap)+'</span></div>';
   window.scrollTo({top:0,behavior:'smooth'});
 }
+function campaignMeta(){
+  try {
+    var q=new URLSearchParams(window.location.search);
+    return {
+      utm_source:(q.get('utm_source')||'').slice(0,100),
+      utm_medium:(q.get('utm_medium')||'').slice(0,100),
+      utm_campaign:(q.get('utm_campaign')||'').slice(0,160),
+      utm_content:(q.get('utm_content')||'').slice(0,160)
+    };
+  } catch(e) { return {utm_source:'',utm_medium:'',utm_campaign:'',utm_content:''}; }
+}
 function submitGate(){
   var email=document.getElementById('inp-email').value.trim();
   if(!email || !email.includes('@')){ document.getElementById('inp-email').style.borderColor='var(--orange)'; document.getElementById('inp-email').focus(); return; }
   S.email=email; S.ig=document.getElementById('inp-ig').value.trim();
-  var current=S.cena*S.zakazky, potential=calcPotential(current), gap=(potential-current)*12;
-  var payload={ name:S.name, email:S.email, ig:S.ig, obory:S.obory.join(', '), level:S.level, cena:S.cena, zakazky:S.zakazky, hodiny:S.hodiny, problems:S.problems.join(', '), goal:S.goal, brake:S.brake, current:current, potential:potential, gap:gap };
+  var current=S.cena*S.zakazky, potential=calcPotential(current), gap=(potential-current)*12, hourly=S.hodiny>0?Math.round(current/(S.hodiny*4)):0, campaign=campaignMeta();
+  var payload={ name:S.name, email:S.email, ig:S.ig, obory:S.obory.join(', '), level:S.level, cena:S.cena, zakazky:S.zakazky, hodiny:S.hodiny, problems:S.problems.join(', '), goal:S.goal, brake:S.brake, current:current, potential:potential, gap:gap, hourly:hourly, utm_source:campaign.utm_source, utm_medium:campaign.utm_medium, utm_campaign:campaign.utm_campaign, utm_content:campaign.utm_content };
   var params=Object.keys(payload).map(function(k){ return encodeURIComponent(k)+'='+encodeURIComponent(payload[k]); }).join('&');
   // ►► Danielova sběrná roura leadů (Google Apps Script) — zachováno
   var url='https://script.google.com/macros/s/AKfycbwlaRvp3lFPadcf5bwHu9kjGOk4y-y8LzPyVzQUmeof8Vq2s3IBPNzwDtZ0tAn_L7Y/exec?'+params;
@@ -516,6 +534,8 @@ function submitGate(){
   setTimeout(function(){ if(s.parentNode) document.body.removeChild(s); },3000);
   if(window.KenjiAuth && window.KenjiAuth.recordTool){
     window.KenjiAuth.recordTool('audit', {
+      name:S.name,
+      instagram:S.ig,
       industries:S.obory,
       level:S.level,
       average_price:S.cena,
@@ -526,7 +546,12 @@ function submitGate(){
       brake:S.brake,
       current:current,
       potential:potential,
-      annual_gap:gap
+      annual_gap:gap,
+      hourly:hourly,
+      utm_source:campaign.utm_source,
+      utm_medium:campaign.utm_medium,
+      utm_campaign:campaign.utm_campaign,
+      utm_content:campaign.utm_content
     }, email);
   }
   document.getElementById('gate-page').classList.remove('active');
@@ -677,15 +702,19 @@ function restart(){
 }
 updateProgress(0); onSlider();
 
-// Předvyplň e-mail + IG z přihlášeného uživatele (gate už je sebral) — míň tření
-(function prefillFromUser(){
+// Přihlášeného člověka už na stejný e-mail znovu neptáme. Fallback bránu
+// předvyplníme i po pomalejším načtení session z magic linku.
+function prefillFromUser(){
   try {
     var u = window.KenjiAuth && window.KenjiAuth.getUser && window.KenjiAuth.getUser();
     if (!u) return;
+    if (u.name && !document.getElementById('inp-name').value) document.getElementById('inp-name').value = u.name;
     if (u.email) document.getElementById('inp-email').value = u.email;
     if (u.instagram) document.getElementById('inp-ig').value = '@' + u.instagram;
   } catch (e) {}
-})();
+}
+prefillFromUser();
+document.addEventListener('kenji-auth-ready', prefillFromUser);
 </script>
 </body>
 </html>

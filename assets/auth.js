@@ -327,12 +327,30 @@
   // Kam se vrátit po kliknutí na magic link. null = aktuální stránka.
   // Přihlášení z prodejní stránky ho nastaví na dashboard, ať člen neskončí zpět v prodeji.
   let gateRedirectTo = null;
+  const CAMPAIGN_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  function currentCampaignUrl() {
+    const target = new URL(location.origin + location.pathname);
+    const source = new URLSearchParams(location.search);
+    CAMPAIGN_PARAMS.forEach(function (key) {
+      const value = source.get(key);
+      if (value) target.searchParams.set(key, value.slice(0, 200));
+    });
+    return target.href;
+  }
+  function cleanAuthLocation() {
+    try {
+      const target = new URL(currentCampaignUrl());
+      history.replaceState(null, '', target.pathname + target.search);
+    } catch (e) {
+      try { history.replaceState(null, '', location.pathname); } catch (_) {}
+    }
+  }
   async function sendMagicLink(email) {
     const sb = await getSupabase();
     if (!sb) return { ok: false, err: 'offline' };
     const { error } = await sb.auth.signInWithOtp({
       email: email,
-      options: { emailRedirectTo: gateRedirectTo || (location.origin + location.pathname), shouldCreateUser: true }
+      options: { emailRedirectTo: gateRedirectTo || currentCampaignUrl(), shouldCreateUser: true }
     });
     if (error) { console.warn('magic link', error); return { ok: false, err: error.message }; }
     return { ok: true };
@@ -1160,7 +1178,7 @@
   const returningFromAuth = /[#&?](access_token|refresh_token|token_hash)=|[?&]code=/.test(location.href) || /type=(magiclink|signup|recovery|email)/.test(location.href);
   // Vypršelý / neplatný přihlašovací odkaz → Supabase vrátí #error=...&error_code=otp_expired
   const authLinkError = /[#&?](error|error_code)=/.test(location.href) && /otp_expired|access_denied|expired|invalid/i.test(location.href);
-  if (authLinkError) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
+  if (authLinkError) cleanAuthLocation();
   const hasSbToken = (function () { try { return !!localStorage.getItem('sb-' + projRef + '-auth-token'); } catch (e) { return false; } })();
   const mightHaveSession = isLive && !IS_LOCAL && !FORCE_PLAN_START && !isLoggedIn() && (returningFromAuth || hasSbToken);
 
@@ -1227,7 +1245,7 @@
         const session = sb ? await getInitialSession(sb) : null;
         if (session) {
           await adoptSession(session);
-          if (returningFromAuth) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
+          if (returningFromAuth) cleanAuthLocation();
         }
       } catch (e) { console.warn('auth boot', e); }
       finishBoot();

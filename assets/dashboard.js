@@ -578,34 +578,27 @@
 
   // ---------- Výzva a úspěchy v jednom komunitním bloku ----------
   // ---------- Živý webinář ----------
-  // Termín dalšího webináře uprav tady. `youtube` nech prázdné, dokud stream neběží
-  // (po vyplnění a dosažení času se z tlačítka stane přímý odkaz na živý stream).
-  // Výchozí (fallback) webinář. Reálně se přepíše z adminu přes next_webinar().
-  var WEBINAR = {
-    topic: 'Jak nacenit zakázku tak, aby klient řekl ano',
-    at: '2026-09-02T20:00:00',
-    youtube: '',
-    info: ''
-  };
-  // Načte nejbližší webinář z adminu a překreslí kartu (fallback = výchozí výše).
-  var webinarLoaded = false;
+  // Aktuální webinář se načítá z adminu; bez placeného členství se karta neukazuje.
+  var WEBINAR = null;
+  var webinarLoading = false;
   async function loadWebinar() {
-    if (webinarLoaded) return; webinarLoaded = true;
+    if (webinarLoading) return;
+    if (!isAcademyMember()) { WEBINAR = null; render(); return; }
+    webinarLoading = true;
     try {
       var A = window.KenjiAuth;
       var sb = A && A.getSupabase ? await A.getSupabase() : null;
       if (!sb) return;
       var res = await sb.rpc('next_webinar');
-      if (res.error || !res.data || !res.data.length) return;
+      if (res.error || !res.data || !res.data.length) { WEBINAR = null; render(); return; }
       var w = res.data[0];
-      if (w.title) WEBINAR.topic = w.title;
-      if (w.starts_at) WEBINAR.at = w.starts_at;
-      WEBINAR.youtube = w.link_url || '';
-      WEBINAR.info = w.body || '';
+      WEBINAR = { topic: w.title || 'Živý webinář', at: w.starts_at, youtube: w.link_url || '', info: w.body || '' };
       render();
     } catch (e) { console.warn('webinar', e); }
+    finally { webinarLoading = false; }
   }
   function webinarCard() {
+    if (!isAcademyMember() || !WEBINAR) return '';
     var start = new Date(WEBINAR.at).getTime();
     if (!start || isNaN(start)) return '';
     var now = Date.now(), diff = start - now, d = new Date(start);
@@ -613,7 +606,12 @@
     var mShort = ['LED', 'ÚNO', 'BŘE', 'DUB', 'KVĚ', 'ČVN', 'ČVC', 'SRP', 'ZÁŘ', 'ŘÍJ', 'LIS', 'PRO'];
     var dateText = d.getDate() + '. ' + mFull[d.getMonth()] + ' ' + d.getFullYear();
     var timeText = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
-    var isLive = now >= start && now <= start + 3 * 3600 * 1000 && !!WEBINAR.youtube;
+    var streamUrl = '';
+    try {
+      var parsedUrl = new URL(WEBINAR.youtube);
+      if (parsedUrl.protocol === 'https:' && /^(www\.)?(youtube\.com|youtu\.be)$/.test(parsedUrl.hostname)) streamUrl = parsedUrl.href;
+    } catch (e) {}
+    var isLive = now >= start && now <= start + 3 * 3600 * 1000 && !!streamUrl;
     var countdown;
     if (isLive) countdown = '🔴 právě běží';
     else if (diff > 0) {
@@ -622,8 +620,8 @@
       countdown = days > 0 ? ('zbývá ' + days + ' ' + dWord + (days < 3 ? ' ' + hrs + ' h' : '')) : ('zbývá ' + hrs + ' h ' + Math.floor((diff % 3600000) / 60000) + ' min');
     } else countdown = 'termín brzy potvrdíme';
     var ytLogo = '<svg class="co-webinar-yt" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#FF0000"/><path d="M11 6l8 4-8 4z" fill="#fff"/></svg>';
-    var btn = isLive
-      ? '<a class="co-webinar-btn is-live" href="' + esc(WEBINAR.youtube) + '" target="_blank" rel="noopener">' + ytLogo + '<span>Spustit stream</span></a>'
+    var btn = streamUrl
+      ? '<a class="co-webinar-btn' + (isLive ? ' is-live' : '') + '" href="' + esc(streamUrl) + '" target="_blank" rel="noopener">' + ytLogo + '<span>' + (isLive ? 'Spustit stream' : 'Otevřít odkaz na webinář') + '</span></a>'
       : '<button class="co-webinar-btn" type="button" data-act="stream-notyet">' + ytLogo + '<span>Spustit stream</span></button>';
     return '<section class="co-card co-webinar' + (isLive ? ' is-live' : '') + '">' +
       '<div class="co-webinar-cal"><span class="co-webinar-cal-m">' + mShort[d.getMonth()] + '</span><span class="co-webinar-cal-d">' + d.getDate() + '</span></div>' +

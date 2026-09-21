@@ -524,12 +524,13 @@
 
   // Rozklikni řádek → uvidíš úplně všechno, co člověk zadal.
   var POLE = {
-    industries:'Obory', level:'Úroveň', level_name:'Úroveň', average_price:'Průměrná cena zakázky',
+    name:'Jméno', instagram:'Instagram', industries:'Obory', level:'Úroveň', level_name:'Úroveň', average_price:'Průměrná cena zakázky',
     jobs_per_month:'Zakázek měsíčně', hours_per_week:'Hodin týdně', problems:'Co ho brzdí',
     goal:'Cíl', brake:'Hlavní brzda', current:'Měsíčně teď', potential:'Potenciál měsíčně',
     annual_gap:'Rozdíl za rok', hourly:'Hodinovka', daily:'Denní sazba',
     monthly_revenue:'Měsíční obrat', monthly_taxes_and_levies:'Daně a odvody měsíčně',
-    billable_hours:'Fakturovatelných hodin', score:'Skóre', total:'Otázek', passed:'Prošel'
+    billable_hours:'Fakturovatelných hodin', score:'Skóre', total:'Otázek', passed:'Prošel',
+    utm_source:'Zdroj návštěvy', utm_medium:'Kanál', utm_campaign:'Kampaň', utm_content:'Varianta odkazu'
   };
   var PENIZE = { average_price:1, current:1, potential:1, annual_gap:1, hourly:1, daily:1, monthly_revenue:1, monthly_taxes_and_levies:1 };
   function toggleTool(id, rowEl) {

@@ -80,54 +80,62 @@ function saveEmail(data) { fs.writeFileSync(file, JSON.stringify(data, null, 2) 
     }
 
     if (flag('--draft')) {
+      // Ecomail při odeslání použije jen PRVNÍ segment z pole → na každý segment vlastní kampaň.
       const wanted = typeof flag('--draft') === 'string' ? flag('--draft') : '';
-      let segmentId = null;
-      if (wanted) {
-        // Více segmentů oddělených čárkou → jedna kampaň, Ecomail adresy sloučí.
-        const segments = await E.listSegments();
-        const picked = wanted.split(',').map(function (w) { return w.trim(); }).filter(Boolean).map(function (w) {
-          const seg = segments.find(function (s) { return s.name.trim().toLowerCase() === w.toLowerCase(); }) || segments.find(function (s) { return s.name.toLowerCase().includes(w.toLowerCase()); });
-          if (!seg) { console.error('Segment „' + w + '“ v Ecomailu není. Dostupné: ' + segments.map(function (s) { return s.name; }).join(' | ')); process.exit(2); }
-          return seg;
-        });
-        segmentId = picked.map(function (s) { return s.id; });
-        picked.forEach(function (seg) { console.log('Segment: ' + seg.name + ' (' + seg.id + ') — ' + (seg.count == null ? '?' : seg.count) + ' kontaktů'); });
-        console.log('Celkem: ' + picked.reduce(function (a, s) { return a + (s.count || 0); }, 0) + ' kontaktů');
-      } else {
-        console.log('Bez segmentu — kampaň půjde na CELÝ seznam.');
+      const segments = wanted ? await E.listSegments() : [];
+      const picked = wanted ? wanted.split(',').map(function (w) { return w.trim(); }).filter(Boolean).map(function (w) {
+        const seg = segments.find(function (s) { return s.name.trim().toLowerCase() === w.toLowerCase(); }) || segments.find(function (s) { return s.name.toLowerCase().includes(w.toLowerCase()); });
+        if (!seg) { console.error('Segment „' + w + '“ v Ecomailu není. Dostupné: ' + segments.map(function (s) { return s.name; }).join(' | ')); process.exit(2); }
+        return seg;
+      }) : [null];
+      const existing = Array.isArray(data.ecomail_campaigns) ? data.ecomail_campaigns : [];
+      const campaigns = [];
+      for (const seg of picked) {
+        const already = existing.find(function (c) { return seg ? c.segment_id === seg.id : !c.segment_id; });
+        if (already && already.sent_at) { console.log('Segment ' + (seg ? seg.name : 'celý seznam') + ' už odeslán (' + already.sent_at.slice(0, 16) + ') — přeskakuji.'); campaigns.push(already); continue; }
+        const created = await E.createCampaign(sequence, step, seg ? seg.id : null);
+        campaigns.push({ id: created.id, segment: seg ? seg.name : 'celý seznam', segment_id: seg ? seg.id : null, count: seg ? seg.count : null, created_at: new Date().toISOString() });
+        console.log('Koncept ' + created.id + ' → ' + (seg ? seg.name + ' (' + (seg.count == null ? '?' : seg.count) + ' kontaktů)' : 'CELÝ seznam'));
       }
-      const created = await E.createCampaign(sequence, step, segmentId);
-      data.ecomail_campaign_id = created.id;
-      data.ecomail_segment = wanted || 'celý seznam';
-      data.ecomail_campaign_created_at = new Date().toISOString();
-      delete data.ecomail_campaign_sent_at;
+      data.ecomail_campaigns = campaigns;
+      delete data.ecomail_campaign_id; delete data.ecomail_segment; delete data.ecomail_campaign_created_at; delete data.ecomail_campaign_sent_at;
       saveEmail(data);
-      return console.log('Koncept kampaně založen v Ecomailu: ID ' + created.id + '. Nic neodešlo. Zkontroluj v Ecomailu → Kampaně, pak: --send --yes');
+      return console.log('Celkem ' + campaigns.filter(function (c) { return !c.sent_at; }).length + ' konceptů k odeslání (' + campaigns.filter(function (c) { return !c.sent_at; }).reduce(function (a, c) { return a + (c.count || 0); }, 0) + ' kontaktů). Nic neodešlo. Odeslat: --send --yes');
     }
 
     if (flag('--send')) {
-      if (!data.ecomail_campaign_id) { console.error('Nejdřív --draft (koncept kampaně).'); process.exit(2); }
-      if (data.ecomail_campaign_sent_at) { console.error('Tahle kampaň už odešla ' + data.ecomail_campaign_sent_at + '.'); process.exit(2); }
+      const campaigns = Array.isArray(data.ecomail_campaigns) ? data.ecomail_campaigns : (data.ecomail_campaign_id ? [{ id: data.ecomail_campaign_id, segment: data.ecomail_segment, sent_at: data.ecomail_campaign_sent_at }] : []);
+      const pending = campaigns.filter(function (c) { return !c.sent_at; });
+      if (!campaigns.length) { console.error('Nejdřív --draft (koncept kampaně).'); process.exit(2); }
+      if (!pending.length) { console.error('Všechny koncepty už odešly.'); process.exit(2); }
       if (!flag('--yes')) { console.error('Odeslání je nevratné. Potvrď přepínačem --yes.'); process.exit(2); }
-      await E.sendCampaign(data.ecomail_campaign_id);
-      data.ecomail_campaign_sent_at = new Date().toISOString();
+      for (const c of pending) {
+        await E.sendCampaign(c.id);
+        c.sent_at = new Date().toISOString();
+        console.log('Kampaň ' + c.id + ' (' + c.segment + ') je ve frontě Ecomailu.');
+      }
+      data.ecomail_campaigns = campaigns;
       saveEmail(data);
-      return console.log('Kampaň ' + data.ecomail_campaign_id + ' je ve frontě Ecomailu (' + data.ecomail_segment + ').');
+      return;
     }
 
     if (flag('--stats')) {
-      if (!data.ecomail_campaign_id) { console.error('E-mail nemá kampaň v Ecomailu.'); process.exit(2); }
-      const r = await E.ecomail('/campaigns/' + encodeURIComponent(data.ecomail_campaign_id) + '/stats');
-      const st = (r && r.stats) || r || {};
-      const pct = function (v) { return v == null ? '—' : (Math.round(Number(v) * 10) / 10) + ' %'; };
-      console.log('Kampaň ' + data.ecomail_campaign_id + ' — ' + (data.ecomail_segment || '') + (data.ecomail_campaign_sent_at ? ' — odesláno ' + data.ecomail_campaign_sent_at.slice(0, 16).replace('T', ' ') : ''));
-      console.log('  Odesláno:   ' + (st.inject != null ? st.inject : '—'));
-      console.log('  Doručeno:   ' + (st.delivery != null ? st.delivery : '—') + '  (' + pct(st.delivery_rate) + ')');
-      console.log('  Otevřelo:   ' + (st.open != null ? st.open : '—') + ' lidí  (' + pct(st.open_rate) + ')  celkem otevření ' + (st.total_open != null ? st.total_open : '—'));
-      console.log('  Prokliklo:  ' + (st.click != null ? st.click : '—') + ' lidí  (' + pct(st.click_rate) + ')  celkem prokliků ' + (st.total_click != null ? st.total_click : '—'));
-      console.log('  Nedoručeno: ' + (st.bounce != null ? st.bounce : '—') + '  (' + pct(st.bounce_rate) + ')');
-      console.log('  Odhlášeno:  ' + (st.unsub != null ? st.unsub : '—') + '  (' + pct(st.unsub_rate) + ')');
-      console.log('  Spam:       ' + (st.spam != null ? st.spam : '—') + '  (' + pct(st.spam_rate) + ')');
+      const campaigns = Array.isArray(data.ecomail_campaigns) ? data.ecomail_campaigns : (data.ecomail_campaign_id ? [{ id: data.ecomail_campaign_id, segment: data.ecomail_segment, sent_at: data.ecomail_campaign_sent_at }] : []);
+      if (!campaigns.length) { console.error('E-mail nemá kampaň v Ecomailu.'); process.exit(2); }
+      const pct = function (a, b) { return b ? Math.round(a / b * 1000) / 10 + ' %' : '—'; };
+      const total = { inject: 0, delivery: 0, open: 0, click: 0, bounce: 0, unsub: 0, spam: 0 };
+      for (const c of campaigns) {
+        const r = await E.ecomail('/campaigns/' + encodeURIComponent(c.id) + '/stats');
+        const st = (r && r.stats) || r || {};
+        Object.keys(total).forEach(function (k) { total[k] += Number(st[k] || 0); });
+        console.log('  ' + c.id + '  ' + String(c.segment || '').padEnd(20) + (c.sent_at ? c.sent_at.slice(0, 16).replace('T', ' ') : 'koncept        ') + '  odesl. ' + String(st.inject || 0).padStart(4) + '  otevř. ' + String(st.open || 0).padStart(4) + '  klik ' + String(st.click || 0).padStart(3) + '  odhl. ' + String(st.unsub || 0));
+      }
+      console.log(data.subject);
+      console.log('  Odesláno:   ' + total.inject);
+      console.log('  Doručeno:   ' + total.delivery + '  (' + pct(total.delivery, total.inject) + ')');
+      console.log('  Otevřelo:   ' + total.open + ' lidí  (' + pct(total.open, total.delivery) + ')');
+      console.log('  Prokliklo:  ' + total.click + ' lidí  (' + pct(total.click, total.delivery) + ')');
+      console.log('  Nedoručeno: ' + total.bounce + '   Odhlášeno: ' + total.unsub + '   Spam: ' + total.spam);
       return;
     }
 
