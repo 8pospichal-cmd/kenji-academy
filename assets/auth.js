@@ -544,39 +544,20 @@
     if (document.getElementById('kenji-gate')) return;
 
     const wrap = document.createElement('div');
-    wrap.className = 'kenji-gate' + (saveplan ? ' kg-saveplan' : '');
+    wrap.className = 'kenji-gate kg-login' + (saveplan ? ' kg-saveplan' : '');
     wrap.id = 'kenji-gate';
     wrap.innerHTML = `
       <div class="kg-modal">
         <button class="kg-close" id="kg-close" type="button" aria-label="Zpět na úvodní stránku">✕</button>
-        <div class="kg-intro">
-          <div class="kg-logo">KENJI ACADEMY</div>
-          <h2>Tohle najdeš v Kenji Academy</h2>
-          <p>Přihlašuješ se e-mailem přes odkaz — bez hesla. Část obsahu máš hned zdarma, zbytek odemkneš, až budeš chtít.</p>
-          <ul class="kg-features">
-            <li><strong>Videokurzy</strong><span>5 ucelených kurzů a 20+ hodin praxe od techniky po byznys.</span></li>
-            <li><strong>Databáze článků</strong><span>75+ návodů na focení, cenotvorbu, marketing i právo.</span></li>
-            <li><strong>Kenji AI</strong><span>Asistent, co ti poradí s konkrétní zakázkou 24/7.</span></li>
-            <li><strong>Komunita tvůrců</strong><span>Sdílej práci, ptej se a inspiruj se od ostatních.</span></li>
-            <li><strong>Živé webináře</strong><span>Rozbory a Q&amp;A na témata, co tě reálně pálí.</span></li>
-            <li><strong>90denní výzva</strong><span>Jasný plán a akční kroky, ne jen sledování videí.</span></li>
-            <li><strong>Foto feedback</strong><span>Nahraj práci a dostaneš konkrétní tipy na zlepšení.</span></li>
-            <li><strong>Podpora</strong><span>Nezůstaneš na to sám — poradí Kenji i celá komunita.</span></li>
-          </ul>
-        </div>
         <div class="kg-form">
           <div class="kg-logo kg-logo-mobile">KENJI ACADEMY</div>
           <div class="kg-pane" id="kg-pane-lead">
-            <div class="kg-form-head">${saveplan ? 'Uložit plán zdarma' : 'Vstup do Kenji Academy'}</div>
-            <p class="kg-form-sub">${saveplan ? 'Zadej e-mail. Pošleme ti přihlašovací odkaz a tvůj plán pod ním zůstane uložený.' : 'Zadej e-mail — pošleme ti přihlašovací odkaz. Klikneš a jsi uvnitř. Bez hesla, jeden krok.'}</p>
+            <div class="kg-form-head">Přihlášení</div>
             <label class="kg-label" for="kg-email">E-mail</label>
             <input class="kg-input" id="kg-email" type="email" placeholder="tvuj@email.cz" autocomplete="email">
-            <label class="kg-label kg-label-pw" for="kg-password">Heslo <span>nepovinné</span></label>
-            <input class="kg-input" id="kg-password" type="password" placeholder="Máš heslo? Zadej ho a jsi hned uvnitř" autocomplete="current-password">
-            <div class="kg-pw-hint" id="kg-pw-hint">Heslo nemusíš mít. Když pole necháš prázdné, pošleme ti přihlašovací odkaz do e-mailu. <button type="button" class="kg-forgot" id="kg-forgot">Zapomněl jsem heslo</button></div>
-            <label class="kg-consent"><input type="checkbox" id="kg-consent"> <span>Beru na vědomí zpracování e-mailu pro vytvoření a správu profilu. <a href="${ROOT}${escapeHtml(CONFIG.privacyUrl)}" target="_blank" rel="noopener">Jak pracujeme s údaji</a></span></label>
-            <label class="kg-consent kg-consent-marketing"><input type="checkbox" id="kg-marketing"> <span>Chci dostávat praktické úkoly, týdenní výzvy a novinky z Kenji Academy. Odhlásit se můžu kdykoli.</span></label>
-            <button class="kg-btn" id="kg-submit">Poslat přihlašovací odkaz →</button>
+            <label class="kg-label kg-label-pw" for="kg-password">Heslo</label>
+            <input class="kg-input" id="kg-password" type="password" placeholder="Heslo" autocomplete="current-password">
+            <button class="kg-btn" id="kg-submit" type="button">Přihlásit se</button>
             <div class="kg-error" id="kg-error" hidden></div>
             <div class="kg-sent" id="kg-sent" hidden>
               <div class="kg-sent-ico">📩</div>
@@ -588,8 +569,6 @@
     document.body.appendChild(wrap);
 
     const emailEl = document.getElementById('kg-email');
-    const consentEl = document.getElementById('kg-consent');
-    const marketingEl = document.getElementById('kg-marketing');
     const errEl = document.getElementById('kg-error');
     const btn = document.getElementById('kg-submit');
 
@@ -609,45 +588,23 @@
       closeGate();
     });
 
-    // Zapomenuté heslo → odkaz na obnovu. Potřebuje jen platný e-mail v poli výš.
-    const forgotBtn = document.getElementById('kg-forgot');
-    if (forgotBtn) forgotBtn.addEventListener('click', async function () {
-      const mail = normEmail(emailEl.value);
-      if (!validEmail(mail)) { err('Nejdřív vyplň e-mail — pošleme na něj odkaz pro nastavení nového hesla.'); emailEl.focus(); return; }
-      errEl.hidden = true;
-      forgotBtn.disabled = true; forgotBtn.textContent = 'Posílám…';
-      const out = await requestPasswordReset(mail);
-      forgotBtn.textContent = out.ok ? 'Odkaz je v e-mailu ✓' : 'Nepovedlo se odeslat';
-      if (!out.ok) forgotBtn.disabled = false;
-    });
-
     const sentEl = document.getElementById('kg-sent');
-
-    // Popisek tlačítka se řídí tím, jestli je vyplněné heslo — ať je jasné, co se stane.
     const pwEl = document.getElementById('kg-password');
-    const linkLabel = saveplan ? 'Poslat přihlašovací odkaz →' : 'Poslat přihlašovací odkaz →';
-    function syncBtnLabel() {
-      if (btn.disabled) return;
-      btn.textContent = pwEl && pwEl.value ? 'Přihlásit se →' : linkLabel;
-    }
-    if (pwEl) pwEl.addEventListener('input', syncBtnLabel);
+    // Účty bez hesla se mohou dál přihlásit ověřeným odkazem.
+    function syncBtnLabel() { if (!btn.disabled) btn.textContent = 'Přihlásit se'; }
+    const destination = gateRedirectTo || currentCampaignUrl();
 
     async function submit() {
       const email = normEmail(emailEl.value);
       if (!validEmail(email)) { err('Zadej platný e-mail.'); emailEl.focus(); return; }
-      if (!consentEl.checked) { err('Potvrď, že ses seznámil se zpracováním údajů.'); return; }
+      if (btn.disabled) return;
       errEl.hidden = true;
       const password = pwEl ? pwEl.value : '';
-      try {
-        if (marketingEl && marketingEl.checked) localStorage.setItem('kenji_marketing_pending_v1', JSON.stringify({ email: email, enabled: true, createdAt: Date.now() }));
-        else localStorage.removeItem('kenji_marketing_pending_v1');
-      } catch (e) {}
-
       // Localhost (vývoj): magic link nefunguje → okamžitý vstup jako free, ať jde testovat.
       if (!isLive || IS_LOCAL) {
         btn.disabled = true; btn.textContent = 'Posílám…';
         saveUser({ email: email, instagram: '', tier: 'free' });
-        location.href = ROOT + 'index.html';
+        location.href = destination;
         return;
       }
 
@@ -657,7 +614,7 @@
         const login = await signInWithPassword(email, password);
         if (login.ok && login.session) {
           await adoptSession(login.session);
-          location.href = gateRedirectTo || (ROOT + 'index.html');
+          location.href = destination;
           return;
         }
         btn.disabled = false; syncBtnLabel();
@@ -676,8 +633,6 @@
         if (pwEl) pwEl.style.display = 'none';
         var pwLbl = document.querySelector('.kg-label-pw'); if (pwLbl) pwLbl.style.display = 'none';
         var pwHint = document.getElementById('kg-pw-hint'); if (pwHint) pwHint.style.display = 'none';
-        consentEl.closest('.kg-consent').style.display = 'none';
-        if (marketingEl) marketingEl.closest('.kg-consent').style.display = 'none';
         btn.style.display = 'none';
         var lbl = document.querySelector('#kg-pane-lead .kg-label'); if (lbl) lbl.style.display = 'none';
         sentEl.hidden = false;
@@ -1221,7 +1176,7 @@
           showGate('saveplan');
         }
       } else {
-        showGate('saveplan');   // obsah/kurzy → povinná brána (e-mail)
+        showGate('login');   // obsah/kurzy → přihlášení, návrat na otevřenou stránku
       }
     } else {
       revealSite();

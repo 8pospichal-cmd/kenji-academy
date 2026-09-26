@@ -9144,3 +9144,11 @@ body.upg-modal-open { overflow: hidden; }
   }
   .academy-sale-top .academy-top-actions .academy-top-cta { display: inline-flex; margin: 12px 0 0; min-height: 46px; font-size: .84rem; }
 }
+
+/* Jednoduché společné přihlášení bez nabídky newsletteru. */
+.kg-login .kg-modal { max-width: 440px; grid-template-columns: 1fr; }
+.kg-login .kg-logo-mobile { display: block; margin-bottom: 26px; }
+.kg-login .kg-form-head { margin-bottom: 24px; }
+.kg-login #kg-password { margin-bottom: 24px; }
+.kg-login .kg-btn { background: #fff; color: #111; }
+:root[data-theme="light"] .kg-login .kg-btn { background: #fff; color: #111; border: 1px solid var(--border); }
