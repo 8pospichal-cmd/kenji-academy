@@ -3,8 +3,7 @@
 // ============================================
 //
 // CO TO DĚLÁ:
-//  • Nikdo se nedostane na web zadarmo — nejdřív musí dát E-MAIL.
-//    (rozmazané pozadí + modal: vlevo „co to je", vpravo formulář)
+//  • Články jsou veřejné. AI, komunita a kurzy vyžadují přihlášení.
 //  • Lead (e-mail) se uloží do Supabase (tabulka `users`). Instagram doplní v profilu.
 //  • PROGRES (přečtené články + kvíz + odměna) se ukládá pod e-mail na server,
 //    takže se uživateli načte i na jiném zařízení, když zadá ten samý e-mail.
@@ -261,6 +260,15 @@
     }
   }
 
+  async function dismissPointsIntro() {
+    try { localStorage.setItem('kenji_kp_intro_v1', 'true'); } catch (e) {}
+    if (!isLive || IS_LOCAL || !isLoggedIn()) return;
+    const sb = await getSupabase();
+    if (!sb) return;
+    const { error } = await sb.auth.updateUser({ data: { kenji_kp_intro_seen: true } });
+    if (error) console.warn('points intro preference', error);
+  }
+
   // ---------------- KENJI POINTS (KP/XP) local ⇄ server ----------------
   // KP jsou vázané na účet (e-mail) a sčítají se napříč zařízeními. Log slouží k idempotenci
   // klíčovaných odměn (read:*, quiz:*, activation:* …), ať se stejná odměna nepočítá dvakrát.
@@ -454,6 +462,12 @@
     }
     saveUser({ email: vEmail, instagram: prevIg, tier: tier, auth: 'email', name: name, hasPassword: !!meta.has_password });
     user = loadUser();
+    // Úvodní nápověda je vázaná na účet, ne pouze na konkrétní prohlížeč.
+    const created = Date.parse(session.user.created_at || '');
+    const returningAccount = Number.isFinite(created) && Date.now() - created > 10 * 60 * 1000;
+    if (meta.kenji_kp_intro_seen || returningAccount) {
+      try { localStorage.setItem('kenji_kp_intro_v1', 'true'); } catch (e) {}
+    }
     // Marketing je oddělený od vytvoření účtu. Zapíšeme ho až po ověření e-mailu
     // a jen tehdy, když jej člověk ve vstupní bráně výslovně zaškrtl.
     try {
@@ -883,7 +897,7 @@
   function renderHeaderUI() {
     const actions = document.querySelector('.header-actions');
     if (!actions) return;
-    if (!isLoggedIn()) { actions.innerHTML = `<span class="header-tag">EXCLUSIVE • MEMBERS ONLY</span>`; return; }
+    if (!isLoggedIn()) { actions.innerHTML = `<a class="header-tag" href="${ROOT}academy.html">Kenji Academy</a>`; return; }
     const tierLabel = currentTier() === 'academy' ? 'ACADEMY' : (currentTier() === 'knihovna' ? 'DATABÁZE' : 'FREE');
     const tierClass = currentTier() === 'free' ? 'free' : 'member';
     const tierSub = currentTier() === 'academy' ? 'Plný přístup' : (currentTier() === 'knihovna' ? 'Celá databáze' : 'Free přístup');
@@ -963,10 +977,7 @@
   function applyGating() {
     markFeatureLocks();
     gateLockedFeaturePage();
-    if (!can('fullDatabase')) {
-      markHomepageLocks();
-      gateArticlePage();
-    }
+
   }
 
   // Na úvodní stránce označí kartu členství podle reálného tieru uživatele.
@@ -1052,57 +1063,11 @@
         </div>
       </div>`;
   }
-  function markHomepageLocks() {
-    document.querySelectorAll('#articles-list .article-row').forEach((row) => {
-      const titleEl = row.querySelector('.article-row-title');
-      if (!titleEl) return;
-      const a = articles.find((x) => x.title === titleEl.textContent);
-      if (a && isPremiumArticle(a) && a.status === 'published') {
-        row.classList.add('locked');
-        if (!row.querySelector('.lock-pill')) {
-          const pill = document.createElement('div'); pill.className = 'lock-pill'; pill.textContent = '🔒 Členové'; row.appendChild(pill);
-        }
-      }
-    });
-    document.querySelectorAll('#sidebar .sidebar-sublink[data-slug]').forEach((lnk) => {
-      const slug = lnk.getAttribute('data-slug');
-      const a = articles.find((x) => x.slug === slug);
-      if (a && isPremiumArticle(a)) {
-        lnk.classList.add('locked');
-        lnk.setAttribute('title', 'Zamčeno pro plný přístup');
-        lnk.setAttribute('aria-label', (a.title || 'Článek') + ' — zamčeno pro plný přístup');
-      } else {
-        lnk.classList.remove('locked');
-        lnk.removeAttribute('title');
-        lnk.removeAttribute('aria-label');
-      }
-    });
-  }
-  function gateArticlePage() {
-    const article = articleForCurrentPage();
-    if (!article) return;
+  // Články jsou veřejné; nabídka kurzů nenahrazuje ani neskrývá jejich obsah.
+  function promoteArticleCourses() {
+    if (!inArticle || isAcademy()) return;
     const inner = document.querySelector('.main-inner');
-    if (!inner) return;
-    if (isPremiumArticle(article)) {
-      let cutFrom = inner.querySelector('.section-title');
-      if (cutFrom) { let el = cutFrom; while (el) { el.style.display = 'none'; el = el.nextElementSibling; } }
-      insertPaywall(inner, cutFrom);
-    } else {
-      insertEndPromo(inner);
-    }
-  }
-  function insertPaywall(inner, beforeEl) {
-    const box = document.createElement('div');
-    box.className = 'paywall';
-    box.innerHTML = `
-      <div class="paywall-lock">🔒</div>
-      <h2 class="paywall-title">Zbytek je jen pro členy</h2>
-      <p class="paywall-text">Tohle je prémiový obsah ${escapeHtml(CONFIG.academyName)}. Čteš teď jen úvod — celý článek a zbytek databáze se odemknou členům.</p>
-      <div class="paywall-actions">
-        <a class="paywall-cta" href="#" data-checkout-product="databaze">Chci plný přístup</a>
-        <span class="paywall-note">Databáze 1 497 Kč · nebo kompletní <a href="academy.html">Kenji Academy</a></span>
-      </div>`;
-    if (beforeEl) inner.insertBefore(box, beforeEl); else inner.appendChild(box);
+    if (inner && !inner.querySelector('.promo-banner')) insertEndPromo(inner);
   }
   function insertEndPromo(inner) {
     const signoff = inner.querySelector('.signoff');
@@ -1111,9 +1076,9 @@
     promo.innerHTML = `
       <div class="promo-content">
         <div class="promo-kicker">KENJI ACADEMY</div>
-        <h3 class="promo-title">Tohle byla jen ochutnávka.</h3>
-        <p class="promo-text">Většina databáze je za zámkem — kompletní návody, byznys a technika pro tvůrce.</p>
-        <a class="promo-cta" href="#" data-checkout-product="databaze">Odemknout celou databázi →</a>
+        <h3 class="promo-title">Chceš to posunout do praxe?</h3>
+        <p class="promo-text">V Kenji Academy najdeš videokurzy focení, úprav i podnikání. K tomu komunitu a živé webináře.</p>
+        <a class="promo-cta" href="${ROOT}academy.html">Prohlédnout Kenji Academy →</a>
       </div>`;
     if (signoff) inner.insertBefore(promo, signoff); else inner.appendChild(promo);
   }
@@ -1128,7 +1093,7 @@
   window._kenjiLogout = doLogout;
 
   // ---------------- START ----------------
-  const isPublicPage = PUBLIC_PAGES.indexOf(currentFile) >= 0;
+  const isPublicPage = inArticle || PUBLIC_PAGES.indexOf(currentFile) >= 0;
   const projRef = (CONFIG.supabaseUrl.match(/\/\/([^.]+)\./) || [])[1] || '';
   const returningFromAuth = /[#&?](access_token|refresh_token|token_hash)=|[?&]code=/.test(location.href) || /type=(magiclink|signup|recovery|email)/.test(location.href);
   // Vypršelý / neplatný přihlašovací odkaz → Supabase vrátí #error=...&error_code=otp_expired
@@ -1139,17 +1104,8 @@
 
   function loadProductTour() {
     if (isPublicPage || currentFile === 'admin.html' || !isLoggedIn() || document.querySelector('script[data-kenji-tour]')) return;
-    // Dokončený nebo ukončený průvodce znovu nestahujeme. Explicitní spuštění
-    // z Nastavení a rozpracovaný statický průchod se načtou na cílové stránce.
-    var tourRequested = /[?&](?:tour=1|tourStep=)/.test(location.search);
-    if (!tourRequested) {
-      try {
-        var tourState = JSON.parse(localStorage.getItem('kenji_guided_onboarding_v4') || 'null');
-        if (tourState && tourState.version === 4 && (tourState.status === 'complete' || tourState.status === 'dismissed')) return;
-        var oldTourState = JSON.parse(localStorage.getItem('kenji_guided_onboarding_v3') || 'null');
-        if (!tourState && oldTourState && oldTourState.version === 3 && oldTourState.status === 'complete') return;
-      } catch (e) {}
-    }
+    // Průvodce otevíráme pouze na vyžádání; pokračování zachovává tourStep v URL.
+    if (!/[?&](?:tour=1(?:&|$)|tourStep=)/.test(location.search)) return;
     const tourScript = document.createElement('script');
     tourScript.src = ROOT + 'assets/tour.js?v=20260907-cistaurl-v1';
     tourScript.dataset.kenjiTour = '1';
@@ -1182,6 +1138,7 @@
       revealSite();
     }
     renderHeaderUI();
+    promoteArticleCourses();
     if (!isPublicPage) applyGating();
     markHomepagePlan();
     renderStartPanel();
@@ -1220,6 +1177,7 @@
     live: isLive,
     getSupabase: getSupabase,   // sdílený Supabase klient (pro feed apod.)
     updateUserProfile: updateUserProfile,
+    dismissPointsIntro: dismissPointsIntro,
     saveProfile: saveProfileRemote,   // dashboard po dokončení onboardingu pošle profil na server
     getProfile: getProfileRemote,
     liveSession: liveSession,   // session s ověřeně platným tokenem (pro Storage zápisy)

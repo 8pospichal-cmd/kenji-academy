@@ -169,46 +169,7 @@
   }
   function isFree(slug) { return (window.KENJI_FREE_SLUGS || []).indexOf(slug) !== -1; }
 
-  function learningOverview(b) {
-    var read = readSlugs();
-    var history = historyItems();
-    var lastEntry = history.find(function (entry) { return article(entry.slug); });
-    var last = lastEntry && article(lastEntry.slug);
-    var recList = (FOCUS_ARTICLES[b.blocker] || FOCUS_ARTICLES.klienti).map(article).filter(Boolean);
-    var recommended = recList.find(function (item) { return read.indexOf(item.slug) === -1 && (!last || item.slug !== last.slug); }) || recList[0];
-    var total = ARTICLES.filter(function (item) { return item.status === 'published'; }).length;
-    var pct = total ? Math.round(read.length / total * 100) : 0;
-    var primary = last || recommended || article('expozice');
-    var primaryProgress = last ? Math.max(4, Math.min(100, Number(lastEntry.progress) || 4)) : 0;
-    var member = isMember();
-    var stages = [
-      { slug: 'expozice', label: 'Základy', icon: 'camera' },
-      { slug: 'prehled-oboru', label: 'Směr', icon: 'compass' },
-      { slug: 'portfolio', label: 'Portfolio', icon: 'image' },
-      { slug: 'prvni-klienti', label: 'První klienti', icon: 'users' },
-      { slug: 'cenik-ktery-prodava', label: 'Stabilní byznys', icon: 'briefcase' }
-    ].map(function (stage) { stage.article = article(stage.slug); return stage; }).filter(function (stage) { return stage.article; });
-    var current = stages.findIndex(function (stage) { return read.indexOf(stage.slug) === -1; });
-    if (current < 0) current = stages.length - 1;
-    var completed = stages.filter(function (stage) { return read.indexOf(stage.slug) !== -1; }).length;
-    var fill = stages.length > 1 ? Math.min(100, Math.max(0, current / (stages.length - 1) * 100)) : 0;
-    var nodes = stages.map(function (stage, index) {
-      var done = read.indexOf(stage.slug) !== -1;
-      var active = !done && index === current;
-      var locked = !member && !isFree(stage.slug);
-      return '<a class="co-learning-stage' + (done ? ' is-done' : '') + (active ? ' is-current' : '') + (locked ? ' is-locked' : '') + '" href="' + esc(articleUrl(stage.article)) + '"><span>' + (done ? '✓' : (index + 1)) + '</span><strong>' + esc(stage.label) + '</strong></a>';
-    }).join('');
-    return '<section class="co-card co-learning-hub" data-tour="database">' +
-      '<div class="co-card-head"><div><span class="co-learning-kicker">DATABÁZE PRO TEBE</span><h2 class="co-card-title">' + (last ? 'Pokračuj, kde jsi skončil' : 'Začni jedním správným krokem') + '</h2></div><span class="co-count">' + read.length + ' / ' + total + '</span></div>' +
-      '<div class="co-learning-main">' +
-        '<div class="co-learning-reason"><span>' + (last ? 'ROZDĚLANÝ ČLÁNEK' : 'DOPORUČENO PRO TVŮJ CÍL') + '</span><p>' + (last ? 'Nemusíš znovu hledat. Navážeme přesně tam, kde jsi přestal.' : 'Teď řešíš <strong>' + esc(blockerText(b)) + '</strong>. Tohle je nejkratší cesta k dalšímu posunu.') + '</p></div>' +
-        (primary ? '<a class="co-learning-primary" href="' + esc(articleUrl(primary, !!last)) + '"><span class="co-content-icon">' + esc(primary.icon) + '</span><span class="co-content-main"><strong>' + esc(primary.title) + '</strong><span>' + esc(primary.desc) + '</span></span><span class="co-content-arrow">→</span></a>' : '') +
-      '</div>' +
-      (last ? '<div class="co-content-progress"><i style="width:' + primaryProgress + '%"></i></div>' : '') +
-      '<div class="co-learning-progress"><span><i style="width:' + Math.max(2, pct) + '%"></i></span><small>' + pct + ' % databáze</small></div>' +
-      '<div class="co-learning-path"><div class="co-learning-path-head"><strong>Tvoje cesta</strong><span>' + completed + ' / ' + stages.length + '</span></div><div class="co-learning-stages"><i class="co-learning-line"><b style="width:' + fill + '%"></b></i>' + nodes + '</div></div>' +
-    '</section>';
-  }
+
 
   // ---------- Úkoly ----------
   function todosGet() { var t = jget(TODO, []); return Array.isArray(t) ? t : []; }
@@ -498,7 +459,7 @@
     h += '</div>';
     h += '</div>';
 
-    if (!jget('kenji_kp_intro_v1', false)) {
+    if (!jget('kenji_kp_intro_v1', false) && !profileComplete() && !readSlugs().length && !xpGet().xp) {
       h += '<div class="co-kpintro"><span class="co-kpintro-ico">⚡</span>' +
         '<div class="co-kpintro-body"><strong>Co jsou Kenji Points (KP)?</strong>' +
         '<p>Sbíráš je za čtení, splněné úkoly, kvíz i komunitu. Levely jsou postupně těžší a končí levelem 10. Za vlastní úkoly se počítá nejvýš 5 splnění denně, ať má žebříček férový rytmus.</p></div>' +
@@ -519,8 +480,6 @@
 
     h += webinarCard();
 
-    // Obsah se mění podle historie čtení a aktuálního problému uživatele.
-    h += learningOverview(b);
     h += workPanel(b, active, done);
     h += communityPulseCard();
 
@@ -840,7 +799,11 @@
     if (act === 'onb-cancel') { editingProfile = false; onbStep = 1; render(); return; }
     if (act === 'prof-edit') { editingProfile = true; onbStep = 1; render(); return; }
     if (act === 'save-plan') { if (window.KenjiAuth && window.KenjiAuth.promptSavePlan) window.KenjiAuth.promptSavePlan(); return; }
-    if (act === 'kpintro-dismiss') { jset('kenji_kp_intro_v1', true); render(); return; }
+    if (act === 'kpintro-dismiss') {
+      jset('kenji_kp_intro_v1', true);
+      if (window.KenjiAuth && window.KenjiAuth.dismissPointsIntro) window.KenjiAuth.dismissPointsIntro().catch(function () {});
+      render(); return;
+    }
     if (act === 'activation-dismiss') { jset('kenji_activation_hidden_v1', true); render(); return; }
     if (act === 'kpnudge-dismiss') { jset('kenji_kpnudge_dismiss_v1', new Date().toDateString()); render(); return; }
     if (act === 'stream-notyet') { flash('Stream nebo webinář ještě nezačal 🔴 Dej vědět mailem, ať ti nic neuteče.'); return; }
