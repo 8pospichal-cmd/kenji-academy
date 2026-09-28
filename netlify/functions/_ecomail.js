@@ -347,16 +347,39 @@ function senderOf(sequence) {
   };
 }
 
+// Prostý text článku — pro klienty bez HTML a pro kontrolu obsahu v API.
+function articlePlainText(a) {
+  const strip = function (t) { return String(t == null ? '' : t).replace(/\*\*(.+?)\*\*/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); };
+  const out = [strip(a.headline), ''];
+  (a.blocks || []).forEach(function (b) {
+    if (b.type === 'h') out.push('', strip(b.text).toUpperCase(), '');
+    else if (b.type === 'p' || b.type === 'lead') out.push(strip(b.text), '');
+    else if (b.type === 'quote') out.push('„' + strip(b.text) + '“', '');
+    else if (b.type === 'box') out.push((b.title ? strip(b.title) + ': ' : '') + strip(b.text), '');
+    else if (b.type === 'compare') (b.items || []).forEach(function (it) { out.push((it.ok === false ? '✕ ' : '✓ ') + strip(it.title), strip(it.text), ''); });
+    else if (b.type === 'cards') (b.items || []).forEach(function (it) { out.push(strip(it.tag) + ' — ' + strip(it.title), strip(it.text), ''); });
+    else if (b.type === 'steps') { (b.items || []).forEach(function (it, i) { out.push((i + 1) + '. ' + strip(it)); }); out.push(''); }
+  });
+  const o = a.offer || {};
+  if (o.text) out.push('---', strip(o.kicker || ''), strip(o.text), o.url ? (strip(o.label || 'Otevřít') + ': ' + o.url) : '');
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// Článkový e-mail má vlastní šablonu; ostatní jdou přes jednoduchou.
+function bodyHtml(sequence, step) {
+  return step && step.article ? articleEmailHtml(step.article) : emailTemplateHtml(sequence, step);
+}
+
 async function sendTestEmail(sequence, step, toEmail) {
   const sender = senderOf(sequence);
   if (!validEmail(sender.from_email)) throw new Error('Chybí platná adresa odesílatele.');
-  const html = emailTemplateHtml(sequence, step).replace(/\*\|UNSUB\|\*/g, 'https://kenjiacademy.cz/nastaveni.html');
+  const html = bodyHtml(sequence, step).replace(/\*\|UNSUB\|\*/g, 'https://kenjiacademy.cz/nastaveni.html');
   return ecomail('/transactional/send-message', {
     method: 'POST',
     body: JSON.stringify({ message: {
       subject: String(step.subject || ''),
       from_name: sender.from_name, from_email: sender.from_email, reply_to: sender.reply_to,
-      html: html, text: String(step.body || ''),
+      html: html, text: step && step.article ? articlePlainText(step.article) : String(step.body || ''),
       to: [{ email: email(toEmail) }],
       options: { click_tracking: false, open_tracking: false }
     } })
@@ -375,7 +398,7 @@ async function createCampaign(sequence, step, segmentId) {
       title: `[Kenji] ${sequence.name} — ${step.subject}`,
       from_name: sender.from_name, from_email: sender.from_email, reply_to: sender.reply_to,
       subject: String(step.subject || ''),
-      html_text: emailTemplateHtml(sequence, step),
+      html_text: bodyHtml(sequence, step),
       recepient_lists: recipients
     })
   });
@@ -388,4 +411,109 @@ async function sendCampaign(campaignId) {
   return ecomail(`/campaign/${encodeURIComponent(campaignId)}/send`);
 }
 
-module.exports = { json, email, validEmail, requiredEnv, discoveryEnv, supabase, verifiedUser, userRow, adminUser, ecomail, contactData, canMarket, emailTemplateHtml, syncContact, syncContacts, unsubscribe, trackerEvent, listSubscribers, auditAudience, tagSafeAudience, listSegments, sendTestEmail, createCampaign, sendCampaign };
+// ---------------- ČLÁNKOVÝ E-MAIL ----------------
+// Celý článek v těle e-mailu. Tabulkové rozložení a inline styly kvůli Outlooku,
+// šířka 640 px, bez webfontů. Bloky: h, p, quote, box, compare, cards, steps, cta, hr.
+
+const A_INK = '#1b1b1f', A_DIM = '#4a4a52', A_MUTE = '#8b8b95', A_LINE = '#e6e6ea', A_ORANGE = '#e0590d', A_BG = '#f4f4f2';
+
+function rich(text) {
+  return escapeHtml(String(text == null ? '' : text))
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:' + A_INK + ';">$1</strong>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:' + A_ORANGE + ';text-decoration:underline;">$1</a>')
+    .replace(/\n/g, '<br>');
+}
+function cell(inner, pad) {
+  return '<tr><td style="padding:' + (pad || '0 34px') + ';">' + inner + '</td></tr>';
+}
+
+function articleBlock(b) {
+  const t = b.type;
+  if (t === 'h') return cell('<h2 style="margin:34px 0 14px;color:' + A_INK + ';font:bold 25px/1.25 Georgia,\'Times New Roman\',serif;">' + rich(b.text) + '</h2>');
+  if (t === 'p') return cell('<p style="margin:0 0 18px;color:' + A_DIM + ';font:17px/1.65 Georgia,\'Times New Roman\',serif;">' + rich(b.text) + '</p>');
+  if (t === 'lead') return cell('<p style="margin:0 0 22px;color:' + A_INK + ';font:19px/1.6 Georgia,\'Times New Roman\',serif;">' + rich(b.text) + '</p>');
+  if (t === 'hr') return cell('<div style="height:1px;background:' + A_LINE + ';margin:30px 0;"></div>');
+  if (t === 'quote') return cell('<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>'
+    + '<td style="border-left:3px solid ' + A_ORANGE + ';padding:6px 0 6px 20px;">'
+    + '<p style="margin:0;color:' + A_INK + ';font:italic 19px/1.5 Georgia,serif;">' + rich(b.text) + '</p></td></tr></table>'
+    + '<div style="height:26px;"></div>');
+  if (t === 'box') return cell('<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:' + (b.tone === 'warn' ? '#fff6ed' : '#f3f5f3') + ';border-left:3px solid ' + (b.tone === 'warn' ? A_ORANGE : '#3f8f68') + ';"><tr>'
+    + '<td style="padding:18px 20px;">'
+    + (b.title ? '<p style="margin:0 0 7px;color:' + A_INK + ';font:bold 14px/1.3 Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;">' + rich(b.title) + '</p>' : '')
+    + '<p style="margin:0;color:' + A_DIM + ';font:16px/1.6 Georgia,serif;">' + rich(b.text) + '</p>'
+    + '</td></tr></table><div style="height:26px;"></div>');
+  if (t === 'compare') return cell('<table role="presentation" width="100%" cellspacing="0" cellpadding="0">'
+    + (b.items || []).map(function (it, i) {
+      const bad = it.ok === false;
+      return '<tr><td style="padding:' + (i ? '12px' : '0') + ' 0 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid ' + A_LINE + ';"><tr>'
+        + '<td width="44" valign="top" style="padding:16px 0 16px 16px;color:' + (bad ? '#c0332e' : '#2d8a5c') + ';font:bold 20px/1 Arial,sans-serif;">' + (bad ? '✕' : '✓') + '</td>'
+        + '<td style="padding:16px 18px 16px 4px;">'
+        + '<p style="margin:0 0 5px;color:' + A_INK + ';font:bold 15px/1.35 Arial,sans-serif;">' + rich(it.title) + '</p>'
+        + '<p style="margin:0;color:' + A_DIM + ';font:16px/1.6 Georgia,serif;">' + rich(it.text) + '</p>'
+        + '</td></tr></table></td></tr>';
+    }).join('') + '</table><div style="height:26px;"></div>');
+  if (t === 'cards') return cell('<table role="presentation" width="100%" cellspacing="0" cellpadding="0">'
+    + (b.items || []).map(function (it, i) {
+      const hi = !!it.highlight;
+      return '<tr><td style="padding:' + (i ? '10px' : '0') + ' 0 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:' + (hi ? '2px solid ' + A_ORANGE : '1px solid ' + A_LINE) + ';background:' + (hi ? '#fff8f3' : '#ffffff') + ';"><tr>'
+        + '<td style="padding:16px 18px;">'
+        + '<p style="margin:0 0 4px;color:' + (hi ? A_ORANGE : A_MUTE) + ';font:bold 12px/1.2 Arial,sans-serif;letter-spacing:.14em;">' + rich(it.tag) + '</p>'
+        + '<p style="margin:0 0 6px;color:' + A_INK + ';font:bold 16px/1.3 Arial,sans-serif;">' + rich(it.title) + '</p>'
+        + '<p style="margin:0;color:' + A_DIM + ';font:15px/1.55 Georgia,serif;">' + rich(it.text) + '</p>'
+        + '</td></tr></table></td></tr>';
+    }).join('') + '</table><div style="height:26px;"></div>');
+  if (t === 'steps') return cell('<table role="presentation" width="100%" cellspacing="0" cellpadding="0">'
+    + (b.items || []).map(function (it, i) {
+      return '<tr>'
+        + '<td width="40" valign="top" style="padding:0 0 16px;color:' + A_ORANGE + ';font:bold 17px/1.5 Arial,sans-serif;">' + (i + 1) + '.</td>'
+        + '<td style="padding:0 0 16px;color:' + A_DIM + ';font:16px/1.6 Georgia,serif;">' + rich(it) + '</td></tr>';
+    }).join('') + '</table>');
+  if (t === 'cta') return cell('<table role="presentation" cellspacing="0" cellpadding="0"><tr>'
+    + '<td style="background:' + A_ORANGE + ';border-radius:6px;">'
+    + '<a href="' + escapeHtml(b.url) + '" style="display:inline-block;padding:16px 30px;color:#fff;font:bold 16px/1 Arial,sans-serif;text-decoration:none;">' + escapeHtml(b.label) + ' →</a>'
+    + '</td></tr></table><div style="height:8px;"></div>');
+  return '';
+}
+
+function articleEmailHtml(email) {
+  const blocks = (email.blocks || []).map(articleBlock).join('');
+  const readMin = email.read_minutes ? escapeHtml(String(email.read_minutes)) + ' min čtení' : '';
+  const offer = email.offer || {};
+  return '<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>' + escapeHtml(email.subject) + '</title>'
+    + '<style>@media(max-width:480px){.pad{padding-left:20px!important;padding-right:20px!important}.hl{font-size:29px!important}}</style>'
+    + '</head><body style="margin:0;padding:0;background:' + A_BG + ';">'
+    + '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">' + escapeHtml(email.preheader || '') + '</div>'
+    + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:' + A_BG + ';"><tr><td align="center" style="padding:26px 12px 40px;">'
+    + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid ' + A_LINE + ';">'
+    // hlavička
+    + '<tr><td class="pad" style="padding:26px 34px 0;">'
+    + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>'
+    + '<td style="color:' + A_INK + ';font:bold 17px/1 Arial,sans-serif;">kenji<span style="font-weight:normal;color:' + A_MUTE + ';">academy</span></td>'
+    + '<td align="right" style="color:' + A_MUTE + ';font:12px/1 Arial,sans-serif;">' + escapeHtml(email.kicker || '') + (readMin ? ' · ' + readMin : '') + '</td>'
+    + '</tr></table></td></tr>'
+    // titulek
+    + '<tr><td class="pad" style="padding:22px 34px 0;">'
+    + '<h1 class="hl" style="margin:0 0 6px;color:' + A_INK + ';font:bold 36px/1.15 Georgia,\'Times New Roman\',serif;">' + rich(email.headline) + '</h1>'
+    + '<div style="height:3px;width:64px;background:' + A_ORANGE + ';margin:16px 0 22px;"></div>'
+    + '</td></tr>'
+    + blocks
+    // nabídka
+    + '<tr><td class="pad" style="padding:14px 34px 34px;">'
+    + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid ' + A_LINE + ';"><tr><td style="padding:26px 0 0;">'
+    + (offer.kicker ? '<p style="margin:0 0 10px;color:' + A_MUTE + ';font:bold 12px/1.2 Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;">' + escapeHtml(offer.kicker) + '</p>' : '')
+    + '<p style="margin:0 0 16px;color:' + A_DIM + ';font:16px/1.6 Georgia,serif;">' + rich(offer.text || '') + '</p>'
+    + (offer.url ? '<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="background:' + A_ORANGE + ';border-radius:6px;">'
+        + '<a href="' + escapeHtml(offer.url) + '" style="display:inline-block;padding:15px 28px;color:#fff;font:bold 15px/1 Arial,sans-serif;text-decoration:none;">' + escapeHtml(offer.label || 'Otevřít') + ' →</a>'
+        + '</td></tr></table>' : '')
+    // Drobný textový dovětek pod tlačítkem — druhá, nenápadná nabídka bez dalšího tlačítka.
+    + (offer.note ? '<p style="margin:18px 0 0;color:' + A_MUTE + ';font:14px/1.6 Georgia,serif;">' + rich(offer.note) + '</p>' : '')
+    + '</td></tr></table></td></tr>'
+    // patička
+    + '<tr><td class="pad" style="padding:20px 34px;border-top:1px solid ' + A_LINE + ';background:#fafafa;color:' + A_MUTE + ';font:12px/1.6 Arial,sans-serif;">'
+    + 'Tenhle e-mail ti přišel, protože jsi v seznamu Kenji Academy. <a href="*|UNSUB|*" style="color:' + A_MUTE + ';">Odhlásit se</a>.'
+    + '</td></tr>'
+    + '</table></td></tr></table></body></html>';
+}
+
+module.exports = { json, email, validEmail, requiredEnv, discoveryEnv, supabase, verifiedUser, userRow, adminUser, ecomail, contactData, canMarket, emailTemplateHtml, articleEmailHtml, articlePlainText, syncContact, syncContacts, unsubscribe, trackerEvent, listSubscribers, auditAudience, tagSafeAudience, listSegments, sendTestEmail, createCampaign, sendCampaign };

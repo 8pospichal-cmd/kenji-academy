@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Členská a servisní část — nemá smysl v indexu
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /nastaveni
+Disallow: /moje-presety
+# /koupit zakládá platební session ve Stripu — roboti ji procházet nemají
+Disallow: /koupit
+Disallow: /platba-uspesna
+Disallow: /platba-zrusena
+Disallow: /obnova-hesla
+Disallow: /supabase/
+Disallow: /netlify/
+Disallow: /tools/
+Disallow: /graphify-out/
+
+Sitemap: https://kenjiacademy.cz/sitemap.xml

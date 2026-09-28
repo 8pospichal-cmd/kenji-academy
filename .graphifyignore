@@ -1,0 +1,43 @@
+# Graphify must never index secrets, local state, dependencies, or its own output.
+graphify-out/
+.git/
+.netlify/
+.claude/
+.codex/
+.agents/
+node_modules/
+scratchpad/
+presets/
+.env
+.env.*
+*.log
+*.tmp
+
+# Raw/community exports contain names, profiles, posts, avatars, or customer material.
+_source/
+assets/kenjiacademy-export/
+assets/whop-*-export/
+assets/legacy-*.js
+kenji-deploy/
+
+# Generated course exports and old monolithic backups duplicate current sources.
+tools/course-exports/
+KENJI_RUN_V4.html
+KENJI_RUN_V4.backup-*.html
+
+# Media and downloadable product/template files are not needed for the code graph.
+_originals/
+*.webp
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.pdf
+*.docx
+*.xlsx
+*.zip

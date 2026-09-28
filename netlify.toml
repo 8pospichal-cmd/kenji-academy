@@ -7,6 +7,18 @@
 [functions]
   directory = "netlify/functions"
 
+# Klikací pokladna pro e-maily a sítě: /koupit → Stripe Checkout (GET, viz
+# netlify/functions/koupit.js). /koupit/academy volí produkt, ?od= značí zdroj.
+[[redirects]]
+  from = "/koupit"
+  to = "/.netlify/functions/koupit"
+  status = 200
+
+[[redirects]]
+  from = "/koupit/:produkt"
+  to = "/.netlify/functions/koupit/:produkt"
+  status = 200
+
 [[redirects]]
   from = "/academy"
   to = "/academy.html"
@@ -207,6 +219,52 @@
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+# ---- Staré adresy z předchozího webu, které Google pořád nabízí jako pododkazy ----
+# Vracely 404. 301 pošle Google i návštěvníka na skutečnou stránku.
+[[redirects]]
+  from = "/online-kurzy"
+  to = "/kurzy"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/moje-kurzy"
+  to = "/kurzy"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/zacinam-fotografovat"
+  to = "/kurzy"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/vsechno-navzdy"
+  to = "/academy"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/affiliate"
+  to = "/academy"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/clanky"
+  to = "/"
+  status = 301
+  force = true
+
+# Mapa webu a pravidla pro roboty nesmí spadnout pod jiné pravidlo.
+[[redirects]]
+  from = "/graphify-out/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
 
 # Security headers
 [[headers]]

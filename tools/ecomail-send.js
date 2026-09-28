@@ -38,6 +38,13 @@ const file = args.find(function (a) { return a.endsWith('.json'); });
 function loadEmail() {
   if (!file) { console.error('Chybí soubor s e-mailem (.json).'); process.exit(2); }
   const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  // Článkový e-mail (pole `blocks`) má vlastní bohatou šablonu.
+  if (Array.isArray(data.blocks)) {
+    const sequence = { name: data.name || data.subject, from_name: data.from_name || 'Kenji', from_email: data.from_email, reply_to: data.reply_to || data.from_email };
+    const step = { id: 'mail-1', position: 1, subject: data.subject, preheader: data.preheader || '', body: '', article: data };
+    ['from_email', 'subject', 'headline'].forEach(function (k) { if (!data[k]) { console.error('V e-mailu chybí pole: ' + k); process.exit(2); } });
+    return { data, sequence, step, article: true };
+  }
   const sequence = { plain: !!data.plain, name: data.name || data.subject, from_name: data.from_name || 'Kenji', from_email: data.from_email, reply_to: data.reply_to || data.from_email };
   const step = { id: 'mail-1', position: 1, subject: data.subject, preheader: data.preheader || '', headline: data.headline || data.subject, body: data.body, cta_label: data.cta_label || '', cta_url: data.cta_url || '' };
   ['from_email', 'subject', 'body'].forEach(function (k) { if (!data[k]) { console.error('V e-mailu chybí pole: ' + k); process.exit(2); } });
@@ -58,7 +65,7 @@ function saveEmail(data) { fs.writeFileSync(file, JSON.stringify(data, null, 2) 
 
     if (flag('--html')) {
       const out = file.replace(/\.json$/, '.html');
-      fs.writeFileSync(out, E.emailTemplateHtml(sequence, step));
+      fs.writeFileSync(out, (step.article ? E.articleEmailHtml(step.article) : E.emailTemplateHtml(sequence, step)));
       return console.log('Náhled uložen: ' + out);
     }
 
