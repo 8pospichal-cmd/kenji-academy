@@ -573,9 +573,13 @@
             <input class="kg-input" id="kg-password" type="password" placeholder="Heslo" autocomplete="current-password">
             <button class="kg-btn" id="kg-submit" type="button">Přihlásit se</button>
             <div class="kg-error" id="kg-error" hidden></div>
+            <div class="kg-help-actions">
+              <button type="button" id="kg-forgot">Zapomenuté heslo</button>
+              <button type="button" id="kg-magic">Poslat přihlašovací odkaz</button>
+            </div>
             <div class="kg-sent" id="kg-sent" hidden>
               <div class="kg-sent-ico">📩</div>
-              <p>Poslali jsme odkaz na <strong id="kg-sent-email"></strong>. Otevři e-mail a klikni na tlačítko — pak už budeš uvnitř. (Zkontroluj i spam.)</p>
+              <p id="kg-sent-text"></p>
             </div>
           </div>
         </div>
@@ -585,6 +589,8 @@
     const emailEl = document.getElementById('kg-email');
     const errEl = document.getElementById('kg-error');
     const btn = document.getElementById('kg-submit');
+    const forgotBtn = document.getElementById('kg-forgot');
+    const magicBtn = document.getElementById('kg-magic');
 
     function err(msg) { errEl.textContent = msg; errEl.hidden = false; }
 
@@ -604,9 +610,51 @@
 
     const sentEl = document.getElementById('kg-sent');
     const pwEl = document.getElementById('kg-password');
-    // Účty bez hesla se mohou dál přihlásit ověřeným odkazem.
     function syncBtnLabel() { if (!btn.disabled) btn.textContent = 'Přihlásit se'; }
     const destination = gateRedirectTo || currentCampaignUrl();
+    function emailForHelp() {
+      const email = normEmail(emailEl.value);
+      if (!validEmail(email)) { err('Nejdřív vyplň platný e-mail.'); emailEl.focus(); return null; }
+      return email;
+    }
+    function setBusy(busy) {
+      btn.disabled = busy;
+      forgotBtn.disabled = busy;
+      magicBtn.disabled = busy;
+    }
+    function showSent(email, reset) {
+      document.getElementById('kg-sent-text').textContent = reset
+        ? 'Pokud k tomuto e-mailu existuje účet, poslali jsme na ' + email + ' odkaz pro nastavení nového hesla. Zkontroluj i spam.'
+        : 'Poslali jsme přihlašovací odkaz na ' + email + '. Otevři e-mail a klikni na odkaz. Zkontroluj i spam.';
+      document.querySelectorAll('#kg-pane-lead .kg-label, #kg-email, #kg-password, #kg-submit, .kg-help-actions').forEach(function (el) { el.hidden = true; });
+      errEl.hidden = true;
+      sentEl.hidden = false;
+    }
+    forgotBtn.addEventListener('click', async function () {
+      const email = emailForHelp();
+      if (!email || forgotBtn.disabled) return;
+      errEl.hidden = true;
+      setBusy(true);
+      forgotBtn.textContent = 'Posílám…';
+      const result = await requestPasswordReset(email).catch(function () { return { ok: false }; });
+      if (result.ok) { showSent(email, true); return; }
+      setBusy(false);
+      forgotBtn.textContent = 'Zapomenuté heslo';
+      err('Odkaz pro obnovu hesla se teď nepovedlo odeslat. Zkus to prosím za chvíli.');
+    });
+    async function sendLink() {
+      const email = emailForHelp();
+      if (!email || magicBtn.disabled) return;
+      errEl.hidden = true;
+      setBusy(true);
+      magicBtn.textContent = 'Posílám…';
+      const result = await sendMagicLink(email).catch(function () { return { ok: false }; });
+      if (result.ok) { showSent(email, false); return; }
+      setBusy(false);
+      magicBtn.textContent = 'Poslat přihlašovací odkaz';
+      err('Přihlašovací odkaz se teď nepovedlo odeslat. Zkus to prosím za chvíli.');
+    }
+    magicBtn.addEventListener('click', sendLink);
 
     async function submit() {
       const email = normEmail(emailEl.value);
@@ -614,6 +662,7 @@
       if (btn.disabled) return;
       errEl.hidden = true;
       const password = pwEl ? pwEl.value : '';
+      if (!password) { err('Vyplň heslo, nebo si níže pošli přihlašovací odkaz.'); pwEl.focus(); return; }
       // Localhost (vývoj): magic link nefunguje → okamžitý vstup jako free, ať jde testovat.
       if (!isLive || IS_LOCAL) {
         btn.disabled = true; btn.textContent = 'Posílám…';
@@ -622,42 +671,23 @@
         return;
       }
 
-      // Vyplněné heslo → vstup bez e-mailu.
-      if (password) {
-        btn.disabled = true; btn.textContent = 'Přihlašuji…';
-        const login = await signInWithPassword(email, password);
-        if (login.ok && login.session) {
-          await adoptSession(login.session);
-          location.href = destination;
-          return;
-        }
-        btn.disabled = false; syncBtnLabel();
-        err(login.noPassword
-          ? 'Heslo nesedí — nebo si ho k tomuhle účtu ještě nenastavil. Nech pole prázdné a pošleme ti přihlašovací odkaz.'
-          : 'Přihlášení se nepovedlo. Zkus to prosím znovu.');
+      setBusy(true); btn.textContent = 'Přihlašuji…';
+      const login = await signInWithPassword(email, password).catch(function () { return { ok: false }; });
+      if (login.ok && login.session) {
+        await adoptSession(login.session);
+        location.href = destination;
         return;
       }
-
-      btn.disabled = true; btn.textContent = 'Posílám…';
-      // Bez hesla: jediná cesta dovnitř je ověřený odkaz (magic link).
-      const res = await sendMagicLink(email);
-      if (res.ok) {
-        document.getElementById('kg-sent-email').textContent = email;
-        emailEl.style.display = 'none';
-        if (pwEl) pwEl.style.display = 'none';
-        var pwLbl = document.querySelector('.kg-label-pw'); if (pwLbl) pwLbl.style.display = 'none';
-        var pwHint = document.getElementById('kg-pw-hint'); if (pwHint) pwHint.style.display = 'none';
-        btn.style.display = 'none';
-        var lbl = document.querySelector('#kg-pane-lead .kg-label'); if (lbl) lbl.style.display = 'none';
-        sentEl.hidden = false;
-      } else {
-        btn.disabled = false; syncBtnLabel();
-        err('E-mail s odkazem se teď nepovedlo odeslat. Zkus to prosím za chvíli.');
-      }
+      setBusy(false); syncBtnLabel();
+      err(login.noPassword
+        ? 'Heslo nesedí. Zkus ho znovu, obnov heslo nebo si pošli přihlašovací odkaz níže.'
+        : 'Přihlášení se nepovedlo. Zkus to prosím znovu.');
     }
 
     btn.addEventListener('click', submit);
-    document.getElementById('kg-pane-lead').addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+    document.getElementById('kg-pane-lead').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && (e.target === emailEl || e.target === pwEl)) submit();
+    });
 
     // Vypršelý/neplatný odkaz → vysvětli a nech poslat nový.
     if (authLinkError) {

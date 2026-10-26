@@ -3,23 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kenji Academy — z tvorby fungující byznys</title>
+<title>KENJI ACADEMY – kurzy focení a podnikání pro fotografy</title>
 <link rel="canonical" href="https://kenjiacademy.cz/academy">
-<meta name="description" content="Videokurzy, komunita, nástroje a byznys know-how pro fotografy a kameramany. Nauč se získávat klienty a říkat si o správnou cenu. 4,65 ze 173+ hodnocení.">
-<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<meta name="description" content="Praktické videokurzy focení a fotobyznysu pro fotografy a kameramany. Nauč se získávat klienty, nastavit ceny a růst s komunitou Kenji Academy.">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/academy-favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/academy-favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/academy-touch-icon-180.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Kenji Academy — z tvorby fungující byznys">
-<meta property="og:description" content="Videokurzy, komunita, nástroje a byznys know-how pro fotografy a kameramany. Nauč se získávat klienty a říkat si o správnou cenu.">
-<meta property="og:image" content="https://kenjiacademy.cz/assets/og-image.jpg">
+<meta property="og:locale" content="cs_CZ">
+<meta property="og:url" content="https://kenjiacademy.cz/academy">
+<meta property="og:title" content="KENJI ACADEMY – kurzy focení a podnikání pro fotografy">
+<meta property="og:description" content="Videokurzy, komunita a praxe od Kenjiho. Nauč se získávat klienty, nastavit ceny a proměnit focení v byznys.">
+<meta property="og:image" content="https://kenjiacademy.cz/assets/academy-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kenji Academy – kurzy pro fotografy s portrétem Kenjiho">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="KENJI ACADEMY – kurzy focení a podnikání pro fotografy">
+<meta name="twitter:description" content="Videokurzy, komunita a praxe od Kenjiho. Nauč se získávat klienty a nastavit ceny.">
+<meta name="twitter:image" content="https://kenjiacademy.cz/assets/academy-og.jpg">
 <meta name="theme-color" content="#FBFAF6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="assets/academy-b/7cfd7d4f840f9d383ffebb204b21b1af.webp">
-<link rel="stylesheet" href="assets/styles.css?v=20260926-login-v1">
+<link rel="stylesheet" href="assets/styles.css?v=20261026-auth-help-v1">
 <style>
 a{color:#0E0E10}a:hover{color:#8A5A14}
 .b-root{position:relative;background:#FBFAF6;color:#0E0E10;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -74,7 +82,14 @@ a{color:#0E0E10}a:hover{color:#8A5A14}
 .price-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:18px;align-items:stretch}
 .price-grid > *{box-sizing:border-box}
 .mini-row{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.partner-benefits{padding-top:118px}
+.partner-benefits-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:42px}
+.partner-benefits-logo{display:flex;align-items:center;justify-content:center;min-height:112px;padding:20px;border:1px solid #EAE4D8;border-radius:20px;background:#FFFFFF;box-shadow:0 16px 40px -32px rgba(75,48,12,.45)}
+.partner-benefits-logo img{display:block;max-width:85%;max-height:68px;width:auto;height:auto;object-fit:contain}
+.partner-benefits-logo img[alt="Nikon"]{max-height:76px}
+#b-bonusy{padding-top:118px}
 @media (max-width:860px){.price-grid{grid-template-columns:1fr;gap:30px}}
+@media (max-width:700px){.partner-benefits-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.partner-benefits-logo{min-height:96px;padding:14px}.partner-benefits-logo img{max-width:90%;max-height:58px}.partner-benefits-logo img[alt="Nikon"]{max-height:66px}}
 @media (prefers-reduced-motion:reduce){.b-root *{animation:none !important}}
 @media (max-width:860px){.nav-l{display:none}.sec{padding-top:100px}.bento > *{grid-column:1 / -1 !important}.hide-m{display:none !important}}
 /* Sdílený styles.css nastavuje tmavé téma a globální reset — prodejní stránka B je světlá. */
@@ -88,6 +103,23 @@ body.academy-b-body{line-height:normal}
 #academy-login-btn,.b-root header .cta-k{white-space:nowrap}
 #b-cena span[style*="#E6E1D6"]{white-space:nowrap}
 @media (max-width:520px){.b-root header{padding:8px 8px 8px 16px !important}.b-root header img{height:18px !important}#academy-login-btn{font-size:14px !important;padding:10px 6px !important}.b-root header .cta-k{font-size:14px;padding:10px 14px}}
+@media (max-width:520px){
+  .wrap{padding-left:16px;padding-right:16px}
+  .sec{padding-top:76px}
+  .shelf{padding-left:16px;padding-right:16px}
+  .bh2{font-size:clamp(32px,9vw,42px)}
+  .sub{font-size:16px}
+  .marq figure.glass{width:calc(100vw - 32px) !important;max-width:380px;padding:20px !important}
+  .bento .glass[style*="height:210px"]{height:auto !important;min-height:180px}
+  .bento .glass[style*="height:210px"] img{width:42% !important;height:auto !important;align-self:stretch}
+  #b-cena .price-grid{margin-top:42px !important}
+}
+@media (max-width:420px){
+  .b-root header{flex-wrap:wrap;gap:2px !important;border-radius:24px !important;padding:10px 12px !important}
+  .b-root header > a:first-child{padding:4px 0}
+  .b-root header > div:last-child{width:100%;justify-content:space-between}
+  .b-root header .cta-k{justify-content:center;min-width:112px}
+}
 </style>
 </head>
 <body class="academy-b-body">
@@ -110,7 +142,7 @@ body.academy-b-body{line-height:normal}
     </nav>
     <div style="display:flex;gap:6px;align-items:center">
       <a href="preset.html" class="hide-m" style="font-size:15px;font-weight:600;text-decoration:none;color:#55555C;padding:12px 10px">Presety</a><button type="button" id="academy-login-btn" style="font:inherit;font-size:15px;font-weight:600;color:#0E0E10;background:none;border:0;cursor:pointer;padding:12px 12px;min-height:44px">Přihlásit se</button>
-      <a href="#b-cena" class="cta-k" data-checkout-product="academy" data-cta-location="header">Jdu do toho</a>
+      <a href="#b-cena" class="cta-k" data-cta-location="header">Jdu do toho</a>
     </div>
   </header>
 </div>
@@ -192,8 +224,8 @@ body.academy-b-body{line-height:normal}
           <span style="align-self:flex-start;font-size:15px;font-weight:800;letter-spacing:.06em;padding:10px 22px;border-radius:999px;background:#E4E1DA;color:#2A2A2E">TOHLE MÁŠ</span>
           <h3 style="margin:22px 0 0;font-size:clamp(28px,3.2vw,40px);line-height:1.05;font-weight:900;letter-spacing:-.045em">Foťák nebo kameru.</h3>
           <p style="margin:12px 0 0;font-size:17px;line-height:1.5;color:#55555C;max-width:400px">Skvělé vybavení na krásné fotky a videa. Klienty ti ale samo nepřivede.</p>
-          <div style="position:relative;margin-top:auto;padding-top:18px">
-            <img loading="lazy" decoding="async" src="assets/academy-b/c01e3f9a803f9076e34c73e7da85f0e9.jpg" alt="Fotoaparát Sony s objektivem" style="display:block;width:100%;height:auto;mix-blend-mode:multiply">
+          <div style="position:relative;margin-top:auto;padding-top:18px;aspect-ratio:3/2">
+            <img loading="lazy" decoding="async" src="assets/academy-b/kenji-technika-cutout.webp" alt="Kenji s fotoaparáty a další fotografickou technikou" style="position:absolute;inset:18px 0 0;display:block;width:100%;height:calc(100% - 18px);object-fit:contain;object-position:center bottom">
             <div class="glass-s" style="position:absolute;left:0;bottom:6%;padding:12px 16px;display:flex;flex-direction:column;gap:6px;font-size:14px;min-width:220px">
               <div style="display:flex;justify-content:space-between;gap:14px"><span style="color:#55555C">Technika</span><strong>130 000 Kč</strong></div>
               <div style="display:flex;justify-content:space-between;gap:14px"><span style="color:#55555C">Systém na klienty</span><strong style="color:#B42318">0 Kč</strong></div>
@@ -204,8 +236,8 @@ body.academy-b-body{line-height:normal}
           <span class="goldbg" style="align-self:flex-start;font-size:15px;font-weight:800;letter-spacing:.06em;padding:10px 22px;border-radius:999px;color:#FFFFFF">TOHLE CHCEŠ</span>
           <h3 style="margin:22px 0 0;font-size:clamp(28px,3.2vw,40px);line-height:1.05;font-weight:900;letter-spacing:-.045em">Stabilní příjem,<br><span class="acc">víc zakázek a svobodu.</span></h3>
           <p style="margin:12px 0 0;font-size:17px;line-height:1.5;color:#55555C;max-width:420px">Naučím tě, jak z vybavení, které už máš, postavit podnikání, které vydělává.</p>
-          <div style="margin-top:auto;padding-top:18px">
-            <img loading="lazy" decoding="async" src="assets/academy-b/f913c4ad9e44d9de2cd97a1675482fc6.jpg" alt="Balík bankovek, fotky klientů a štítky Více klientů, Vyšší příjmy, Větší svoboda" style="display:block;width:100%;height:auto;mix-blend-mode:multiply">
+          <div style="position:relative;margin-top:auto;padding-top:18px;aspect-ratio:3/2">
+            <img loading="lazy" decoding="async" src="assets/academy-b/kenji-mesec-cutout.webp" alt="Kenji sedí v křesle s fotoaparátem a měšcem peněz" style="position:absolute;inset:18px 0 0;display:block;width:100%;height:calc(100% - 18px);object-fit:contain;object-position:center bottom">
           </div>
         </div>
         <svg class="hide-m" aria-hidden="true" width="150" height="80" viewBox="0 0 150 80" fill="none" stroke="#B07A22" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);z-index:2;overflow:visible">
@@ -1109,7 +1141,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             <img loading="lazy" decoding="async" src="assets/academy-b/2656bc033de6b0223fde0699b3f1702b.webp" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top">
             
-            <div><div style="font-weight:800;font-size:15px">Matěj Kubíček</div><div style="font-size:12px;color:#6A6A72">4+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Matěj Kubíček</div><div style="font-size:12px;color:#6A6A72">11+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Největší přínos pro mě jako fotografa, co se know-how týče. Oceňuju, že s tebou mluví nejen Kenji, ale i ostatní fotografové – hodně otevřeně. A neřeší se jen focení, ale i byznys, propagace, finance i právo. Palec nahoru 👍</blockquote>
         </figure>
@@ -1118,7 +1150,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             <img loading="lazy" decoding="async" src="assets/academy-b/afe363457885de0aeed803830f371ef4.webp" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top">
             
-            <div><div style="font-weight:800;font-size:15px">Jana Hamadová</div><div style="font-size:12px;color:#6A6A72">3+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Jana Hamadová</div><div style="font-size:12px;color:#6A6A72">18+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Úkoly tě motivují, aby ses opravdu rozhýbal, byl aktivní a začal na svém podnikání reálně pracovat. Jakmile se tím prokoušeš, čeká tě hodnotný obsah. Rozhodně doporučuju. 😊</blockquote>
         </figure>
@@ -1136,7 +1168,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             
             <span class="goldbg" style="flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800">M</span>
-            <div><div style="font-weight:800;font-size:15px">Marek Fux</div><div style="font-size:12px;color:#6A6A72">3+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Marek Fux</div><div style="font-size:12px;color:#6A6A72">8+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Jde se do hloubky a změnilo mi to přístup k práci! Největší výhoda je, že Kenji i Dan se tvorbou obsahu živí a předávají to, co sami používají. Prostě vše z praxe. Díky Kenji!</blockquote>
         </figure>
@@ -1145,7 +1177,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             <img loading="lazy" decoding="async" src="assets/academy-b/2656bc033de6b0223fde0699b3f1702b.webp" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top">
             
-            <div><div style="font-weight:800;font-size:15px">Matěj Kubíček</div><div style="font-size:12px;color:#6A6A72">4+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Matěj Kubíček</div><div style="font-size:12px;color:#6A6A72">11+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Největší přínos pro mě jako fotografa, co se know-how týče. Oceňuju, že s tebou mluví nejen Kenji, ale i ostatní fotografové – hodně otevřeně. A neřeší se jen focení, ale i byznys, propagace, finance i právo. Palec nahoru 👍</blockquote>
         </figure>
@@ -1154,7 +1186,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             <img loading="lazy" decoding="async" src="assets/academy-b/afe363457885de0aeed803830f371ef4.webp" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top">
             
-            <div><div style="font-weight:800;font-size:15px">Jana Hamadová</div><div style="font-size:12px;color:#6A6A72">3+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Jana Hamadová</div><div style="font-size:12px;color:#6A6A72">18+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Úkoly tě motivují, aby ses opravdu rozhýbal, byl aktivní a začal na svém podnikání reálně pracovat. Jakmile se tím prokoušeš, čeká tě hodnotný obsah. Rozhodně doporučuju. 😊</blockquote>
         </figure>
@@ -1172,7 +1204,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             
             <span class="goldbg" style="flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800">M</span>
-            <div><div style="font-weight:800;font-size:15px">Marek Fux</div><div style="font-size:12px;color:#6A6A72">3+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Marek Fux</div><div style="font-size:12px;color:#6A6A72">8+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Jde se do hloubky a změnilo mi to přístup k práci! Největší výhoda je, že Kenji i Dan se tvorbou obsahu živí a předávají to, co sami používají. Prostě vše z praxe. Díky Kenji!</blockquote>
         </figure>
@@ -1186,7 +1218,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             
             <span class="goldbg" style="flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800">T</span>
-            <div><div style="font-weight:800;font-size:15px">Tomino Photo</div><div style="font-size:12px;color:#6A6A72">4+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Tomino Photo</div><div style="font-size:12px;color:#6A6A72">7+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Ze začátku jsem byl skeptický – takových kurzů je na netu spousta. Ale díky KA jsem zjistil, že spoustu věcí dělám špatně 😁 Skvělý vhled pod pokličku profíka a komunita, která se navzájem podporuje. Kdo váhá, na nic nečekej. 🤘</blockquote>
         </figure>
@@ -1195,7 +1227,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             <img loading="lazy" decoding="async" src="assets/academy-b/afe363457885de0aeed803830f371ef4.webp" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top">
             
-            <div><div style="font-weight:800;font-size:15px">Jana Hamadová</div><div style="font-size:12px;color:#6A6A72">3+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Jana Hamadová</div><div style="font-size:12px;color:#6A6A72">18+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Chtěla bych strašně poděkovat Kenjimu za vytvoření téhle komunity plné skvělých lidí, podpory a webinářů. Je to tu našlapané informacemi z vlastní praxe a pořád přibývají další novinky. Děkuju.</blockquote>
         </figure>
@@ -1204,7 +1236,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             <img loading="lazy" decoding="async" src="assets/academy-b/8a896da8dbdef9746100fb363f8e626e.webp" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top">
             
-            <div><div style="font-weight:800;font-size:15px">Petr Dvorský</div><div style="font-size:12px;color:#6A6A72">4+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Petr Dvorský</div><div style="font-size:12px;color:#6A6A72">18+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">KenjiAcademy není jen další sada videí. Je to promyšlený projekt, za kterým je vidět spousta práce – a srdce 🧡. Najdeš tu diskuse, rozhovory se specialisty, soutěže, vlastní AI pomocníka i fotosrazy. Není to komunita, je to rodina.</blockquote>
         </figure>
@@ -1213,7 +1245,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             
             <span class="goldbg" style="flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800">T</span>
-            <div><div style="font-weight:800;font-size:15px">Tomino Photo</div><div style="font-size:12px;color:#6A6A72">4+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Tomino Photo</div><div style="font-size:12px;color:#6A6A72">7+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Ze začátku jsem byl skeptický – takových kurzů je na netu spousta. Ale díky KA jsem zjistil, že spoustu věcí dělám špatně 😁 Skvělý vhled pod pokličku profíka a komunita, která se navzájem podporuje. Kdo váhá, na nic nečekej. 🤘</blockquote>
         </figure>
@@ -1222,7 +1254,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             <img loading="lazy" decoding="async" src="assets/academy-b/afe363457885de0aeed803830f371ef4.webp" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top">
             
-            <div><div style="font-weight:800;font-size:15px">Jana Hamadová</div><div style="font-size:12px;color:#6A6A72">3+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Jana Hamadová</div><div style="font-size:12px;color:#6A6A72">18+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">Chtěla bych strašně poděkovat Kenjimu za vytvoření téhle komunity plné skvělých lidí, podpory a webinářů. Je to tu našlapané informacemi z vlastní praxe a pořád přibývají další novinky. Děkuju.</blockquote>
         </figure>
@@ -1231,7 +1263,7 @@ body.academy-b-body{line-height:normal}
           <figcaption style="display:flex;align-items:center;gap:12px">
             <img loading="lazy" decoding="async" src="assets/academy-b/8a896da8dbdef9746100fb363f8e626e.webp" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top">
             
-            <div><div style="font-weight:800;font-size:15px">Petr Dvorský</div><div style="font-size:12px;color:#6A6A72">4+ měsíce v Academy · ★★★★★</div></div>
+            <div><div style="font-weight:800;font-size:15px">Petr Dvorský</div><div style="font-size:12px;color:#6A6A72">18+ měsíců v Academy · ★★★★★</div></div>
           </figcaption>
           <blockquote style="margin:0;font-size:15px;line-height:1.6;color:#2A2A2F">KenjiAcademy není jen další sada videí. Je to promyšlený projekt, za kterým je vidět spousta práce – a srdce 🧡. Najdeš tu diskuse, rozhovory se specialisty, soutěže, vlastní AI pomocníka i fotosrazy. Není to komunita, je to rodina.</blockquote>
         </figure>
@@ -1488,6 +1520,21 @@ body.academy-b-body{line-height:normal}
 </section>
 
 
+<section class="sec partner-benefits" aria-labelledby="partner-benefits-title">
+  <div class="wrap center">
+    <span class="kick"><span class="dot"></span>Výhody pro členy</span>
+    <h2 id="partner-benefits-title" class="bh2">Partneři <span class="acc">Kenji Academy</span>.</h2>
+    <p class="sub" style="max-width:670px">S těmihle značkami spolupracujeme. Jako člen Academy získáš přístup ke slevám na vybranou techniku a nástroje i k dalším výhodám. Co právě platí a jak to využít, najdeš uvnitř v záložce Slevy.</p>
+    <div class="partner-benefits-grid" aria-label="Partneři Kenji Academy">
+      <div class="partner-benefits-logo"><img loading="lazy" decoding="async" src="assets/partners/nikon-160.webp" alt="Nikon" width="160" height="160"></div>
+      <div class="partner-benefits-logo"><img loading="lazy" decoding="async" src="assets/partners/manfrotto.png" alt="Manfrotto" width="393" height="154"></div>
+      <div class="partner-benefits-logo"><img loading="lazy" decoding="async" src="assets/partners/pixin.svg" alt="PIXIN" width="117" height="29"></div>
+      <div class="partner-benefits-logo"><img loading="lazy" decoding="async" src="assets/partners/kvalitni-fotky.svg" alt="Kvalitní fotky" width="200" height="50"></div>
+    </div>
+  </div>
+</section>
+
+
 <section id="b-bonusy" class="sec">
   <div class="wrap center">
     <span class="kick"><span class="dot"></span>A to není všechno</span>
@@ -1631,7 +1678,7 @@ body.academy-b-body{line-height:normal}
 </footer>
 
 </div>
-<script src="assets/auth.js?v=20260926-public-articles-v1"></script>
+<script src="assets/auth.js?v=20261026-auth-help-v1"></script>
 <script src="assets/script.js?v=20260907-email-v1"></script>
 <script src="assets/academy-b.js?v=202610271200"></script>
 </body>

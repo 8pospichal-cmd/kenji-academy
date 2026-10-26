@@ -9152,3 +9152,8 @@ body.upg-modal-open { overflow: hidden; }
 .kg-login #kg-password { margin-bottom: 24px; }
 .kg-login .kg-btn { background: #fff; color: #111; }
 :root[data-theme="light"] .kg-login .kg-btn { background: #fff; color: #111; border: 1px solid var(--border); }
+.kg-login .kg-help-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.kg-login .kg-help-actions button { border: 0; padding: 4px 0; background: none; color: var(--text-dim); font: 500 12px/1.4 'Inter', sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.kg-login .kg-help-actions button:hover, .kg-login .kg-help-actions button:focus-visible { color: var(--text); }
+.kg-login .kg-help-actions button:disabled { opacity: .55; cursor: default; }
+.kg-login [hidden] { display: none !important; }
