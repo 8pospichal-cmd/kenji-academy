@@ -24,6 +24,7 @@
   function aiUrl(q) { return 'kenji-ai.html?q=' + encodeURIComponent(q); }
   function track(name, data) {
     try { window.dataLayer = window.dataLayer || []; window.dataLayer.push(Object.assign({ event: name }, data || {})); } catch (e) {}
+    try { if (window.KenjiAuth && window.KenjiAuth.track) window.KenjiAuth.track(name, 'dashboard', data || {}); } catch (e) {}
   }
   var ICONS = {
     camera: '<path d="M4 8h3l1.4-2h7.2L17 8h3v10H4z"/><circle cx="12" cy="13" r="3.3"/>',

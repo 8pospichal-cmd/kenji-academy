@@ -2,13 +2,12 @@
   'use strict';
   var ROOT = document.getElementById('admin-root');
   if (!ROOT) return;
-  var DIALOG = document.getElementById('admin-dialog');
-  var DIALOG_CONTENT = document.getElementById('admin-dialog-content');
   var A = window.KenjiAuth || {};
   var IS_LOCAL = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname);
-  var sb = null, started = false, view = 'people', toolFilter = '', toolSort = 'money';
+  var sb = null, started = false, view = 'overview';
+  var peopleSeg = 'all', peopleQuery = '', peopleSort = 'new', selectedPerson = null;
   var selectedEmailSequenceId = null, selectedEmailStepId = null;
-  var cache = { overview: null, users: [], tools: [], content: [], coupons: [], emailing: null, ecomail: null, emailSequences: [], audience: null };
+  var cache = { overview: null, people: null, orders: null, content: [], coupons: [], emailing: null, ecomail: null, emailSequences: [], audience: null, detail: {} };
 
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
   function date(value, withTime) { if (!value) return '—'; try { return new Intl.DateTimeFormat('cs-CZ', withTime ? { dateStyle:'medium',timeStyle:'short' } : { dateStyle:'medium' }).format(new Date(value)); } catch (e) { return '—'; } }
@@ -22,133 +21,73 @@
     if (hrs < 24) return 'před ' + hrs + (hrs === 1 ? ' hodinou' : ' hodinami');
     var days = Math.floor(hrs / 24);
     if (days === 1) return 'včera';
-    if (days < 5) return 'před ' + days + ' dny';
     if (days < 30) return 'před ' + days + ' dny';
     var months = Math.floor(days / 30);
     return 'před ' + months + (months === 1 ? ' měsícem' : ' měsíci');
   }
   function n(value) { return Number(value || 0).toLocaleString('cs-CZ'); }
-  function label(value) { return ({ page_view:'Návštěva stránky',session_started:'Nová relace',registered:'Registrace',onboarding_completed:'Dokončený onboarding',quiz_started:'Spuštěný kvíz',quiz_completed:'Dokončený kvíz',audit_completed:'Dokončený audit',hourly_calculator_completed:'Spočítaná hodinovka',ai_question_sent:'Dotaz na Kenji AI',community_post_created:'Příspěvek v komunitě',checkout_started:'Zahájená objednávka',purchase_completed:'Dokončený nákup' })[value] || value || 'Událost'; }
+  function kc(value) { return value ? n(Math.round(value)) + ' Kč' : '—'; }
+  function label(value) { return ({ page_view:'Návštěva stránky',session_started:'Nová relace',registered:'Registrace',onboarding_completed:'Dokončený onboarding',onboarding_step_complete:'Krok onboardingu',onboarding_plan_created:'Vytvořený plán v onboardingu',quiz_started:'Spuštěný kvíz',quiz_completed:'Dokončený kvíz',audit_completed:'Dokončený audit',hourly_calculator_completed:'Spočítaná hodinovka',ai_question_sent:'Dotaz na Kenji AI',community_post_created:'Příspěvek v komunitě',academy_cta:'Klik na koupit (prodejní stránka)',academy_blocker:'Prohlížel brzdy na prodejní stránce',checkout_started:'Zahájená objednávka',purchase_completed:'Dokončený nákup' })[value] || value || 'Událost'; }
   function typeLabel(value) { return ({ weekly_challenge:'Týdenní výzva',news:'Novinka',webinar:'Webinář',quiz:'Kvíz',audit:'Audit',hourly_calculator:'Hodinovka' })[value] || value; }
   var REFRESH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>';
-  function head(eyebrow,title,description) {
-    return '<div class="admin-view-head"><div><span class="admin-eyebrow">'+esc(eyebrow)+'</span><h1>'+esc(title)+'</h1><p>'+esc(description)+'</p></div>'+
-      '<button class="admin-refresh" type="button" data-admin-refresh title="Načíst čerstvá data" aria-label="Načíst čerstvá data">'+REFRESH_ICON+'<span data-refresh-label>Načíst data</span></button></div>';
+  function head(eyebrow,title,description,extra) {
+    return '<div class="admin-view-head"><div><span class="admin-eyebrow">'+esc(eyebrow)+'</span><h1>'+esc(title)+'</h1><p>'+esc(description)+'</p></div><div class="admin-row-actions">'+(extra||'')+
+      '<button class="admin-refresh" type="button" data-admin-refresh title="Načíst čerstvá data" aria-label="Načíst čerstvá data">'+REFRESH_ICON+'<span data-refresh-label>Načíst data</span></button></div></div>';
   }
-  function chip(value) { return '<span class="admin-chip is-'+esc(value)+'">'+esc(value)+'</span>'; }
+  function chip(value, text) { return '<span class="admin-chip is-'+esc(value)+'">'+esc(text || value)+'</span>'; }
+  function kpi(title,value,note){return '<div class="admin-kpi"><span>'+esc(title)+'</span><strong>'+esc(typeof value==='string'?value:n(value))+'</strong><small>'+esc(note)+'</small></div>';}
+  function mailStat(title,value){return '<div><span>'+esc(title)+'</span><strong>'+n(value)+'</strong></div>';}
 
+  // ── Ukázková data (jen lokálně) ─────────────────────────────────────────
   function demoData() {
-    var now = new Date(), yesterday = new Date(Date.now()-86400000).toISOString();
-    cache.overview = { users_total:148,users_new_7d:17,active_7d:63,free_total:119,academy_total:29,quiz_30d:41,audit_30d:26,calculator_30d:18,
-      recent_users:[{email:'klara@example.cz',display_name:'Klára',instagram:'klaravisual',tier:'free',account_status:'active',created_at:now.toISOString(),last_seen_at:now.toISOString()},{email:'david@example.cz',display_name:'David',instagram:'davidvideo',tier:'academy',account_status:'active',created_at:yesterday,last_seen_at:yesterday}],
-      recent_events:[{event_name:'audit_completed',email:'klara@example.cz',source:'audit',created_at:now.toISOString()},{event_name:'quiz_completed',email:'david@example.cz',source:'quiz',created_at:yesterday}] };
-    cache.users = cache.overview.recent_users.map(function(u,i){return Object.assign({},u,{role:'member',updated_at:u.created_at,quiz_completed:i===1,audit_completed:i===0,calculator_completed:false});});
-    cache.tools = [{id:'demo1',tool:'audit',claimed_email:'klara@example.cz',result:{industries:['svatby','portret'],level:'rozjizdi',average_price:9000,jobs_per_month:2,hours_per_week:20,problems:['cena','klienti'],goal:'prechod',brake:'klienti',current:18000,potential:43000,annual_gap:300000},completed_at:now.toISOString()},{id:'demo2',tool:'quiz',user_email:'david@example.cz',result:{level:'business',level_name:'Byznys',score:13,total:15,passed:true},completed_at:yesterday},{id:'demo3',tool:'audit',user_email:'petra@example.cz',result:{industries:['firemni'],level:'zavedeny',average_price:24000,jobs_per_month:3,goal:'skalovat',brake:'cas',current:72000,potential:120000,annual_gap:576000},completed_at:yesterday},{id:'demo4',tool:'hourly_calculator',user_email:'tomas@example.cz',result:{billable_hours:90,hourly:1450,daily:11600,monthly_revenue:130500,monthly_taxes_and_levies:31000},completed_at:now.toISOString()}];
-    cache.content = [{id:'demo-content',type:'weekly_challenge',title:'Ukaž svůj největší posun',body:'Sdílej jednu věc, kterou ses tento týden naučil.',status:'published',audience:'all',xp:50,starts_at:now.toISOString()}];
+    var now = new Date().toISOString(), yesterday = new Date(Date.now()-86400000).toISOString(), week = new Date(Date.now()-6*86400000).toISOString();
+    cache.overview = { users_total:148,users_new_7d:17,active_7d:63,free_total:113,knihovna_total:6,academy_total:29,presets_total:11,consented_total:92,sync_errors:3,quiz_30d:41,audit_30d:26,calculator_30d:18,
+      leads_new:1,leads_oldest_new:now,hot_no_academy:2,challenge_current_ends_at:new Date(Date.now()+4*86400000).toISOString(),challenge_upcoming:0,revenue_30d:51491,orders_30d:4,
+      funnel_30d:{tools:85,registered:61,onboarding:44,sales_page:23,checkout:9,purchases:4},
+      recent_users:[{email:'klara@example.cz',display_name:'Klára',tier:'free',created_at:now},{email:'david@example.cz',display_name:'David',tier:'academy',created_at:yesterday}],
+      recent_events:[{event_name:'audit_completed',email:'klara@example.cz',created_at:now},{event_name:'academy_cta',email:'petra@example.cz',created_at:now},{event_name:'hourly_calculator_completed',email:'tomas@example.cz',created_at:yesterday},{event_name:'quiz_completed',email:'david@example.cz',created_at:yesterday},{event_name:'ai_question_sent',email:'david@example.cz',created_at:yesterday}] };
+    cache.people = [
+      {email:'petra@example.cz',has_account:false,name:'Petra',instagram:'petra.foto',phone:'+420 777 000 111',tier:null,created_at:now,last_seen_at:now,consent:true,source:'cenik',lead_id:2,lead_status:'novy',lead_note:null,money:72000,money_tool:'audit',potential:120000,tools:['audit'],xp:0,orders:0},
+      {email:'klara@example.cz',has_account:true,name:'Klára',instagram:'klaravisual',tier:'free',account_status:'active',role:'member',created_at:now,last_seen_at:now,consent:true,source:'instagram',money:18000,money_tool:'audit',potential:43000,tools:['audit'],xp:120,orders:0},
+      {email:'tomas@example.cz',has_account:false,name:'Tomáš',instagram:'tomas_video',phone:'603 111 222',tier:null,created_at:yesterday,last_seen_at:yesterday,consent:false,source:'hero',lead_id:1,lead_status:'kontaktovan',lead_note:'Volat po 17:00',money:130500,money_tool:'hourly_calculator',tools:['hourly_calculator'],xp:0,orders:0},
+      {email:'david@example.cz',has_account:true,name:'David',instagram:'davidvideo',tier:'academy',account_status:'active',role:'member',has_presets:true,created_at:week,last_seen_at:yesterday,consent:true,source:'email',money:0,tools:['quiz'],xp:860,orders:1},
+      {email:'jana@example.cz',has_account:true,name:'Jana',tier:'knihovna',account_status:'active',role:'member',created_at:week,last_seen_at:week,consent:false,ecomail_sync_error:null,source:null,money:0,tools:[],xp:40,orders:1}
+    ];
+    cache.detail = {
+      'petra@example.cz':{has_account:false,user:{email:'petra@example.cz'},orders:[],ai_questions:0,posts:0,
+        submissions:[{tool:'audit',claimed_email:'petra@example.cz',result:{industries:['svatby','rodina'],level:'rozjizdi',average_price:8000,jobs_per_month:2,current:72000,potential:120000,annual_gap:576000,utm_source:'instagram'},completed_at:yesterday}],
+        plan_requests:[{id:2,created_at:now,name:'Petra',email:'petra@example.cz',phone:'+420 777 000 111',instagram:'petra.foto',obory:['svatby','rodina'],level:'1-3',jobs:'1-2',price:8000,blockers:['cena','klienti'],goal:40000,hours:5,marketing_consent:true,source:'cenik',plan:{phases:[{title:'Odstraníme, co tě brzdí',items:['Cenotvorba','Prodej, follow-up a upsell']},{title:'Postavíme tvůj obor',items:['Svatba od A do Z']},{title:'Rozjedeme systém',items:['90denní výzva']}],weeks:4},status:'novy',note:null}],
+        events:[{event_name:'academy_cta',created_at:now},{event_name:'audit_completed',created_at:yesterday}]},
+      'klara@example.cz':{has_account:true,user:{email:'klara@example.cz',display_name:'Klára',instagram:'klaravisual',tier:'free',role:'member',account_status:'active',created_at:now,last_seen_at:now,xp:120,read:['portfolio','cenotvorba','cold-outreach','instagram'],
+          profile:{industries:['svatby','portret'],income:'10-30',experience:'clients',blocker:'klienti'},marketing_consent_at:now,marketing_consent_source:'registrace',ecomail_synced_at:now,acquisition_source:'instagram'},
+        orders:[],plan_requests:[],ai_questions:3,posts:1,
+        submissions:[{tool:'audit',user_email:'klara@example.cz',result:{industries:['svatby','portret'],level:'rozjizdi',average_price:9000,jobs_per_month:2,hours_per_week:20,goal:'prechod',brake:'klienti',current:18000,potential:43000,annual_gap:300000},completed_at:now}],
+        events:[{event_name:'audit_completed',created_at:now},{event_name:'onboarding_completed',created_at:now},{event_name:'registered',created_at:now}]},
+      'david@example.cz':{has_account:true,user:{email:'david@example.cz',display_name:'David',instagram:'davidvideo',tier:'academy',role:'member',account_status:'active',has_presets:true,created_at:week,last_seen_at:yesterday,xp:860,read:new Array(21).fill('x'),
+          profile:{industries:['video'],income:'30-60',experience:'fulltime',blocker:'cas'},marketing_consent_at:week,marketing_consent_source:'registrace',ecomail_synced_at:week,acquisition_source:'email',admin_note:'Partner Nikon, chce spolupráci.'},
+        orders:[{created_at:week,product:'academy',tier:'academy',amount_total:19998,currency:'czk',coupon:'NIKON20',source:'email',status:'paid'}],plan_requests:[],ai_questions:27,posts:6,
+        submissions:[{tool:'quiz',user_email:'david@example.cz',result:{level:'business',level_name:'Byznys',score:13,total:15,passed:true},completed_at:yesterday}],
+        events:[{event_name:'quiz_completed',created_at:yesterday},{event_name:'ai_question_sent',created_at:yesterday},{event_name:'purchase_completed',created_at:week}]}
+    };
+    cache.orders = [{id:4,created_at:week,email:'david@example.cz',product:'academy',tier:'academy',amount_total:19998,currency:'czk',coupon:'NIKON20',source:'email',status:'paid'},{id:3,created_at:week,email:'jana@example.cz',product:'databaze',tier:'knihovna',amount_total:1497,currency:'czk',coupon:null,source:'koupit',status:'paid'}];
+    cache.content = [{id:'demo-content',type:'weekly_challenge',title:'Ukaž svůj největší posun',body:'Sdílej jednu věc, kterou ses tento týden naučil.',status:'published',audience:'all',xp:50,starts_at:now,ends_at:new Date(Date.now()+4*86400000).toISOString()},{id:'demo-web',type:'webinar',title:'Jak si říct o víc',status:'scheduled',audience:'academy',xp:0,starts_at:new Date(Date.now()+9*86400000).toISOString()}];
     cache.coupons = [{code:'NIKON20',description:'Partner Nikon',percent_off:20,products:['academy'],active:true,used_count:7,max_uses:50,valid_until:null}];
     cache.emailing = {users_total:148,consented_total:92,eligible_leads:71,academy_consented:21,synced_total:89,unsubscribed_total:6,sync_errors:3,events_30d:{delivered:824,opened:441,clicked:96,bounced:4,unsubscribed:5,complained:0},recent_events:[]};
-    cache.ecomail = {configured:true,list:{list:{name:'Fotografové'},subscribers:{subscribed:949,unsubscribed:307,hard_bounced:55}},pipelines:[{id:1,name:'7 dní pro lepší byznys'},{id:2,name:'Týdenní výzva'}],segments:[{id:'seg1',name:'Sekvence – vlna 1'},{id:'seg2',name:'Sekvence – vlna 2'},{id:'seg3',name:'Sekvence – vlna 3'}],webhook:{configured:true,matches:true}};
-    demoSequences(now);
+    cache.ecomail = {configured:true,list:{list:{name:'Fotografové'},subscribers:{subscribed:949,unsubscribed:307,hard_bounced:55}},pipelines:[{id:1,name:'7 dní pro lepší byznys'},{id:2,name:'Týdenní výzva'}],segments:[{id:'seg1',name:'Sekvence – vlna 1'},{id:'seg2',name:'Sekvence – vlna 2'}],webhook:{configured:true,matches:true}};
+    cache.campaignStats={'72':{delivery:699,open:214,open_rate:30.6,click:41,unsub:1}};
+    cache.emailSequences = [{id:'22222222-2222-4222-8222-222222222222',name:'Otevřel jsem novou platformu. Vstup máš zdarma.',description:'',audience:'consented_non_academy',status:'draft',from_name:'Kenji',from_email:'kenji@mail.kenji.cz',reply_to:'ahoj@kenji.cz',ecomail_pipeline_id:null,created_at:now,steps:[{id:'mail-1',position:1,delay_days:0,status:'draft',plain:true,subject:'Otevřel jsem novou platformu. Vstup máš zdarma.',preheader:'Stačí se přihlásit e-mailem.',headline:'',body:'Ahoj,\n\nrád bych tě pozval do vylepšené platformy…',cta_label:'Udělat si audit — 2 minuty',cta_url:'https://kenjiacademy.cz/audit.html',ecomail_campaign_id:72,ecomail_segment:'Sekvence – vlna 1',ecomail_campaign_sent_at:now}]}];
   }
   // Ukázkové srovnání publika (jen lokálně) — čísla jsou smyšlená, ať jde vidět rozložení.
   function demoAudience() {
-    var now = new Date();
-    return {generated_at:now.toISOString(),ecomail:{subscribed:250,unsubscribed:307,bounced:55,complained:1,not_confirmed:4},academy:{total:195,free:144,knihovna:6,academy:45,consented:61},overlap:{active_in_both:70,only_ecomail:180,only_academy:125,only_academy_consented:38},safe:{total:214,engaged:131,registered:41,tier_knihovna:3,not_registered:173},excluded:{academy:29,admin:1,test:2,typo:3,invalid:0,duplicate:0,unsubscribed_academy:1,bounce:0,blocked:0,total:36},
-      rows:[{email:'klara@example.cz',verdict:'ok',reason:'',tier:'free',registered:true,engaged:true,tags:['fotografove']},{email:'david@example.cz',verdict:'academy',reason:'Člen Kenji Academy',tier:'academy',registered:true,engaged:true,tags:[]},{email:'8pospichal@gmail.com',verdict:'admin',reason:'Správce',tier:'academy',registered:true,engaged:true,tags:[]},{email:'test.ucet@seznam.cz',verdict:'test',reason:'Vypadá jako testovací adresa',tier:'',registered:false,engaged:false,tags:[]},{email:'jana.n@gmial.com',verdict:'typo',reason:'Pravděpodobný překlep v doméně',suggestion:'jana.n@gmail.com',tier:'',registered:false,engaged:false,tags:[]},{email:'petr@seznam.com',verdict:'typo',reason:'Pravděpodobný překlep v doméně',suggestion:'petr@seznam.cz',tier:'',registered:false,engaged:true,tags:[]},{email:'martin@centrum.cz',verdict:'unsubscribed_academy',reason:'V Academy odhlášen nebo nedoručitelný',tier:'free',registered:true,engaged:false,tags:[]}]};
-  }
-  function demoSequences(now) {
-    cache.campaignStats={'72':{delivery:699,open:214,open_rate:30.6,click:41,unsub:1}};
-    cache.emailSequences = [{id:'22222222-2222-4222-8222-222222222222',name:'Otevřel jsem novou platformu. Vstup máš zdarma.',description:'',audience:'consented_non_academy',status:'draft',from_name:'Kenji',from_email:'kenji@mail.kenji.cz',reply_to:'ahoj@kenji.cz',ecomail_pipeline_id:null,created_at:now.toISOString(),steps:[{id:'mail-1',position:1,delay_days:0,status:'draft',plain:true,subject:'Otevřel jsem novou platformu. Vstup máš zdarma.',preheader:'Stačí se přihlásit e-mailem.',headline:'',body:'Ahoj,\n\nrád bych tě pozval do vylepšené platformy…',cta_label:'Udělat si audit — 2 minuty',cta_url:'https://kenjiacademy.cz/audit.html',ecomail_campaign_id:72,ecomail_segment:'Sekvence – vlna 1',ecomail_campaign_sent_at:now.toISOString()}]},{id:'11111111-1111-4111-8111-111111111111',name:'7 dní pro lepší byznys',description:'Každý den jeden konkrétní krok.',audience:'consented_non_academy',status:'draft',from_name:'Lukáš Kenji Vrábel',from_email:'ahoj@kenji.cz',reply_to:'ahoj@kenji.cz',ecomail_pipeline_id:null,steps:[
-  {
-    "id": "day-1",
-    "position": 1,
-    "delay_days": 0,
-    "subject": "Než začneš shánět další klienty",
-    "preheader": "Tři čísla, se kterými uvidíš svou práci jasněji.",
-    "headline": "Nejdřív si zmapuj výchozí bod",
-    "body": "Ahoj,\n\nvětšina tvůrců zkouší zlepšit všechno najednou. Portfolio, Instagram, ceny i reklamu. Výsledek je hodně práce a málo jasného posunu.\n\nDnes nic nepředělávej. Sepiš si tři čísla: kolik zakázek jsi měl za poslední tři měsíce, jaká byla jejich průměrná cena a kolik hodin ti jedna zakázka ve skutečnosti zabrala.\n\nÚkol na dnes: napiš si tato tři čísla na jedno místo. To je tvůj výchozí bod pro dalších sedm dní.",
-    "cta_label": "Udělat si audit zdarma",
-    "cta_url": "https://kenjiacademy.cz/audit.html",
-    "status": "draft"
-  },
-  {
-    "id": "day-2",
-    "position": 2,
-    "delay_days": 1,
-    "subject": "Rozumí klient za 10 sekund tomu, co prodáváš?",
-    "preheader": "Jedna věta, která zjednoduší portfolio i oslovování.",
-    "headline": "Postav jednu srozumitelnou nabídku",
-    "body": "Ahoj,\n\nklient nekupuje focení ani natáčení. Kupuje výsledek, který mu tvoje práce přinese. Když ho musí dlouze hledat, většinou odejde.\n\nDoplň tuto větu: Pomáhám [komu] získat [výsledek] pomocí [tvé služby].\n\nPříklad: Pomáhám restauracím získat více rezervací pomocí fotek a krátkých videí, které mohou hned použít na webu a sítích.\n\nÚkol na dnes: napiš jedinou větu bez obecných slov jako kvalita, emoce nebo profesionalita. Musí ji pochopit i člověk mimo tvůj obor.",
-    "cta_label": "Uložit si směr v profilu",
-    "cta_url": "https://kenjiacademy.cz/nastaveni.html",
-    "status": "draft"
-  },
-  {
-    "id": "day-3",
-    "position": 3,
-    "delay_days": 2,
-    "subject": "Kolik ti z jedné zakázky opravdu zůstane?",
-    "preheader": "Cena zakázky sama o sobě nic neříká.",
-    "headline": "Spočítej skutečnou hodinovku",
-    "body": "Ahoj,\n\nzakázka za 10 000 Kč může být skvělá, nebo ztrátová. Rozhoduje všechen čas okolo: komunikace, příprava, cesta, třídění, úpravy, odevzdání a administrativa.\n\nÚkol na dnes: vezmi poslední zakázku, sečti všechny hodiny. Od ceny zakázky nejdřív odečti přímé náklady a zbytek vyděl počtem hodin.\n\nPříklad: (10 000 Kč − 2 000 Kč nákladů) ÷ 16 hodin = 500 Kč za hodinu. Je to částka před daněmi, odvody a dalšími náklady podnikání.\n\nToto číslo není důvod ke stresu. Je to podklad pro lepší cenu, balíček nebo proces.",
-    "cta_label": "Zmapovat svůj byznys v auditu",
-    "cta_url": "https://kenjiacademy.cz/audit.html",
-    "status": "draft"
-  },
-  {
-    "id": "day-4",
-    "position": 4,
-    "delay_days": 3,
-    "subject": "Tvoje portfolio možná ukazuje příliš mnoho",
-    "preheader": "Méně práce může působit hodnotněji než více práce.",
-    "headline": "Nech v portfoliu jen to, co chceš prodávat",
-    "body": "Ahoj,\n\nportfolio není archiv všeho, co se ti povedlo. Je to výběr, který má přitáhnout konkrétní typ další zakázky. Slabší nebo nesouvisející ukázky rozmělňují to nejlepší.\n\nÚkol na dnes: otevři své portfolio jako klient a odeber tři ukázky, které neodpovídají práci, jakou chceš dělat za rok. Potom dej nejrelevantnější výsledek na první místo.\n\nNepřidávej dnes nic nového. Jen zprůhledni to, co už máš.",
-    "cta_label": "Projít návod k portfoliu",
-    "cta_url": "https://kenjiacademy.cz/clanky/portfolio.html",
-    "status": "draft"
-  },
-  {
-    "id": "day-5",
-    "position": 5,
-    "delay_days": 4,
-    "subject": "Vrať se k pěti nedokončeným poptávkám",
-    "preheader": "Dnes neposílej studené nabídky. Vrať se k rozehraným kontaktům.",
-    "headline": "Udělej pět follow-upů",
-    "body": "Ahoj,\n\nspousta zakázek nezmizela kvůli ceně. Jen je převálcovala jiná práce, dovolená nebo nerozhodnost. Tvůrci často pošlou jednu zprávu a považují ticho za odmítnutí.\n\nNajdi pět poptávek nebo rozhovorů z posledních tří měsíců, které zůstaly bez jasného konce. Pošli jim: Ahoj, vracím se k naší domluvě ohledně [projektu]. Je to pro vás ještě aktuální, nebo to mám prozatím uzavřít?\n\nÚkol na dnes: odešli všech pět zpráv. Bez slevy a bez dlouhého přesvědčování.",
-    "cta_label": "Probrat zprávu s Kenji AI",
-    "cta_url": "https://kenjiacademy.cz/kenji-ai.html",
-    "status": "draft"
-  },
-  {
-    "id": "day-6",
-    "position": 6,
-    "delay_days": 5,
-    "subject": "Deset klientů, kterým tvoje práce opravdu pomůže",
-    "preheader": "Oslovování je snazší, když víš, proč píšeš právě jim.",
-    "headline": "Postav si malý seznam příležitostí",
-    "body": "Ahoj,\n\nnáhodné oslovování rychle unaví. Lepší je malý seznam firem nebo lidí, u kterých vidíš konkrétní příležitost.\n\nÚkol na dnes: vyber deset potenciálních klientů. Ke každému napiš jedinou poznámku: co jim dnes ve vizuální komunikaci chybí a jaký obchodní výsledek by mohl lepší obsah podpořit.\n\nZatím jim nic neposílej. Cílem je mít deset relevantních důvodů ke kontaktu, ne deset stejných zkopírovaných zpráv.",
-    "cta_label": "Připravit si oslovení",
-    "cta_url": "https://kenjiacademy.cz/clanky/cold-outreach.html",
-    "status": "draft"
-  },
-  {
-    "id": "day-7",
-    "position": 7,
-    "delay_days": 6,
-    "subject": "Teď z toho udělej systém na dalších 30 dní",
-    "preheader": "Sedm drobných úkolů je začátek. Opakovatelnost dělá výsledek.",
-    "headline": "Vyber jeden tah, který budeš opakovat",
-    "body": "Ahoj,\n\nza posledních sedm dní jsi dostal šest úkolů: zmapovat čísla, zjednodušit nabídku, prověřit cenu, pročistit portfolio, oživit kontakty a připravit seznam příležitostí. Pokud jsi některý nestihl, vyber si z nich jeden a začni jím.\n\nTeď si vyber jedinou aktivitu, kterou budeš dalších 30 dní opakovat každý týden. Například pět follow-upů každé úterý nebo dvě cílené nabídky každý čtvrtek. Dej ji do kalendáře jako pevný blok.\n\nÚkol na dnes: zvol jednu aktivitu, den a čas. Ne další seznam nápadů. Konkrétní opakovatelný termín.\n\nPokud chceš mít další kroky, zpětnou vazbu a všechno na jednom místě, otevři si svůj bezplatný plán v Kenji Academy.",
-    "cta_label": "Otevřít můj plán zdarma",
-    "cta_url": "https://kenjiacademy.cz/index.html",
-    "status": "draft"
-  }
-]}];
+    return {generated_at:new Date().toISOString(),ecomail:{subscribed:250,unsubscribed:307,bounced:55,complained:1,not_confirmed:4},academy:{total:195,free:144,knihovna:6,academy:45,consented:61},overlap:{active_in_both:70,only_ecomail:180,only_academy:125,only_academy_consented:38},safe:{total:214,engaged:131,registered:41,tier_knihovna:3,not_registered:173},excluded:{academy:29,admin:1,test:2,typo:3,invalid:0,duplicate:0,unsubscribed_academy:1,bounce:0,blocked:0,total:36},
+      rows:[{email:'david@example.cz',verdict:'academy',reason:'Člen Kenji Academy',tier:'academy'},{email:'test.ucet@seznam.cz',verdict:'test',reason:'Vypadá jako testovací adresa',tier:''},{email:'jana.n@gmial.com',verdict:'typo',reason:'Pravděpodobný překlep v doméně',suggestion:'jana.n@gmail.com',tier:''}]};
   }
 
+  // ── Supabase ────────────────────────────────────────────────────────────
   async function getSB() { if (sb) return sb; sb = A.getSupabase ? await A.getSupabase() : null; return sb; }
   function errText(error) { return String((error && (error.message || error.hint || error.details)) || error || 'neznámá chyba'); }
   function isStaleSession(error) { return /jwt|expired|token|Jen pro admina/i.test(errText(error)); }
+  function isMissingFn(error) { return /could not find the function|PGRST202|does not exist/i.test(errText(error) + ' ' + ((error && error.code) || '')); }
 
   // Když vyprší přihlašovací token, RPC spadne na „Jen pro admina". Jednou obnovíme
   // relaci a zkusíme znovu — jinak by admin viděl jen prázdnou obrazovku.
@@ -169,19 +108,30 @@
     if (started) return; started = true;
     A = window.KenjiAuth || A;
     try {
-      if (IS_LOCAL) {
-        document.getElementById('admin-env').hidden = false;
-        demoData(); render(); return;
-      }
+      if (IS_LOCAL) { document.getElementById('admin-env').hidden = false; demoData(); render(); return; }
       var adminEmail = await rpc('current_admin_email');
       if (!adminEmail) throw new Error('not admin');
-      await loadOverview(); await loadUsers(); render();
+      await loadOverview(); render();
     } catch (e) { fail(e); }
   }
 
   async function loadOverview() { cache.overview = await rpc('admin_overview'); }
-  async function loadUsers(search,tier,status) { cache.users = await rpc('admin_list_users_v2',{p_search:search||null,p_tier:tier||null,p_status:status||null,p_limit:200,p_offset:0}) || []; }
-  async function loadTools(tool) { toolFilter = tool || ''; cache.tools = await rpc('admin_list_tool_submissions',{p_tool:tool||null,p_limit:1000}) || []; }
+  // Jeden seznam lidí. Dokud není nasazená migrace admin_list_people, složí se
+  // ze starších RPC (účty + zájemci + nástroje), ať admin nikdy nezůstane prázdný.
+  async function loadPeople() {
+    try { cache.people = await rpc('admin_list_people',{p_limit:3000}) || []; return; }
+    catch (e) { if (!isMissingFn(e)) throw e; }
+    var users = await rpc('admin_list_users_v2',{p_search:null,p_tier:null,p_status:null,p_limit:300,p_offset:0}) || [];
+    var leads = []; try { leads = await rpc('admin_list_plan_requests',{p_status:null,p_limit:1000}) || []; } catch (e) {}
+    var tools = []; try { tools = await rpc('admin_list_tool_submissions',{p_tool:null,p_limit:300}) || []; } catch (e) {}
+    var map = {};
+    function get(email){ email=String(email||'').toLowerCase(); if(!email)return null; return map[email]||(map[email]={email:email,has_account:false,tools:[],money:0,xp:0,orders:0}); }
+    users.forEach(function(u){var p=get(u.email);Object.assign(p,{has_account:true,name:u.display_name,instagram:u.instagram,tier:u.tier,role:u.role,account_status:u.account_status,created_at:u.created_at,last_seen_at:u.last_seen_at});});
+    leads.forEach(function(l){var p=get(l.email);if(p.lead_id)return;p.lead_id=l.id;p.lead_status=l.status;p.lead_note=l.note;p.name=p.name||l.name;p.instagram=p.instagram||l.instagram;p.phone=l.phone;p.source=p.source||l.source;p.created_at=p.created_at||l.created_at;if(!p.has_account)p.consent=!!l.marketing_consent;});
+    tools.forEach(function(t){var p=get(t.user_email||t.claimed_email);if(!p)return;var m=toolMoney(t);if(p.tools.indexOf(t.tool)<0)p.tools.push(t.tool);if(m>p.money){p.money=m;p.money_tool=t.tool;p.potential=(t.result||{}).potential;}p.created_at=p.created_at||t.completed_at;});
+    cache.people = Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return String(b.created_at||'').localeCompare(String(a.created_at||''));});
+  }
+  async function loadOrders() { try { cache.orders = await rpc('admin_list_orders',{p_limit:1000}) || []; } catch (e) { if (!isMissingFn(e)) throw e; cache.orders = null; } }
   async function loadContent() { cache.content = await rpc('admin_list_content',{p_type:null}) || []; }
   async function loadCoupons() { cache.coupons = await rpc('admin_list_coupons_v2') || []; }
   async function adminEmailApi(method,body) {
@@ -200,39 +150,286 @@
     var ids=(cache.emailSequences||[]).map(function(seq){var st=(seq.steps||[])[0]||{};return st.ecomail_campaign_sent_at&&st.ecomail_campaign_id?String(st.ecomail_campaign_id):null;}).filter(Boolean);
     if(ids.length&&!IS_LOCAL){try{var r=await adminEmailApi('POST',{action:'campaign-stats',ids:ids});cache.campaignStats=r.stats||{};}catch(e){cache.campaignStats={};}}
   }
+  async function ensureData(v, force) {
+    if (IS_LOCAL) return;
+    if (v==='overview' && (force||!cache.overview)) await loadOverview();
+    if (v==='people') { if(force||!cache.people) await loadPeople(); if(force) cache.detail={}; }
+    if (v==='sales') { if(force||!cache.orders) await loadOrders(); if(force||!cache.coupons.length) await loadCoupons(); if(force||!cache.overview) await loadOverview(); }
+    if (v==='content' && (force||!cache.content.length)) await loadContent();
+    if (v==='emailing' && (force||!cache.emailing)) await loadEmailing();
+  }
 
   function render() {
     document.querySelectorAll('[data-admin-view]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-admin-view')===view);});
+    if (view === 'overview') renderOverview();
     if (view === 'people') renderPeople();
-    if (view === 'tools') renderTools();
+    if (view === 'sales') renderSales();
     if (view === 'content') renderContent();
-    if (view === 'coupons') renderCoupons();
     if (view === 'emailing') renderEmailing();
-    if (view === 'activity') renderActivity();
+  }
+  async function go(v, seg) {
+    view = v; if (seg) peopleSeg = seg;
+    ROOT.innerHTML = '<div class="admin-loading">Načítám…</div>';
+    try { await ensureData(v); render(); window.scrollTo(0,0); } catch (err) { fail(err); }
   }
 
+  // ── Přehled ─────────────────────────────────────────────────────────────
+  function todoRow(dot, title, note, cta, target) {
+    return '<div class="admin-todo-row"><i class="is-'+dot+'" aria-hidden="true"></i><div><strong>'+esc(title)+'</strong><small>'+esc(note)+'</small></div><button class="admin-button secondary" type="button" data-goto="'+esc(target)+'">'+esc(cta)+'</button></div>';
+  }
+  function renderOverview() {
+    var d = cache.overview || {}, f = d.funnel_30d || {};
+    var todo = [];
+    if (d.leads_new) todo.push(todoRow('hot', n(d.leads_new)+(d.leads_new===1?' nový zájemce':' noví zájemci')+' o plán na míru', 'Stránka slibuje ozvání do 2 pracovních dnů · nejstarší vyplnil '+rel(d.leads_oldest_new), 'Otevřít zájemce', 'people:leads'));
+    if (d.hot_no_academy) todo.push(todoRow('hot', n(d.hot_no_academy)+' lidí uvedlo příjem nad 50 000 Kč a nemá Academy', 'Z auditu a kalkulačky hodinovky · seřazeno podle příjmu', 'Zobrazit', 'people:hot'));
+    if (d.sync_errors) todo.push(todoRow('warn', n(d.sync_errors)+' kontaktů se nesynchronizovalo do Ecomailu', 'Mají souhlas, ale v seznamu chybí', 'Opravit', 'emailing'));
+    if (!d.challenge_upcoming) todo.push(todoRow('idle', 'Další týdenní výzva není naplánovaná', d.challenge_current_ends_at ? 'Aktuální končí '+date(d.challenge_current_ends_at) : 'Teď neběží žádná výzva', 'Naplánovat', 'content'));
+    var steps = [['Vyplnil nástroj',f.tools],['Registrace',f.registered],['Dokončil onboarding',f.onboarding],['Klik na koupit',f.sales_page],['Zahájená objednávka',f.checkout],['Nákup',f.purchases]];
+    var max = Math.max.apply(null, steps.map(function(s){return Number(s[1]||0);}).concat([1]));
+    var funnel = steps.map(function(s,i){var v=Number(s[1]||0),prev=i?Number(steps[i-1][1]||0):0;return '<div class="admin-funnel-row"><span>'+esc(s[0])+'</span><div class="admin-funnel-bar"><i style="width:'+Math.max(1,Math.round(v/max*100))+'%"'+(i>=4?' class="is-hot"':'')+'></i></div><strong>'+n(v)+'</strong><small>'+(i&&prev?Math.round(v/prev*100)+' %':'')+'</small></div>';}).join('');
+    var paid = Number(d.academy_total||0)+Number(d.knihovna_total||0);
+    var users = (d.recent_users||[]).map(function(u){return '<button class="admin-list-row" type="button" data-open-person="'+esc(u.email)+'"><div><strong>'+esc(u.display_name||u.email)+'</strong><small>'+esc(u.email)+'</small></div>'+chip(u.tier||'free')+'<time>'+esc(rel(u.created_at))+'</time></button>';}).join('') || '<div class="admin-empty">Zatím nikdo.</div>';
+    var events = (d.recent_events||[]).map(function(e){return '<div class="admin-event"><i></i><div><strong>'+esc(label(e.event_name))+'</strong><small>'+esc(e.email||e.source||'anonymní návštěvník')+'</small></div><time>'+esc(rel(e.created_at))+'</time></div>';}).join('') || '<div class="admin-empty">Zatím bez událostí.</div>';
+    ROOT.innerHTML = head(new Intl.DateTimeFormat('cs-CZ',{weekday:'long',day:'numeric',month:'numeric'}).format(new Date()).toUpperCase(),'Přehled','Co dnes udělat a jak se daří trychtýři.')+
+      '<section class="admin-card admin-todo"><div class="admin-card-head"><h2>K vyřízení</h2>'+(todo.length?'<span class="admin-chip is-hot">'+todo.length+(todo.length===1?' úkol':todo.length<5?' úkoly':' úkolů')+'</span>':'')+'</div>'+(todo.length?todo.join(''):'<div class="admin-empty">Nic nečeká. Dobrá práce.</div>')+'</section>'+
+      '<div class="admin-kpis admin-kpis-4">'+kpi('Lidé celkem',d.users_total,'+'+n(d.users_new_7d)+' za 7 dní')+kpi('Aktivní za 7 dní',d.active_7d,d.users_total?Math.round(d.active_7d/d.users_total*100)+' % účtů':'')+kpi('Platící',paid,n(d.academy_total)+' Academy · '+n(d.knihovna_total)+' Databáze')+kpi('Tržby 30 dní',d.revenue_30d!=null?kc(d.revenue_30d):'—',n(d.orders_30d)+' objednávek')+'</div>'+
+      '<section class="admin-card"><div class="admin-card-head"><h2>Trychtýř · posledních 30 dní</h2><span>lidé, ne kliky</span></div><div class="admin-funnel">'+funnel+'</div></section>'+
+      '<div class="admin-grid-2"><section class="admin-card"><div class="admin-card-head"><h2>Noví lidé</h2><button class="admin-link" type="button" data-goto="people">Všichni lidé</button></div>'+users+'</section>'+
+      '<section class="admin-card"><div class="admin-card-head"><h2>Živá aktivita</h2></div><div class="admin-events">'+events+'</div></section></div>';
+  }
+
+  // ── Lidé ────────────────────────────────────────────────────────────────
+  var LEAD_STATUS={novy:'Nový',kontaktovan:'Kontaktovaný',koupil:'Koupil',nezajem:'Nemá zájem'};
+  var LEAD_OBOR={svatby:'Svatby',rodina:'Rodinné',lifestyle:'Lifestyle',portret:'Portrét',plesy:'Plesy a eventy',reality:'Nemovitosti',produkty:'Produktovky',video:'Video',sport:'Sport',nevim:'Ještě neví'};
+  var LEAD_BLOCKER={cena:'Neví, kolik si říct',klienti:'Málo klientů',nabidka:'Neví, co nabízet',portfolio:'Slabé portfolio',chaos:'Chaos v zakázkách',technika:'Technika a úpravy'};
+  var LEAD_LEVEL={zacinam:'Začíná','1-3':'1–3 roky','3-5':'3–5 let','5+':'5+ let'};
+  var ONB_INDUSTRY={svatby:'Svatby',portret:'Portrét / lidé',produkt:'Produktové / e-shop',video:'Video / film',obsah:'Obsah / sítě',event:'Event / reportáž',nemovitosti:'Nemovitosti / interiéry',jine:'Něco jiného'};
+  var ONB_INCOME={'0-10':'Do 10k / měsíc','10-30':'10–30k / měsíc','30-60':'30–60k / měsíc','60-100':'60–100k / měsíc','100+':'100k+ / měsíc'};
+  var ONB_EXPERIENCE={start:'Začíná',practice:'Tvoří pro sebe',clients:'Má zakázky',fulltime:'Živí se tím',jine:'Něco jiného'};
+  var ONB_BLOCKER={klienti:'Málo poptávek / klientů',cena:'Nízké ceny',portfolio:'Slabé portfolio / positioning',cas:'Chaos / nemá systém',zacatek:'Úplný začátek',jine:'Něco jiného'};
+  var TIER_LABEL={free:'Free',knihovna:'Databáze',academy:'Academy'};
+  var PRODUCT_LABEL={academy:'Academy',databaze:'Databáze',knihovna:'Databáze',presets:'Presety',presety:'Presety'};
+
+  function toolMoney(row) { var r = row.result || {}; return Math.max(Number(r.current||0), Number(r.monthly_revenue||0)); }
+  function stageOf(p) { if (!p.has_account) return {cls:'tool',text:'Bez účtu'}; return {cls:p.tier||'free',text:TIER_LABEL[p.tier]||'Free'}; }
+  function isOpenLead(p) { return p.lead_id && (p.lead_status==='novy'||p.lead_status==='kontaktovan'); }
+  function personName(p) { return p.name || (p.instagram?'@'+p.instagram:'') || p.email; }
+  var SEGMENTS = [['all','Všichni'],['leads','Zájemci'],['hot','Nad 50 000 Kč'],['free','Free'],['knihovna','Databáze'],['academy','Academy'],['noacc','Jen nástroj, bez účtu']];
+  function inSegment(p, seg) {
+    if (seg==='leads') return isOpenLead(p);
+    if (seg==='hot') return Number(p.money||0) >= 50000 && p.tier !== 'academy';
+    if (seg==='free') return p.has_account && (p.tier||'free')==='free';
+    if (seg==='knihovna'||seg==='academy') return p.tier===seg;
+    if (seg==='noacc') return !p.has_account;
+    return true;
+  }
+  function filteredPeople() {
+    var q = peopleQuery.trim().toLowerCase();
+    var rows = (cache.people||[]).filter(function(p){ return inSegment(p, peopleSeg) && (!q || [p.email,p.name,p.instagram,p.phone].join(' ').toLowerCase().indexOf(q) >= 0); });
+    if (peopleSort==='money' || peopleSeg==='hot') rows.sort(function(a,b){return Number(b.money||0)-Number(a.money||0);});
+    else if (peopleSort==='seen') rows.sort(function(a,b){return String(b.last_seen_at||'').localeCompare(String(a.last_seen_at||''));});
+    return rows;
+  }
+  function peopleRows() {
+    var rows = filteredPeople();
+    if (!rows.length) return '<tr><td colspan="6"><div class="admin-empty">Nikdo neodpovídá filtru.</div></td></tr>';
+    return rows.slice(0,500).map(function(p){
+      var st = stageOf(p), signal = p.money ? kc(p.money) : (p.tools&&p.tools.length ? p.tools.map(typeLabel).join(', ') : '—');
+      var signalNote = p.money ? typeLabel(p.money_tool)+(p.potential?' · potenciál '+kc(p.potential):'') : '';
+      return '<tr class="admin-person-row'+(p.email===selectedPerson?' is-open':'')+'" data-person="'+esc(p.email)+'">'+
+        '<td><span class="admin-person"><strong>'+esc(personName(p))+'</strong><small>'+esc(p.email)+'</small></span></td>'+
+        '<td>'+chip(st.cls,st.text)+(isOpenLead(p)?' '+chip('hot',LEAD_STATUS[p.lead_status]):'')+(p.has_presets?' '+chip('presets','Presety'):'')+'</td>'+
+        '<td'+(Number(p.money||0)>=50000?' class="is-hot"':'')+'>'+esc(signal)+(signalNote?'<small>'+esc(signalNote)+'</small>':'')+'</td>'+
+        '<td>'+(p.consent?'Souhlas':'<span class="admin-muted">Bez souhlasu</span>')+(p.ecomail_sync_error?'<small class="is-err">chyba synchronizace</small>':'')+'</td>'+
+        '<td>'+esc(p.source||'—')+'</td>'+
+        '<td>'+esc(rel(p.last_seen_at||p.created_at))+'</td></tr>';
+    }).join('');
+  }
+  function renderPeople() {
+    var all = cache.people || [];
+    var segs = SEGMENTS.map(function(s){var c=all.filter(function(p){return inSegment(p,s[0]);}).length;return '<button type="button" class="admin-seg'+(peopleSeg===s[0]?' is-on':'')+'" data-seg="'+s[0]+'">'+esc(s[1])+' <span>'+n(c)+'</span></button>';}).join('');
+    ROOT.innerHTML = head('CRM · ÚČTY, ZÁJEMCI, NÁSTROJE','Lidé','Jeden e-mail = jeden člověk. Klikni na řádek a vpravo uvidíš všechno, co o něm víme.','<button class="admin-button secondary" type="button" data-people-csv>Export CSV</button>')+
+      '<div class="admin-segs" role="group" aria-label="Segment">'+segs+'</div>'+
+      '<div class="admin-filters admin-filters-people"><input class="admin-input" id="admin-people-search" placeholder="Hledat e-mail, jméno, Instagram, telefon" value="'+esc(peopleQuery)+'"><select class="admin-select" id="admin-people-sort" aria-label="Řazení"><option value="new"'+(peopleSort==='new'?' selected':'')+'>Řadit: nejnovější</option><option value="money"'+(peopleSort==='money'?' selected':'')+'>Řadit: příjem z nástrojů</option><option value="seen"'+(peopleSort==='seen'?' selected':'')+'>Řadit: poslední aktivita</option></select></div>'+
+      '<form class="admin-addform" id="admin-add-user"><span class="admin-addform-label">Přidat člověka</span><input class="admin-input" name="email" type="email" required placeholder="email@clovek.cz"><select class="admin-select" name="tier"><option value="free">Free</option><option value="knihovna">Databáze</option><option value="academy">Academy</option></select><button class="admin-button" type="submit">Přidat / nastavit</button><span class="admin-addform-msg" id="admin-add-msg"></span></form>'+
+      '<div class="admin-split"><div class="admin-table-wrap"><table class="admin-table admin-people-table"><thead><tr><th>Člověk</th><th>Fáze</th><th>Signál</th><th>E-maily</th><th>Zdroj</th><th>Naposledy</th></tr></thead><tbody id="admin-people-body">'+peopleRows()+'</tbody></table></div>'+
+      '<aside class="admin-card admin-person-card" id="admin-person-card" aria-label="Karta člověka">'+(selectedPerson?'<div class="admin-loading">Načítám…</div>':'<div class="admin-empty">Vyber člověka v seznamu.</div>')+'</aside></div>';
+    if (selectedPerson) openPerson(selectedPerson);
+  }
+  function refreshPeopleTable() { var body = document.getElementById('admin-people-body'); if (body) body.innerHTML = peopleRows(); }
+
+  async function getDetail(email) {
+    if (cache.detail[email]) return cache.detail[email];
+    var d;
+    if (IS_LOCAL) {
+      var p = (cache.people||[]).find(function(x){return x.email===email;}) || {email:email};
+      d = {has_account:!!p.has_account,user:{email:email,display_name:p.name,instagram:p.instagram,tier:p.tier,role:p.role||'member',account_status:p.account_status||'active',created_at:p.created_at,last_seen_at:p.last_seen_at,xp:p.xp},submissions:[],events:[],orders:[],plan_requests:[],ai_questions:0,posts:0};
+    } else d = await rpc('admin_get_user_v2',{p_target:email});
+    if (d && d.has_account == null) d.has_account = !!(d.user && d.user.created_at);
+    cache.detail[email] = d || {user:{email:email}};
+    return cache.detail[email];
+  }
+  function kv(k, v) { return '<div class="admin-kv"><span>'+esc(k)+'</span><strong>'+(v==null||v===''?'—':v)+'</strong></div>'; }
+  function list(map, values) { return (values||[]).map(function(x){return map[x]||x;}).join(', '); }
+  var POLE = {
+    name:'Jméno', instagram:'Instagram', industries:'Obory', level:'Úroveň', level_name:'Úroveň', average_price:'Průměrná cena zakázky',
+    jobs_per_month:'Zakázek měsíčně', hours_per_week:'Hodin týdně', problems:'Co ho brzdí',
+    goal:'Cíl', brake:'Hlavní brzda', current:'Měsíčně teď', potential:'Potenciál měsíčně',
+    annual_gap:'Rozdíl za rok', hourly:'Hodinovka', daily:'Denní sazba',
+    monthly_revenue:'Měsíční obrat', monthly_taxes_and_levies:'Daně a odvody měsíčně',
+    billable_hours:'Fakturovatelných hodin', score:'Skóre', total:'Otázek', passed:'Prošel',
+    utm_source:'Zdroj návštěvy', utm_medium:'Kanál', utm_campaign:'Kampaň', utm_content:'Varianta odkazu', utm_term:'Klíčové slovo'
+  };
+  var PENIZE = { average_price:1, current:1, potential:1, annual_gap:1, hourly:1, daily:1, monthly_revenue:1, monthly_taxes_and_levies:1 };
+  function submissionBlock(s) {
+    var r = s.result || {};
+    var rows = Object.keys(r).filter(function(k){return !/^utm_/.test(k);}).map(function(k){
+      var v = r[k];
+      if (v === null || v === '' || (Array.isArray(v) && !v.length) || typeof v === 'object' && !Array.isArray(v)) return '';
+      if (Array.isArray(v)) v = v.join(', ');
+      else if (typeof v === 'boolean') v = v ? 'ano' : 'ne';
+      else if (PENIZE[k] && Number(v)) v = n(Math.round(Number(v))) + ' Kč';
+      return kv(POLE[k] || k, esc(v));
+    }).join('');
+    return '<div class="admin-card-sub"><strong>'+esc(typeLabel(s.tool))+'</strong><small>'+esc(date(s.completed_at,true))+(s.user_email?'':' · neověřený e-mail')+'</small></div><div class="admin-kv-grid">'+(rows||kv('Bez detailu','—'))+'</div>';
+  }
+  function originOf(d) {
+    var u = d.user || {}, out = [];
+    var utm = (d.submissions||[]).map(function(s){return s.result||{};}).find(function(r){return r.utm_source;}) || {};
+    var lead = (d.plan_requests||[])[0];
+    out.push(kv('Zdroj účtu', esc(u.acquisition_source||'')));
+    out.push(kv('UTM', esc([utm.utm_source,utm.utm_medium,utm.utm_campaign].filter(Boolean).join(' / '))));
+    out.push(kv('Plán na míru odkud', esc(lead?lead.source:'')));
+    out.push(kv('Registrace', esc(u.created_at?date(u.created_at,true):'zatím bez účtu')));
+    return out.join('');
+  }
+  async function openPerson(email) {
+    selectedPerson = email;
+    document.querySelectorAll('.admin-person-row').forEach(function(r){r.classList.toggle('is-open',r.getAttribute('data-person')===email);});
+    var card = document.getElementById('admin-person-card'); if (!card) return;
+    card.innerHTML = '<div class="admin-loading">Načítám…</div>';
+    var d; try { d = await getDetail(email); } catch (err) { card.innerHTML = '<div class="admin-empty">Kartu se nepovedlo načíst: '+esc(errText(err))+'</div>'; return; }
+    if (selectedPerson !== email) return;
+    var p = (cache.people||[]).find(function(x){return x.email===email;}) || {email:email};
+    var u = d.user || {}, prof = u.profile || {}, lead = (d.plan_requests||[])[0], st = stageOf(Object.assign({}, p, {has_account:d.has_account, tier:u.tier||p.tier}));
+    var phone = (lead&&lead.phone) || p.phone, insta = u.instagram || (lead&&lead.instagram) || p.instagram;
+    var contact = [phone?'<a href="tel:'+esc(String(phone).replace(/\s/g,''))+'">'+esc(phone)+'</a>':'', insta?'<a href="https://www.instagram.com/'+encodeURIComponent(insta)+'" target="_blank" rel="noopener">@'+esc(insta)+'</a>':''].filter(Boolean).join(' · ');
+    var mailto = 'mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent('Kenji Academy')+'&body='+encodeURIComponent('Ahoj '+(u.display_name||(lead&&lead.name)||'')+',\n\n');
+
+    var deal;
+    if (lead) {
+      deal = '<div class="admin-card-fields"><label>Stav zájemce<select class="admin-select" data-lead-status="'+esc(lead.id)+'">'+Object.keys(LEAD_STATUS).map(function(k){return '<option value="'+k+'"'+(lead.status===k?' selected':'')+'>'+LEAD_STATUS[k]+'</option>';}).join('')+'</select></label>'+
+        (d.has_account?tierField(u):'')+'</div><label class="admin-card-note">Poznámka<textarea class="admin-input" rows="2" maxlength="2000" data-note-lead="'+esc(lead.id)+'">'+esc(lead.note||'')+'</textarea></label>';
+    } else if (d.has_account) {
+      deal = '<div class="admin-card-fields">'+tierField(u)+'</div><label class="admin-card-note">Poznámka<textarea class="admin-input" rows="2" maxlength="2000" data-note-user="'+esc(email)+'">'+esc(u.admin_note||'')+'</textarea></label>';
+    } else {
+      deal = '<p class="admin-notice">Člověk zatím nemá účet — vyplnil jen nástroj. Přístup mu můžeš dát v sekci „Přidat člověka“.</p>';
+    }
+    if (lead || d.has_account) deal += '<div class="admin-row-actions"><span class="admin-inline-msg" data-card-msg></span><button class="admin-button" type="button" data-card-save="'+esc(email)+'">Uložit</button></div>';
+
+    var profile = Object.keys(prof).length ? '<div class="admin-kv-grid">'+
+      kv('Obory', esc([list(ONB_INDUSTRY, prof.industries || (prof.industry?[prof.industry]:[])), prof.industryOther].filter(Boolean).join(', ')))+
+      kv('Zkušenost', esc(ONB_EXPERIENCE[prof.experience]||prof.experience||''))+
+      kv('Hlavní brzda', esc([ONB_BLOCKER[prof.blocker]||prof.blocker, prof.blockerOther].filter(Boolean).join(' — ')))+
+      kv('Příjem', esc(ONB_INCOME[prof.income]||prof.income||''))+
+      (prof.goal?kv('Cíl', esc(prof.goal)):'')+(prof.portfolio?kv('Portfolio', esc(prof.portfolio)):'')+'</div>' : '<p class="admin-muted">'+(d.has_account?'Onboarding zatím nevyplnil.':'Nemá účet, onboarding neproběhl.')+'</p>';
+
+    var planHtml = lead ? '<div class="admin-kv-grid">'+kv('Vyplnil', esc(date(lead.created_at,true)))+kv('Obory', esc(list(LEAD_OBOR, lead.obory)))+kv('Zkušenost', esc(LEAD_LEVEL[lead.level]||lead.level||''))+kv('Zakázek měsíčně', esc(lead.jobs||''))+kv('Cena zakázky', esc(kc(lead.price)))+kv('Cíl měsíčně', esc(kc(lead.goal)))+kv('Čas týdně', esc(lead.hours?lead.hours+' h':''))+kv('Co ho brzdí', esc(list(LEAD_BLOCKER, lead.blockers)))+'</div>'+
+      (((lead.plan||{}).phases||[]).length?'<ol class="admin-plan">'+lead.plan.phases.map(function(ph){return '<li><strong>'+esc(ph.title)+'</strong> — '+esc((ph.items||[]).join(', '))+'</li>';}).join('')+'</ol>':'') : '';
+
+    var orders = (d.orders||[]).map(function(o){return '<div class="admin-card-line"><strong>'+esc(PRODUCT_LABEL[o.product]||o.product||o.tier||'Nákup')+'</strong><span>'+esc(kc(o.amount_total))+(o.coupon?' · '+esc(o.coupon):'')+' · '+esc(date(o.created_at))+'</span>'+(o.status==='refunded'?chip('hot','Vráceno'):'')+'</div>';}).join('');
+    if (!orders) orders = '<p class="admin-muted">'+(u.tier==='academy'||u.tier==='knihovna'?'Přístup má, ale nákup ještě nebyl zaznamenaný (starší nákupy jsou jen ve Stripe).':'Zatím nic.')+'</p>';
+    if (u.has_presets) orders += '<div class="admin-card-line"><strong>Presety</strong><span>odemčené</span></div>';
+
+    var consent = d.has_account ? (u.marketing_unsubscribed_at ? 'odhlášen '+date(u.marketing_unsubscribed_at) : (u.marketing_consent_at ? 'ano · '+(u.marketing_consent_source||'')+' · '+date(u.marketing_consent_at) : 'ne')) : (lead ? (lead.marketing_consent?'ano · plán na míru':'ne') : '—');
+    var mail = '<div class="admin-kv-grid">'+kv('Souhlas', esc(consent))+kv('Ecomail', u.ecomail_sync_error?'<span class="is-err">'+esc(u.ecomail_sync_error)+'</span>':esc(u.ecomail_synced_at?'synchronizováno '+date(u.ecomail_synced_at):''))+kv('Doručitelnost', esc(u.email_status||''))+'</div>';
+
+    var readCount = Array.isArray(u.read) ? u.read.length : (u.read && typeof u.read==='object' ? Object.keys(u.read).length : 0);
+    var engage = '<div class="admin-engage">'+[['XP',u.xp],['AI dotazů',d.ai_questions],['Příspěvků',d.posts],['Článků',readCount]].map(function(x){return '<div><strong>'+(d.has_account?n(x[1]):'—')+'</strong><span>'+x[0]+'</span></div>';}).join('')+'</div>';
+
+    var subs = (d.submissions||[]).map(submissionBlock).join('') || '<p class="admin-muted">Žádný nástroj zatím nevyplnil.</p>';
+    var events = (d.events||[]).slice(0,15).map(function(e){return '<div class="admin-card-line"><span>'+esc(rel(e.created_at))+'</span><strong>'+esc(label(e.event_name))+'</strong></div>';}).join('') || '<p class="admin-muted">Bez událostí.</p>';
+    var account = d.has_account ? '<details class="admin-card-sec"><summary>Účet: role a blokace</summary><div class="admin-card-fields"><label>Role<select class="admin-select" data-card-role>'+['member','moderator','admin'].map(function(x){return '<option'+((u.role||'member')===x?' selected':'')+'>'+x+'</option>';}).join('')+'</select></label><label>Stav<select class="admin-select" data-card-status>'+['active','pending','paused','blocked'].map(function(x){return '<option'+((u.account_status||'active')===x?' selected':'')+'>'+x+'</option>';}).join('')+'</select></label></div><p class="admin-muted">Ukládá se tlačítkem Uložit v sekci Obchod.</p></details>' : '';
+
+    card.innerHTML = '<div class="admin-card-top"><div><span class="admin-eyebrow">KARTA ČLOVĚKA</span><h2>'+esc(u.display_name||(lead&&lead.name)||p.name||email)+'</h2><p>'+esc(email)+(contact?'<br>'+contact:'')+'</p></div>'+chip(st.cls,st.text)+'</div>'+
+      '<div class="admin-row-actions"><a class="admin-button" href="'+esc(mailto)+'">Napsat e-mail</a>'+(d.has_account?'<button class="admin-button secondary" type="button" data-quick-link="'+esc(email)+'">Poslat přihlašovací odkaz</button>':'')+'</div>'+
+      sec('Obchod', deal)+sec('Profil z onboardingu', profile)+(lead?sec('Plán na míru', planHtml):'')+sec('Čísla z nástrojů', subs)+sec('Nákupy', orders)+sec('E-maily', mail)+sec('Zapojení', engage)+sec('Původ', '<div class="admin-kv-grid">'+originOf(d)+'</div>')+sec('Časová osa', events)+account;
+  }
+  function sec(title, body) { return '<section class="admin-card-sec"><h3>'+esc(title)+'</h3>'+body+'</section>'; }
+  function tierField(u) { return '<label>Přístup<select class="admin-select" data-card-tier>'+['free','knihovna','academy'].map(function(x){return '<option value="'+x+'"'+((u.tier||'free')===x?' selected':'')+'>'+TIER_LABEL[x]+'</option>';}).join('')+'</select></label>'; }
+
+  async function saveCard(email, btn) {
+    var card = document.getElementById('admin-person-card'), msg = card.querySelector('[data-card-msg]');
+    var d = cache.detail[email] || {}, u = d.user || {}, p = (cache.people||[]).find(function(x){return x.email===email;}) || {};
+    var tierEl = card.querySelector('[data-card-tier]'), roleEl = card.querySelector('[data-card-role]'), statusEl = card.querySelector('[data-card-status]');
+    var leadNote = card.querySelector('[data-note-lead]'), userNote = card.querySelector('[data-note-user]');
+    btn.disabled = true;
+    try {
+      if (!IS_LOCAL) {
+        if (d.has_account && tierEl) await rpc('admin_set_user_v2',{p_target:email,p_tier:tierEl.value,p_role:roleEl?roleEl.value:(u.role||'member'),p_status:statusEl?statusEl.value:(u.account_status||'active')});
+        if (leadNote) await rpc('admin_update_plan_request',{p_id:Number(leadNote.getAttribute('data-note-lead')),p_status:null,p_note:leadNote.value});
+        if (userNote) await rpc('admin_set_user_note',{p_target:email,p_note:userNote.value});
+      }
+      if (tierEl) { u.tier = p.tier = tierEl.value; }
+      if (roleEl) u.role = roleEl.value; if (statusEl) u.account_status = p.account_status = statusEl.value;
+      if (leadNote && d.plan_requests && d.plan_requests[0]) d.plan_requests[0].note = p.lead_note = leadNote.value.trim() || null;
+      if (userNote) u.admin_note = userNote.value.trim() || null;
+      if (msg) { msg.textContent = IS_LOCAL ? 'Jen náhled · neuloženo' : 'Uloženo ✓'; msg.className = 'admin-inline-msg is-ok'; }
+      refreshPeopleTable();
+    } catch (err) { if (msg) { msg.textContent = 'Nepovedlo se: '+errText(err); msg.className = 'admin-inline-msg is-err'; } }
+    btn.disabled = false;
+  }
+  function exportPeople() {
+    var cols=['email','name','phone','instagram','tier','has_account','lead_status','money','potential','consent','source','created_at','last_seen_at'];
+    var rows=filteredPeople();
+    var lines=[cols.join(';')].concat(rows.map(function(r){return cols.map(function(c){var v=r[c];if(v===true)v='ano';if(v===false)v='ne';v=String(v==null?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(';');}));
+    var blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kenji-lide-'+peopleSeg+'-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+  }
+
+  // ── Prodej ──────────────────────────────────────────────────────────────
+  function renderSales() {
+    var d = cache.overview || {}, orders = cache.orders;
+    var ordersHtml = orders === null
+      ? '<div class="admin-empty">Objednávky se začnou ukládat po nasazení migrace a webhooku. Do té doby jsou nákupy jen ve Stripe.</div>'
+      : (orders.length ? '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Kdy</th><th>Člověk</th><th>Produkt</th><th>Částka</th><th>Kupón</th><th>Odkud</th><th>Stav</th></tr></thead><tbody>'+orders.map(function(o){
+          return '<tr><td>'+esc(date(o.created_at,true))+'</td><td><button class="admin-link" type="button" data-open-person="'+esc(o.email)+'">'+esc(o.email)+'</button></td><td>'+esc(PRODUCT_LABEL[o.product]||o.product||o.tier||'—')+(o.presets&&o.product!=='presets'?' + presety':'')+'</td><td><strong>'+esc(kc(o.amount_total))+'</strong></td><td>'+esc(o.coupon||'—')+'</td><td>'+esc(o.source||'—')+'</td><td>'+chip(o.status==='refunded'?'hot':'ok',o.status==='refunded'?'Vráceno':'Zaplaceno')+'</td></tr>';
+        }).join('')+'</tbody></table></div>' : '<div class="admin-empty">Zatím žádná zaznamenaná objednávka.</div>');
+    ROOT.innerHTML = head('OBJEDNÁVKY · KUPÓNY','Prodej','Kdo co koupil, za kolik a s jakým kupónem.','<a class="admin-button secondary" href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">Otevřít Stripe</a>')+
+      '<div class="admin-kpis admin-kpis-4">'+kpi('Tržby 30 dní',d.revenue_30d!=null?kc(d.revenue_30d):'—',n(d.orders_30d)+' objednávek')+kpi('Academy',d.academy_total,'členů celkem')+kpi('Databáze',d.knihovna_total,'členů celkem')+kpi('Presety',d.presets_total,'odemčené presety')+'</div>'+
+      '<section class="admin-section"><div class="admin-section-head"><h2>Objednávky</h2></div>'+ordersHtml+'</section>'+
+      '<section class="admin-section"><div class="admin-section-head"><h2>Kupóny</h2></div>'+
+      '<form class="admin-form" id="admin-coupon-form"><label>Kód<input class="admin-input" name="code" required maxlength="40" placeholder="NIKON20"></label><label>Sleva %<input class="admin-input" type="number" name="percent" min="1" max="100" required></label><label class="span-2">Popis<input class="admin-input" name="description" maxlength="160"></label><label>Produkty<select class="admin-select" name="products"><option value="">Všechny</option><option value="academy">Academy</option><option value="databaze">Databáze</option><option value="presets">Presety</option></select></label><label>Max. použití<input class="admin-input" type="number" name="max_uses" min="1"></label><div class="admin-form-actions"><button class="admin-button" type="submit">Přidat kupón</button></div></form>'+couponsTable(cache.coupons)+'</section>';
+  }
+  function couponsTable(rows){if(!rows.length)return '<div class="admin-empty">Zatím žádné kupóny.</div>';return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Kód</th><th>Sleva</th><th>Produkty</th><th>Použití</th><th>Stav</th><th></th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td><strong>'+esc(x.code)+'</strong>'+(x.description?'<small>'+esc(x.description)+'</small>':'')+'</td><td>'+n(x.percent_off)+' %</td><td>'+esc((x.products||[]).join(', ')||'všechny')+'</td><td>'+n(x.used_count)+(x.max_uses?' / '+n(x.max_uses):' / ∞')+'</td><td><button class="admin-status-button'+(x.active?'':' is-off')+'" type="button" data-coupon-toggle="'+esc(x.code)+'">'+esc(x.active?'Aktivní':'Vypnutý')+'</button></td><td><button class="admin-button danger" type="button" data-coupon-delete="'+esc(x.code)+'">Smazat</button></td></tr>';}).join('')+'</tbody></table></div>';}
+
+  // ── E-maily ─────────────────────────────────────────────────────────────
   function renderEmailing() {
     var d=cache.emailing||{},ev=d.events_30d||{},remote=cache.ecomail||{};
     var list=remote.list&&remote.list.list?remote.list.list:{};
     var subscribers=remote.list&&remote.list.subscribers?remote.list.subscribers:{};
     var pipelines=Array.isArray(remote.pipelines)?remote.pipelines:[];
     var webhook=remote.webhook||{};
-    var connection=remote.configured?'<span class="admin-mail-status is-ok">Propojeno'+(list.name?' · '+esc(list.name):'')+'</span>':'<span class="admin-mail-status is-off">'+(remote.needsListId?'Vyber ID seznamu':'Čeká na nastavení v Netlify')+'</span>';
-    var webhookStatus=webhook.matches?'<span class="admin-mail-status is-ok">Webhook aktivní</span>':'<span class="admin-mail-status is-off">Webhook čeká na nastavení</span>';
+    var live=remote.configured&&!IS_LOCAL;
+    var status='<div class="admin-mail-bar">'+(remote.configured?'<span class="admin-mail-status is-ok">Ecomail propojen</span><span>'+esc(list.name||'')+(subscribers.subscribed!=null?' · '+n(subscribers.subscribed)+' aktivních':'')+'</span>':'<span class="admin-mail-status is-off">'+(remote.needsListId?'Vyber ID seznamu':'Ecomail čeká na nastavení v Netlify')+'</span>')+
+      (webhook.matches?'<span class="admin-mail-status is-ok">Webhook aktivní</span>':'<span class="admin-mail-status is-off">Webhook čeká na nastavení</span>')+
+      (d.sync_errors?'<span class="admin-mail-status is-warn">'+n(d.sync_errors)+' nesynchronizovaných</span>':'')+
+      '<span class="admin-top-spacer"></span><button class="admin-button secondary" type="button" data-email-sync'+(live?'':' disabled')+'>Synchronizovat souhlasy</button></div>';
     var availableLists=remote.needsListId&&Array.isArray(remote.lists)?'<div class="admin-mail-list-picker"><strong>Dostupné seznamy</strong>'+remote.lists.map(function(item){return '<div><span>'+esc(item.name||'Bez názvu')+'</span><code>ID '+esc(item.id)+'</code></div>';}).join('')+'<small>Vybrané ID vlož v Netlify jako ECOMAIL_LIST_ID.</small></div>':'';
-    ROOT.innerHTML=head('EMAILING','E-maily','Souhlasy a stav Ecomailu na jednom místě. Kampaně se připravují a odesílají v Ecomailu.')+
-      '<div class="admin-kpis admin-kpis-4">'+kpi('Souhlas s e-maily',d.consented_total,'z '+n(d.users_total)+' účtů')+kpi('Potenciální klienti',d.eligible_leads,'Free a aktivní')+kpi('V Ecomailu',d.synced_total,d.sync_errors?n(d.sync_errors)+' čeká na opravu':'synchronizováno')+kpi('Odhlášení',d.unsubscribed_total,'nikdy znovu automaticky')+'</div>'+
-      '<div class="admin-grid-2 admin-mail-grid"><section class="admin-section"><div class="admin-section-head"><h2>Propojení</h2>'+connection+'</div>'+
-      '<div class="admin-mail-actions"><div><strong>Ecomail</strong><small>'+(remote.configured?n(subscribers.subscribed)+' aktivních kontaktů v seznamu':(remote.needsListId?'API klíč funguje. Zbývá vybrat seznam.':'Doplň klíč a ID seznamu. Přihlášení dál obsluhuje Resend.'))+'</small></div><button class="admin-button" type="button" data-email-sync'+(remote.configured&&!IS_LOCAL?'':' disabled')+'>Synchronizovat souhlasy</button></div>'+availableLists+
-      '<p class="admin-notice">Synchronizují se jen lidé s výslovným souhlasem. Odhlášené kontakty se nereaktivují.</p><div class="admin-mail-actions"><div><strong>Výsledky kampaní</strong><small>'+webhookStatus+'</small></div><button class="admin-button admin-button-secondary" type="button" data-email-webhook'+(remote.configured&&!IS_LOCAL?'':' disabled')+'>'+(webhook.matches?'Obnovit webhook':'Nastavit webhook')+'</button></div><div class="admin-section-head"><h2>Automatizace v Ecomailu</h2><a class="admin-mail-link" href="https://app.ecomail.cz/" target="_blank" rel="noopener">Otevřít Ecomail</a></div>'+
-      '<div class="admin-mail-pipelines">'+(pipelines.length?pipelines.map(function(p){return '<div><strong>'+esc(p.name||('Automatizace '+p.id))+'</strong><small>ID '+esc(p.id)+'</small></div>';}).join(''):'<div class="admin-empty">Zatím nejsou načtené žádné automatizace.</div>')+'</div></section>'+
-      '<section class="admin-section"><div class="admin-section-head"><h2>Posledních 30 dní</h2><span>Ecomail webhook</span></div><div class="admin-mail-stats">'+mailStat('Doručeno',ev.delivered)+mailStat('Otevřeno',ev.opened)+mailStat('Proklik',ev.clicked)+mailStat('Odhlášeno',ev.unsubscribed)+mailStat('Nedoručeno',ev.bounced)+mailStat('Spam',ev.complained)+'</div></section></div>'+renderEmailList()+renderEmailSequenceEditor()+'<details class="admin-audience-wrap"><summary>Srovnání publika před sekvencí (kontrola, nic neposílá)</summary>'+renderAudience(remote)+'</details>';
+    var openRate=ev.delivered?Math.round(Number(ev.opened||0)/Number(ev.delivered)*100)+' %':'—';
+    ROOT.innerHTML=head('ECOMAIL · SOUHLASY · KAMPANĚ','E-maily','Napiš e-mail, pošli si test, vytvoř koncept v Ecomailu a odešli.','<button class="admin-button" type="button" data-email-new>+ Nový e-mail</button>')+status+availableLists+
+      '<div class="admin-kpis admin-kpis-4">'+kpi('Souhlas s e-maily',d.consented_total,'z '+n(d.users_total)+' účtů')+kpi('V Ecomailu',d.synced_total,d.sync_errors?n(d.sync_errors)+' čeká na opravu':'synchronizováno')+kpi('Otevřenost 30 dní',openRate,n(ev.opened)+' z '+n(ev.delivered)+' doručených · '+n(ev.clicked)+' prokliků')+kpi('Odhlášení',d.unsubscribed_total,n(ev.unsubscribed)+' za 30 dní · '+n(ev.bounced)+' bounce · '+n(ev.complained)+' spam')+'</div>'+
+      renderEmailList()+renderEmailSequenceEditor()+
+      '<details class="admin-audience-wrap"><summary>Srovnání publika před rozesláním (kontrola, nic neposílá)</summary>'+renderAudience(remote)+'</details>'+
+      '<details class="admin-audience-wrap"><summary>Propojení a automatizace v Ecomailu</summary><section class="admin-section"><p class="admin-notice">Synchronizují se jen lidé s výslovným souhlasem. Odhlášené kontakty se nereaktivují.</p>'+
+      '<div class="admin-mail-actions"><div><strong>Výsledky kampaní</strong><small>'+(webhook.matches?'Webhook aktivní':'Webhook čeká na nastavení')+'</small></div><button class="admin-button admin-button-secondary" type="button" data-email-webhook'+(live?'':' disabled')+'>'+(webhook.matches?'Obnovit webhook':'Nastavit webhook')+'</button></div>'+
+      '<div class="admin-section-head"><h3>Automatizace</h3><a class="admin-mail-link" href="https://app.ecomail.cz/" target="_blank" rel="noopener">Otevřít Ecomail</a></div><div class="admin-mail-pipelines">'+(pipelines.length?pipelines.map(function(p){return '<div><strong>'+esc(p.name||('Automatizace '+p.id))+'</strong><small>ID '+esc(p.id)+'</small></div>';}).join(''):'<div class="admin-empty">Zatím nejsou načtené žádné automatizace.</div>')+'</div></section></details>';
   }
   var VERDICT_LABEL={ok:'Pošle se',academy:'Člen Academy',admin:'Správce',test:'Testovací',typo:'Překlep',invalid:'Neplatná',duplicate:'Duplicita',unsubscribed_academy:'Odhlášen v Academy',bounce:'Bounce',blocked:'Blokovaný'};
   function verdictLabel(v){return VERDICT_LABEL[v]||v;}
   function renderAudience(remote) {
     var a=cache.audience,canRun=!!(remote&&remote.configured);
-    var headHtml='<div class="admin-section-head"><h2>Publikum pro první sekvenci</h2><div class="admin-row-actions"><button class="admin-button admin-button-secondary" type="button" data-audience-run'+(canRun?'':' disabled')+'>'+(a?'Srovnat znovu':'Srovnat publikum')+'</button></div></div>';
+    var headHtml='<div class="admin-section-head"><h2>Publikum pro sekvenci</h2><div class="admin-row-actions"><button class="admin-button admin-button-secondary" type="button" data-audience-run'+(canRun?'':' disabled')+'>'+(a?'Srovnat znovu':'Srovnat publikum')+'</button></div></div>';
     if(!a){
       return '<section class="admin-section admin-audience">'+headHtml+'<p class="admin-notice">Srovnání načte celý seznam z Ecomailu, porovná ho s účty v Academy a vyřadí členy Academy, správce, testovací adresy, překlepy, duplicity, odhlášené a nedoručitelné. Nic neposílá a nic nemění — jen řekne, komu se sekvence smí poslat.'+(canRun?'':' Funguje až po nasazení propojení s Ecomailem.')+'</p></section>';
     }
@@ -253,12 +450,10 @@
     var blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
   }
-  function mailStat(title,value){return '<div><span>'+esc(title)+'</span><strong>'+n(value)+'</strong></div>';}
 
   function activeEmailSequence() {
     var rows=cache.emailSequences||[];
-    var sequence=rows.find(function(item){return item.id===selectedEmailSequenceId;})||null;
-    return sequence;
+    return rows.find(function(item){return item.id===selectedEmailSequenceId;})||null;
   }
   function activeEmailStep(sequence) {
     var steps=(sequence&&Array.isArray(sequence.steps)?sequence.steps:[]).slice().sort(function(a,b){return n(a.position)-n(b.position);});
@@ -317,7 +512,7 @@
     var sequences=rows.filter(function(seq){return !isSingleEmail(seq);});
     var list=singles.length?singles.map(function(seq){var st=seq.steps[0]||{};var when=emailDate(seq);return '<div class="admin-email-row'+(seq.id===selectedEmailSequenceId?' is-active':'')+'"><div class="admin-email-row-main"><strong>'+esc(st.subject||'Bez předmětu')+'</strong><small>'+esc(when?date(when,true):'')+(st.ecomail_segment?' · '+esc(st.ecomail_segment):'')+'</small>'+campaignStatsLine(st)+'</div><div class="admin-email-row-side">'+emailStatusChip(st)+'<button class="admin-button secondary" type="button" data-email-open="'+esc(seq.id)+'">'+(seq.id===selectedEmailSequenceId?'Otevřeno':'Otevřít')+'</button></div></div>';}).join(''):'<div class="admin-empty">Zatím žádný e-mail. Klikni na „Nový e-mail“, napiš ho, pošli si test a pak ho pošli lidem.</div>';
     var seqHtml=sequences.length?'<details class="admin-email-seqs"><summary>Sekvence pro automatizace ('+sequences.length+')</summary>'+sequences.map(function(seq){return '<div class="admin-email-row"><div class="admin-email-row-main"><strong>'+esc(seq.name)+'</strong><small>'+n((seq.steps||[]).length)+' e-mailů · '+esc(audienceLabel(seq.audience))+'</small></div><div class="admin-email-row-side"><span class="admin-chip">'+esc(seq.status==='draft'?'Koncept':seq.status)+'</span><button class="admin-button secondary" type="button" data-email-open="'+esc(seq.id)+'">Otevřít</button></div></div>';}).join('')+'</details>':'';
-    return '<section class="admin-section admin-email-list"><div class="admin-section-head"><h2>E-maily</h2><button class="admin-button" type="button" data-email-new>+ Nový e-mail</button></div><p class="admin-notice">Nejnovější nahoře. Každý e-mail: napsat → test na sebe → koncept v Ecomailu pro segment → odeslat. Statistiky se doplní po odeslání.</p>'+list+seqHtml+'</section>';
+    return '<section class="admin-section admin-email-list"><div class="admin-section-head"><h2>Odeslané a koncepty</h2></div>'+list+seqHtml+'</section>';
   }
 
   function collectEmailEditor() {
@@ -341,228 +536,22 @@
     var msg=document.querySelector('[data-email-save-msg]');if(msg&&showMessage){msg.textContent=IS_LOCAL?'Pouze náhled · změny platí do obnovení stránky':'Uloženo ✓';msg.className='admin-inline-msg is-ok';}
   }
 
-  // Čísla, která vedou k akci (nahoře nad CRM) — ne dekorativní analytika.
-  function kpiRow() {
-    var d = cache.overview || {};
-    return '<div class="admin-kpis">'+
-      kpi('Všichni lidé',d.users_total,'+'+n(d.users_new_7d)+' za 7 dní')+
-      kpi('Aktivní za 7 dní',d.active_7d,'ověřená aktivita')+
-      kpi('Academy',d.academy_total,'z '+n(d.free_total)+' Free')+
-      kpi('Lidé s auditem',d.audit_30d,'za posledních 30 dní')+
-      kpi('Lidé v nástrojích',Number(d.quiz_30d||0)+Number(d.calculator_30d||0),n(d.quiz_30d)+' kvíz · '+n(d.calculator_30d)+' sazba')+
-    '</div>';
-  }
-  function renderActivity() {
-    var events = (cache.overview && cache.overview.recent_events) || [];
-    ROOT.innerHTML = head('SIGNÁL','Aktivita','Živý přehled toho, co lidé v Academy dělají.')+
-      '<div class="admin-events admin-events-full">'+(events.length?events.map(eventRow).join(''):'<div class="admin-empty">Zatím bez událostí.</div>')+'</div>';
-  }
-  function kpi(title,value,note){return '<div class="admin-kpi"><span>'+esc(title)+'</span><strong>'+n(value)+'</strong><small>'+esc(note)+'</small></div>';}
-  function eventRow(e){return '<div class="admin-event"><i></i><div><strong>'+esc(label(e.event_name))+'</strong><small>'+esc(e.email||e.source||'anonymní návštěvník')+'</small></div><time>'+esc(rel(e.created_at))+'</time></div>';}
-
-  function tierSelect(email, current) {
-    return '<select class="admin-quick-tier" data-quick-tier="'+esc(email)+'" title="Změnit tier">'+
-      ['free','knihovna','academy'].map(function(t){ return '<option value="'+t+'"'+((current||'free')===t?' selected':'')+'>'+t+'</option>'; }).join('')+
-      '</select>';
-  }
-  function blockButton(email, status) {
-    var blocked = status === 'blocked';
-    return '<button class="admin-quick-block'+(blocked?' is-blocked':'')+'" type="button" data-quick-block="'+esc(email)+'">'+(blocked?'Odblokovat':'Zablokovat')+'</button>';
-  }
-  function linkButton(email) {
-    return '<button class="admin-quick-link" type="button" data-quick-link="'+esc(email)+'" title="Poslat přihlašovací odkaz" aria-label="Poslat odkaz">✉</button>';
-  }
-  // Malé auto-štítky — jen užitečné signály, minimalisticky.
-  function userBadges(u) {
-    var b = [];
-    if (u.tier === 'academy') b.push('<span class="admin-badge is-academy">Academy</span>');
-    else if (u.tier === 'knihovna') b.push('<span class="admin-badge is-db">Databáze</span>');
-    var created = u.created_at ? Date.now() - new Date(u.created_at).getTime() : 0;
-    if (created > 0 && created < 7 * 86400000) b.push('<span class="admin-badge is-new">Nový</span>');
-    var seen = u.last_seen_at ? Date.now() - new Date(u.last_seen_at).getTime() : Infinity;
-    if (seen > 30 * 86400000) b.push('<span class="admin-badge is-idle">Neaktivní</span>');
-    return b.length ? '<span class="admin-badges">' + b.join('') + '</span>' : '';
-  }
-  function opts(list, current) { return list.map(function(x){ return '<option value="'+x+'"'+((current||list[0])===x?' selected':'')+'>'+x+'</option>'; }).join(''); }
-  function usersTable(users) {
-    if (!users.length) return '<div class="admin-empty">Nikdo neodpovídá filtru.</div>';
-    return '<div class="admin-table-wrap"><table class="admin-table admin-people-table"><thead><tr><th>Člověk</th><th>Tier</th><th>Stav</th><th>Přidal se</th><th>Naposledy</th></tr></thead><tbody>'+users.map(function(u){
-      var name=u.display_name||(u.instagram?'@'+u.instagram:'Bez jména');
-      return '<tr class="admin-people-row" data-email="'+esc(u.email)+'"><td><span class="admin-person"><strong>'+esc(name)+'</strong><small>'+esc(u.email)+'</small>'+userBadges(u)+'</span></td><td>'+chip(u.tier||'free')+'</td><td>'+chip(u.account_status||'active')+'</td><td>'+esc(date(u.created_at,false))+'</td><td>'+esc(rel(u.last_seen_at))+'</td></tr>';
-    }).join('')+'</tbody></table></div>';
-  }
-  // Inline rozbalení řádku — úprava člověka rovnou v tabulce, bez nové stránky.
-  async function toggleUser(email, rowEl) {
-    var next = rowEl.nextElementSibling;
-    if (next && next.classList.contains('admin-detail-row')) { next.remove(); rowEl.classList.remove('is-open'); return; }
-    document.querySelectorAll('.admin-detail-row').forEach(function(r){ r.remove(); });
-    document.querySelectorAll('.admin-people-row.is-open').forEach(function(r){ r.classList.remove('is-open'); });
-    var u;
-    if (IS_LOCAL) { u = cache.users.find(function(x){return x.email===email;}) || {}; }
-    else { try { var detail = await rpc('admin_get_user_v2',{p_target:email}); u = (detail&&detail.user)||{}; } catch(err){ fail(err); return; } }
-    var tools=[u.quiz_completed?'Kvíz':'',u.audit_completed?'Audit':'',u.calculator_completed?'Sazba':''].filter(Boolean).join(' · ')||'—';
-    var tr = document.createElement('tr');
-    tr.className = 'admin-detail-row';
-    tr.innerHTML = '<td colspan="'+rowEl.children.length+'"><div class="admin-inline-detail">'+
-      '<div class="admin-inline-meta">'+
-        '<span>Přidal se<strong>'+esc(date(u.created_at,true))+'</strong></span>'+
-        '<span>Instagram<strong>'+esc(u.instagram?'@'+u.instagram:'—')+'</strong></span>'+
-        '<span>Poslední aktivita<strong>'+esc(rel(u.last_seen_at))+'</strong></span>'+
-        '<span>Nástroje<strong>'+esc(tools)+'</strong></span>'+
-      '</div>'+
-      '<div class="admin-inline-fields">'+
-        '<label>Tier<select class="admin-select" data-d="tier">'+opts(['free','knihovna','academy'],u.tier||'free')+'</select></label>'+
-        '<label>Role<select class="admin-select" data-d="role">'+opts(['member','moderator','admin'],u.role||'member')+'</select></label>'+
-        '<label>Stav<select class="admin-select" data-d="status">'+opts(['active','pending','paused','blocked'],u.account_status||'active')+'</select></label>'+
-        '<button class="admin-button" type="button" data-detail-save="'+esc(email)+'">Uložit změny</button>'+
-        '<button class="admin-quick-link" type="button" data-quick-link="'+esc(email)+'" title="Poslat přihlašovací odkaz">✉ Odkaz</button>'+
-      '</div>'+
-      '<span class="admin-inline-msg" data-detail-msg></span>'+
-    '</div></td>';
-    rowEl.after(tr);
-    rowEl.classList.add('is-open');
-  }
-
-  function renderPeople() {
-    ROOT.innerHTML = head('CRM','Lidé','Kdo přišel, kde se nachází a co už v Academy udělal.')+
-      kpiRow()+
-      '<form class="admin-addform" id="admin-add-user"><span class="admin-addform-label">Přidat člověka</span>'+
-        '<input class="admin-input" name="email" type="email" required placeholder="email@clovek.cz">'+
-        '<select class="admin-select" name="tier"><option value="free">free</option><option value="knihovna">knihovna (databáze)</option><option value="academy">academy (plný přístup)</option></select>'+
-        '<button class="admin-button" type="submit">Přidat / nastavit</button>'+
-        '<span class="admin-addform-msg" id="admin-add-msg"></span>'+
-      '</form>'+
-      '<div class="admin-filters"><input class="admin-input" id="admin-user-search" placeholder="Hledat e-mail, jméno nebo Instagram"><select class="admin-select" id="admin-user-tier"><option value="">Všechny tiery</option><option>free</option><option>knihovna</option><option>academy</option></select><select class="admin-select" id="admin-user-status"><option value="">Všechny stavy</option><option>active</option><option>pending</option><option>paused</option><option>blocked</option></select><button class="admin-button" id="admin-user-filter">Filtrovat</button></div>'+usersTable(cache.users);
-  }
-
-  // Kolik člověk měsíčně točí — audit i kalkulačka to počítají, jen jinak se to jmenuje.
-  function mesicniPrijem(row) {
-    var r = row.result || {};
-    if (row.tool === 'audit') return Number(r.current || 0);
-    if (row.tool === 'hourly_calculator') return Number(r.monthly_revenue || 0);
-    return 0;
-  }
-  function potencial(row) {
-    var r = row.result || {};
-    return row.tool === 'audit' ? Number(r.potential || 0) : 0;
-  }
-  function kc(value) { return value ? n(Math.round(value)) + ' Kč' : '—'; }
-  function toolEmail(row) { return row.user_email || row.claimed_email || ''; }
-
-  function medianOf(list) {
-    if (!list.length) return 0;
-    var a = list.slice().sort(function (x, y) { return x - y; });
-    var mid = Math.floor(a.length / 2);
-    return a.length % 2 ? a[mid] : Math.round((a[mid - 1] + a[mid]) / 2);
-  }
-
-  // Souhrn, který vede k akci: kdo má na Academy peníze už teď.
-  function moneyRow(rows) {
-    var prijmy = rows.map(mesicniPrijem).filter(function (v) { return v > 0; });
-    if (!prijmy.length) return '';
-    var bohati = prijmy.filter(function (v) { return v >= 50000; }).length;
-    var gap = rows.reduce(function (sum, r) { return sum + Math.max(0, potencial(r) - mesicniPrijem(r)); }, 0);
-    return '<div class="admin-kpis admin-kpis-4">' +
-      kpi('Uvedlo příjem', prijmy.length, 'z ' + n(rows.length) + ' vyplnění') +
-      kpi('Medián měsíčně', medianOf(prijmy), 'Kč / měsíc') +
-      kpi('Nad 50 000 Kč', bohati, 'na Academy mají') +
-      kpi('Nevyužitý potenciál', Math.round(gap), 'Kč / měsíc dohromady') +
-    '</div>';
-  }
-
-  function renderTools() {
-    var counts = { quiz:0, audit:0, hourly_calculator:0 };
-    cache.tools.forEach(function (x) { counts[x.tool] = (counts[x.tool] || 0) + 1; });
-    var rows = cache.tools.slice();
-    if (toolSort === 'money') rows.sort(function (a, b) { return mesicniPrijem(b) - mesicniPrijem(a); });
-    else rows.sort(function (a, b) { return new Date(b.completed_at) - new Date(a.completed_at); });
-
-    ROOT.innerHTML = head('SIGNÁLY ZÁJMU','Nástroje','Kdo co vyplnil, kolik točí a kde má rezervu. Seřaď podle příjmu a máš seznam lidí, kterým dává smysl nabídnout Academy.')+
-      '<div class="admin-tools-summary">'+
-        toolTab('', 'Všechny výsledky', cache.tools.length)+
-        toolTab('audit', 'Audit', counts.audit)+
-        toolTab('quiz', 'Kvíz', counts.quiz)+
-        toolTab('hourly_calculator', 'Hodinovka', counts.hourly_calculator)+
-      '</div>'+
-      moneyRow(cache.tools)+
-      '<div class="admin-sortbar">Řadit podle: '+
-        '<button type="button" data-tool-sort="money"'+(toolSort==='money'?' class="is-on"':'')+'>nejvyššího příjmu</button>'+
-        '<button type="button" data-tool-sort="date"'+(toolSort==='date'?' class="is-on"':'')+'>data vyplnění</button>'+
-      '</div>'+
-      '<p class="admin-notice">Klikni na řádek a uvidíš všechno, co člověk vyplnil. Výsledky bez ověřené relace jsou označené jako neověřený e-mail.</p>'+
-      toolsTable(rows);
-  }
-  function toolTab(id, label, count) {
-    return '<button'+(toolFilter===id?' class="active"':'')+' data-tool-filter="'+id+'"><span>'+esc(label)+'</span><strong>'+n(count)+'</strong></button>';
-  }
-
-  function toolsTable(rows) {
-    if (!rows.length) return '<div class="admin-empty">Zatím žádná dokončení.</div>';
-    return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'+
-      '<th>Nástroj</th><th>Člověk</th><th>Měsíčně teď</th><th>Potenciál</th><th>Situace</th><th>Dokončeno</th>'+
-      '</tr></thead><tbody>'+rows.map(toolRow).join('')+'</tbody></table></div>';
-  }
-
-  function toolRow(x) {
-    var r = x.result || {};
-    var email = toolEmail(x);
-    var situace = x.tool === 'quiz'
-      ? ((r.level_name || r.level || 'kvíz') + ' · ' + (r.score || 0) + '/' + (r.total || '—') + (r.passed ? ' ✓' : ''))
-      : x.tool === 'audit'
-        ? ([r.level, r.goal, r.brake].filter(Boolean).join(' · ') || 'audit dokončen')
-        : (r.hourly ? Math.round(r.hourly).toLocaleString('cs-CZ') + ' Kč/h' : 'výpočet dokončen');
-    var prijem = mesicniPrijem(x), pot = potencial(x);
-    return '<tr data-tool-row="'+esc(x.id)+'">'+
-      '<td>'+chip(typeLabel(x.tool))+'</td>'+
-      '<td><span class="admin-person"><strong>'+esc(email || 'Anonymní')+'</strong><small>'+(x.user_email?'ověřeno':'neověřený e-mail')+'</small></span></td>'+
-      '<td'+(prijem>=50000?' class="is-hot"':'')+'>'+kc(prijem)+'</td>'+
-      '<td>'+kc(pot)+'</td>'+
-      '<td>'+esc(situace)+'</td>'+
-      '<td>'+esc(date(x.completed_at,true))+'</td>'+
-    '</tr>';
-  }
-
-  // Rozklikni řádek → uvidíš úplně všechno, co člověk zadal.
-  var POLE = {
-    name:'Jméno', instagram:'Instagram', industries:'Obory', level:'Úroveň', level_name:'Úroveň', average_price:'Průměrná cena zakázky',
-    jobs_per_month:'Zakázek měsíčně', hours_per_week:'Hodin týdně', problems:'Co ho brzdí',
-    goal:'Cíl', brake:'Hlavní brzda', current:'Měsíčně teď', potential:'Potenciál měsíčně',
-    annual_gap:'Rozdíl za rok', hourly:'Hodinovka', daily:'Denní sazba',
-    monthly_revenue:'Měsíční obrat', monthly_taxes_and_levies:'Daně a odvody měsíčně',
-    billable_hours:'Fakturovatelných hodin', score:'Skóre', total:'Otázek', passed:'Prošel',
-    utm_source:'Zdroj návštěvy', utm_medium:'Kanál', utm_campaign:'Kampaň', utm_content:'Varianta odkazu'
-  };
-  var PENIZE = { average_price:1, current:1, potential:1, annual_gap:1, hourly:1, daily:1, monthly_revenue:1, monthly_taxes_and_levies:1 };
-  function toggleTool(id, rowEl) {
-    var open = rowEl.nextElementSibling;
-    if (open && open.classList.contains('admin-inline-detail-row')) { open.remove(); return; }
-    document.querySelectorAll('.admin-inline-detail-row').forEach(function (el) { el.remove(); });
-    var item = cache.tools.find(function (x) { return String(x.id) === String(id); });
-    if (!item) return;
-    var r = item.result || {};
-    var radky = Object.keys(r).map(function (k) {
-      var v = r[k];
-      if (v === null || v === '' || (Array.isArray(v) && !v.length)) return '';
-      if (Array.isArray(v)) v = v.join(', ');
-      else if (typeof v === 'boolean') v = v ? 'ano' : 'ne';
-      else if (PENIZE[k] && Number(v)) v = n(Math.round(Number(v))) + ' Kč';
-      return '<div class="admin-kv"><span>'+esc(POLE[k] || k)+'</span><strong>'+esc(v)+'</strong></div>';
-    }).join('');
-    var tr = document.createElement('tr');
-    tr.className = 'admin-inline-detail-row';
-    tr.innerHTML = '<td colspan="6"><div class="admin-inline-detail"><div class="admin-kv-grid">'+
-      (radky || '<div class="admin-kv"><span>Bez detailu</span><strong>—</strong></div>')+'</div>'+
-      (toolEmail(item) ? '<div class="admin-inline-fields"><a class="admin-button secondary" href="mailto:'+esc(toolEmail(item))+'">Napsat e-mail</a></div>' : '')+
-    '</div></td>';
-    rowEl.parentNode.insertBefore(tr, rowEl.nextSibling);
-  }
-
+  // ── Obsah ───────────────────────────────────────────────────────────────
+  var CONTENT_STATUS={draft:'Koncept',scheduled:'Naplánováno',published:'Publikováno',archived:'Archiv'};
   function renderContent() {
-    ROOT.innerHTML = head('PUBLIKOVÁNÍ','Obsah','Výzvy, novinky a webináře na jednom místě.')+
-      '<form class="admin-form" id="admin-content-form"><input type="hidden" name="id"><label>Typ<select class="admin-select" name="type"><option value="weekly_challenge">Týdenní výzva</option><option value="news">Novinka</option><option value="webinar">Webinář</option></select></label><label class="span-2">Název<input class="admin-input" name="title" required maxlength="160"></label><label>Stav<select class="admin-select" name="status"><option value="draft">Koncept</option><option value="scheduled">Naplánováno</option><option value="published">Publikováno</option><option value="archived">Archiv</option></select></label><label>Pro koho<select class="admin-select" name="audience"><option value="all">Všichni</option><option value="free">Free</option><option value="academy">Academy</option></select></label><label>KP<input class="admin-input" type="number" min="0" max="10000" name="xp" value="0"></label><label class="span-3">Text<textarea class="admin-textarea" name="body" maxlength="4000"></textarea></label><label>Začátek<input class="admin-input" type="datetime-local" name="starts_at"></label><label>Odkaz<input class="admin-input" name="link_url" placeholder="https://…"></label><div class="admin-form-actions"><span class="admin-inline-msg" id="admin-content-msg"></span><button class="admin-button secondary" type="button" data-content-reset hidden>Zrušit úpravu</button><button class="admin-button" type="submit">Uložit obsah</button></div></form>'+contentTable(cache.content);
+    var groups=[['weekly_challenge','Týdenní výzvy'],['webinar','Webináře'],['news','Novinky']];
+    var lists=groups.map(function(g){
+      var rows=(cache.content||[]).filter(function(x){return x.type===g[0];}).sort(function(a,b){return String(b.starts_at||b.created_at||'').localeCompare(String(a.starts_at||a.created_at||''));});
+      return '<section class="admin-card"><div class="admin-card-head"><h2>'+esc(g[1])+'</h2><span>'+n(rows.length)+'</span></div>'+(rows.length?rows.map(function(x){
+        var live=x.status==='published'&&(!x.ends_at||new Date(x.ends_at)>new Date())&&(!x.starts_at||new Date(x.starts_at)<=new Date());
+        return '<div class="admin-list-row"><div><strong>'+esc(x.title)+'</strong><small>'+esc([x.audience==='all'?'Všichni':x.audience==='free'?'Free':'Academy',x.xp?n(x.xp)+' XP':'',x.starts_at?date(x.starts_at,true):'',x.ends_at?'do '+date(x.ends_at):''].filter(Boolean).join(' · '))+'</small></div>'+chip(live?'ok':x.status,live?'Běží':CONTENT_STATUS[x.status]||x.status)+'<div class="admin-row-actions"><button class="admin-button secondary" type="button" data-content-edit="'+esc(x.id)+'">Upravit</button><button class="admin-button danger" type="button" data-content-delete="'+esc(x.id)+'">Smazat</button></div></div>';
+      }).join(''):'<div class="admin-empty">Nic tu není.</div>')+'</section>';
+    }).join('');
+    ROOT.innerHTML = head('VÝZVY · WEBINÁŘE · NOVINKY','Obsah','Vlevo co běží a co je na řadě, vpravo úprava.','<button class="admin-button" type="button" data-content-reset>+ Nový obsah</button>')+
+      '<div class="admin-split admin-split-content"><div class="admin-stack">'+lists+'</div>'+
+      '<form class="admin-card admin-content-form" id="admin-content-form"><input type="hidden" name="id"><span class="admin-eyebrow" data-content-mode>NOVÝ OBSAH</span><label>Typ<select class="admin-select" name="type"><option value="weekly_challenge">Týdenní výzva</option><option value="webinar">Webinář</option><option value="news">Novinka</option></select></label><label>Název<input class="admin-input" name="title" required maxlength="160"></label><label>Text<textarea class="admin-textarea" name="body" maxlength="4000" rows="4"></textarea></label><div class="admin-card-fields"><label>Začátek<input class="admin-input" type="datetime-local" name="starts_at"></label><label>Konec<input class="admin-input" type="datetime-local" name="ends_at"></label><label>Pro koho<select class="admin-select" name="audience"><option value="all">Všichni</option><option value="free">Free</option><option value="academy">Academy</option></select></label><label>XP<input class="admin-input" type="number" min="0" max="10000" name="xp" value="0"></label><label>Stav<select class="admin-select" name="status"><option value="draft">Koncept</option><option value="scheduled">Naplánováno</option><option value="published">Publikováno</option><option value="archived">Archiv</option></select></label></div><label>Odkaz<input class="admin-input" name="link_url" placeholder="https://…"></label><div class="admin-form-actions"><span class="admin-inline-msg" id="admin-content-msg"></span><button class="admin-button" type="submit">Uložit obsah</button></div></form></div>';
     wireContentForm();
   }
-
   // Formulář obsahu má vlastní posluchač (ne jen delegovaný), aby prohlížeč nikdy
   // neprovedl nativní odeslání a nepřenačetl celou administraci.
   function wireContentForm() {
@@ -570,25 +559,21 @@
     if (!form) return;
     form.addEventListener('submit', function (e) { e.preventDefault(); saveContent(form); });
   }
-
   function contentMsg(text, kind) {
     var el = document.getElementById('admin-content-msg');
     if (el) { el.textContent = text || ''; el.className = 'admin-inline-msg' + (kind ? ' is-' + kind : ''); }
   }
-
   async function saveContent(form) {
     var f = new FormData(form);
     var title = String(f.get('title') || '').trim();
     if (!title) { contentMsg('Doplň název.', 'err'); form.elements.title.focus(); return; }
     var button = form.querySelector('button[type="submit"]');
     var row = {
-      id: f.get('id') || null,
-      type: f.get('type'),
-      title: title,
+      id: f.get('id') || null, type: f.get('type'), title: title,
       body: String(f.get('body') || '').trim() || null,
-      status: f.get('status'),
-      audience: f.get('audience'),
+      status: f.get('status'), audience: f.get('audience'),
       starts_at: f.get('starts_at') ? new Date(f.get('starts_at')).toISOString() : null,
+      ends_at: f.get('ends_at') ? new Date(f.get('ends_at')).toISOString() : null,
       xp: Number(f.get('xp') || 0),
       link_url: String(f.get('link_url') || '').trim() || null
     };
@@ -603,7 +588,7 @@
         await rpc('admin_upsert_content', {
           p_id: row.id, p_type: row.type, p_title: row.title, p_body: row.body,
           p_status: row.status, p_audience: row.audience, p_starts_at: row.starts_at,
-          p_ends_at: null, p_xp: row.xp, p_link_url: row.link_url, p_metadata: {}
+          p_ends_at: row.ends_at, p_xp: row.xp, p_link_url: row.link_url, p_metadata: {}
         });
         await loadContent();
       }
@@ -615,9 +600,6 @@
       contentMsg('Nepovedlo se uložit: ' + ((err && (err.message || err.hint)) || 'neznámá chyba'), 'err');
     }
   }
-
-  function contentTable(rows){if(!rows.length)return '<div class="admin-empty">Zatím žádný spravovaný obsah.</div>';return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Typ</th><th>Název</th><th>Stav</th><th>Publikum</th><th>Termín</th><th></th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td>'+esc(typeLabel(x.type))+'</td><td><span class="admin-person"><strong>'+esc(x.title)+'</strong><small>'+esc((x.body||'').slice(0,90))+'</small></span></td><td>'+chip(x.status)+'</td><td>'+esc(x.audience)+'</td><td>'+esc(date(x.starts_at,true))+'</td><td><div class="admin-row-actions"><button class="admin-button secondary" type="button" data-content-edit="'+esc(x.id)+'">Upravit</button><button class="admin-button danger" type="button" data-content-delete="'+esc(x.id)+'">Smazat</button></div></td></tr>';}).join('')+'</tbody></table></div>';}
-
   function localDateTime(value) {
     if (!value) return '';
     var d = new Date(value), offset = d.getTimezoneOffset() * 60000;
@@ -626,49 +608,27 @@
   function resetContentForm() {
     var form = document.getElementById('admin-content-form'); if (!form) return;
     form.reset(); form.elements.id.value = ''; form.elements.xp.value = '0';
-    form.querySelector('[data-content-reset]').hidden = true;
+    form.querySelector('[data-content-mode]').textContent = 'NOVÝ OBSAH';
+    form.elements.title.focus();
   }
   function editContent(id) {
     var item = cache.content.find(function(x){return x.id===id;}), form = document.getElementById('admin-content-form');
     if (!item || !form) return;
-    form.elements.id.value=item.id;form.elements.type.value=item.type;form.elements.title.value=item.title||'';form.elements.status.value=item.status;form.elements.audience.value=item.audience;form.elements.xp.value=item.xp||0;form.elements.body.value=item.body||'';form.elements.starts_at.value=localDateTime(item.starts_at);form.elements.link_url.value=item.link_url||'';
-    form.querySelector('[data-content-reset]').hidden=false;form.scrollIntoView({behavior:'smooth',block:'start'});form.elements.title.focus();
+    form.elements.id.value=item.id;form.elements.type.value=item.type;form.elements.title.value=item.title||'';form.elements.status.value=item.status;form.elements.audience.value=item.audience;form.elements.xp.value=item.xp||0;form.elements.body.value=item.body||'';form.elements.starts_at.value=localDateTime(item.starts_at);form.elements.ends_at.value=localDateTime(item.ends_at);form.elements.link_url.value=item.link_url||'';
+    form.querySelector('[data-content-mode]').textContent='ÚPRAVA';form.scrollIntoView({behavior:'smooth',block:'start'});form.elements.title.focus();
   }
 
-  function renderCoupons() {
-    ROOT.innerHTML = head('NABÍDKY','Kupóny','Kódy, limity a reálné použití bez hledání v databázi.')+
-      '<form class="admin-form" id="admin-coupon-form"><label>Kód<input class="admin-input" name="code" required maxlength="40" placeholder="NIKON20"></label><label>Sleva %<input class="admin-input" type="number" name="percent" min="1" max="100" required></label><label class="span-2">Popis<input class="admin-input" name="description" maxlength="160"></label><label>Produkty<select class="admin-select" name="products"><option value="">Všechny</option><option value="academy">Academy</option><option value="databaze">Databáze</option><option value="presets">Presety</option></select></label><label>Max. použití<input class="admin-input" type="number" name="max_uses" min="1"></label><div class="admin-form-actions"><button class="admin-button" type="submit">Přidat kupón</button></div></form>'+couponsTable(cache.coupons);
-  }
-  function couponsTable(rows){if(!rows.length)return '<div class="admin-empty">Zatím žádné kupóny.</div>';return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Kód</th><th>Sleva</th><th>Produkty</th><th>Použití</th><th>Stav</th><th></th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td><strong>'+esc(x.code)+'</strong></td><td>'+n(x.percent_off)+' %</td><td>'+esc((x.products||[]).join(', ')||'všechny')+'</td><td>'+n(x.used_count)+(x.max_uses?' / '+n(x.max_uses):' / ∞')+'</td><td><button class="admin-status-button'+(x.active?'':' is-off')+'" type="button" data-coupon-toggle="'+esc(x.code)+'">'+esc(x.active?'Aktivní':'Vypnutý')+'</button></td><td><button class="admin-button danger" type="button" data-coupon-delete="'+esc(x.code)+'">Smazat</button></td></tr>';}).join('')+'</tbody></table></div>';}
-
-  async function openUser(email) {
-    var detail;
-    if (IS_LOCAL) { var user=cache.users.find(function(x){return x.email===email;}); detail={user:user,submissions:cache.tools.filter(function(x){return (x.user_email||x.claimed_email)===email;}),events:[]}; }
-    else detail=await rpc('admin_get_user_v2',{p_target:email});
-    var u=detail&&detail.user||{};
-    DIALOG_CONTENT.innerHTML='<div class="admin-detail"><div class="admin-detail-top"><div><span class="admin-eyebrow">DETAIL ČLOVĚKA</span><h2>'+esc(u.display_name||u.email)+'</h2><p>'+esc(u.email||'')+'</p></div><button class="admin-dialog-close" type="button" aria-label="Zavřít">×</button></div><div class="admin-detail-grid"><label>Přidal se<strong>'+esc(date(u.created_at,true))+'</strong></label><label>Poslední aktivita<strong>'+esc(rel(u.last_seen_at))+'</strong></label><label>Instagram<strong>'+esc(u.instagram?'@'+u.instagram:'—')+'</strong></label><label>Tier<select class="admin-select" id="detail-tier"><option>free</option><option>knihovna</option><option>academy</option></select></label><label>Role<select class="admin-select" id="detail-role"><option>member</option><option>moderator</option><option>admin</option></select></label><label>Stav<select class="admin-select" id="detail-status"><option>active</option><option>pending</option><option>paused</option><option>blocked</option></select></label></div><div class="admin-form-actions"><button class="admin-button" id="detail-save" type="button">Uložit změny</button></div><h3>Výsledky nástrojů</h3><pre class="admin-json">'+esc(JSON.stringify(detail.submissions||[],null,2))+'</pre><h3>Poslední události</h3><pre class="admin-json">'+esc(JSON.stringify(detail.events||[],null,2))+'</pre></div>';
-    DIALOG_CONTENT.querySelector('#detail-tier').value=u.tier||'free';DIALOG_CONTENT.querySelector('#detail-role').value=u.role||'member';DIALOG_CONTENT.querySelector('#detail-status').value=u.account_status||'active';
-    DIALOG_CONTENT.querySelector('.admin-dialog-close').onclick=function(){DIALOG.close();};
-    DIALOG_CONTENT.querySelector('#detail-save').onclick=async function(){if(IS_LOCAL){DIALOG.close();return;}await rpc('admin_set_user_v2',{p_target:u.email,p_tier:document.getElementById('detail-tier').value,p_role:document.getElementById('detail-role').value,p_status:document.getElementById('detail-status').value});DIALOG.close();await loadUsers();renderPeople();};
-    DIALOG.showModal();
-  }
-
+  // ── Události ────────────────────────────────────────────────────────────
   document.addEventListener('click',async function(e){
-    var viewButton=e.target.closest('[data-admin-view]');if(viewButton){view=viewButton.getAttribute('data-admin-view');ROOT.innerHTML='<div class="admin-loading">Načítám…</div>';try{if(view==='people'){if(!cache.overview)await loadOverview();if(!cache.users.length)await loadUsers();}if(view==='activity'&&!cache.overview)await loadOverview();if(view==='tools'&&!cache.tools.length)await loadTools();if(view==='content'&&!cache.content.length)await loadContent();if(view==='coupons'&&!cache.coupons.length)await loadCoupons();if(view==='emailing'&&!cache.emailing)await loadEmailing();render();}catch(err){fail(err);}return;}
+    var viewButton=e.target.closest('[data-admin-view]');if(viewButton){go(viewButton.getAttribute('data-admin-view'));return;}
+    var gotoBtn=e.target.closest('[data-goto]');if(gotoBtn){var parts=gotoBtn.getAttribute('data-goto').split(':');go(parts[0],parts[1]);return;}
+    var openP=e.target.closest('[data-open-person]');if(openP){selectedPerson=openP.getAttribute('data-open-person');peopleSeg='all';peopleQuery='';go('people');return;}
     var refreshBtn=e.target.closest('[data-admin-refresh]');
     if(refreshBtn){
       refreshBtn.disabled=true; refreshBtn.classList.add('is-loading');
       var lbl=refreshBtn.querySelector('[data-refresh-label]'); if(lbl) lbl.textContent='Načítám…';
       try{
-        if(IS_LOCAL){ demoData(); }
-        else {
-          if(view==='people'){await loadOverview();await loadUsers();}
-          if(view==='activity')await loadOverview();
-          if(view==='tools')await loadTools(toolFilter);
-          if(view==='content')await loadContent();
-          if(view==='coupons')await loadCoupons();
-          if(view==='emailing')await loadEmailing();
-        }
+        if(IS_LOCAL){ demoData(); } else { await ensureData(view,true); }
         render();
         // render() postavil tlačítko znovu — potvrzení zapiš do toho nového.
         var fresh=document.querySelector('[data-admin-refresh]');
@@ -693,12 +653,19 @@
       }
       return;
     }
+    // Lidé
+    var seg=e.target.closest('[data-seg]');if(seg){peopleSeg=seg.getAttribute('data-seg');renderPeople();return;}
+    var personRow=e.target.closest('[data-person]');if(personRow&&!e.target.closest('a,button,select')){openPerson(personRow.getAttribute('data-person'));return;}
+    var cardSave=e.target.closest('[data-card-save]');if(cardSave){saveCard(cardSave.getAttribute('data-card-save'),cardSave);return;}
+    if(e.target.closest('[data-people-csv]')){exportPeople();return;}
+    var qlink=e.target.closest('[data-quick-link]');if(qlink){var lEmail=qlink.getAttribute('data-quick-link');qlink.disabled=true;try{if(IS_LOCAL){alert('(Lokálně) Přihlašovací odkaz by šel na: '+lEmail);}else{var KA=window.KenjiAuth;if(KA&&KA.requestMagicLink){var r=await KA.requestMagicLink(lEmail,{redirect:'index.html'});if(!r||!r.ok)throw new Error('nepovedlo se odeslat');}alert('Přihlašovací odkaz odeslán na '+lEmail);}}catch(err){alert('Odkaz se nepovedlo odeslat: '+((err&&err.message)||'chyba'));}qlink.disabled=false;return;}
+    // E-maily
     var audienceRun=e.target.closest('[data-audience-run]');if(audienceRun){audienceRun.disabled=true;audienceRun.textContent='Srovnávám…';try{if(IS_LOCAL){cache.audience=demoAudience();}else{cache.audience=await adminEmailApi('POST',{action:'audience-audit'});}renderEmailing();}catch(err){alert('Srovnání se nepovedlo: '+errText(err));audienceRun.disabled=false;audienceRun.textContent='Srovnat publikum';}return;}
     var audienceCsv=e.target.closest('[data-audience-csv]');if(audienceCsv&&cache.audience){var kind=audienceCsv.getAttribute('data-audience-csv'),rowsAll=cache.audience.rows||[];var picked=kind==='safe'?rowsAll.filter(function(r){return r.verdict==='ok';}):rowsAll.filter(function(r){return r.verdict!=='ok';});downloadCsv('kenji-publikum-'+kind+'-'+new Date().toISOString().slice(0,10)+'.csv',picked);return;}
     var audienceTagBtn=e.target.closest('[data-audience-tag]');if(audienceTagBtn&&cache.audience){var tagName=audienceTag();if(!/^[a-z0-9][a-z0-9-]{1,49}$/.test(tagName)){alert('Štítek smí mít jen malá písmena, čísla a pomlčky.');return;}var safeCount=(cache.audience.safe||{}).total||0;if(!confirm('Označit '+n(safeCount)+' kontaktů štítkem „'+tagName+'“ v Ecomailu? Srovnání se před označením spustí znovu na serveru. Nic se nerozešle.'))return;audienceTagBtn.disabled=true;audienceTagBtn.textContent='Označuji…';try{var tagged=await adminEmailApi('POST',{action:'tag-audience',tag:tagName});cache.audience=await adminEmailApi('POST',{action:'audience-audit'});renderEmailing();alert('Hotovo. Štítek „'+tagName+'“ má '+n(tagged.tagged)+' kontaktů. Nic nebylo rozesláno.');}catch(err){alert('Označení se nepovedlo: '+errText(err));audienceTagBtn.disabled=false;audienceTagBtn.textContent='Označit '+n(safeCount)+' kontaktů';}return;}
     var emailSync=e.target.closest('[data-email-sync]');if(emailSync){if(!confirm('Synchronizovat do Ecomailu všechny účty s platným souhlasem? Odhlášené kontakty se přeskočí.'))return;emailSync.disabled=true;emailSync.textContent='Synchronizuji…';try{var sync=await adminEmailApi('POST',{action:'sync-consented'});await loadEmailing();renderEmailing();alert('Hotovo. Synchronizováno: '+n(sync.synced)+', chyby: '+n(sync.failed)+'.');}catch(err){alert('Synchronizace se nepovedla: '+errText(err));emailSync.disabled=false;emailSync.textContent='Synchronizovat souhlasy';}return;}
     var emailWebhook=e.target.closest('[data-email-webhook]');if(emailWebhook){if(!confirm('Nastavit v Ecomailu zabezpečený webhook pro výsledky kampaní?'))return;emailWebhook.disabled=true;emailWebhook.textContent='Nastavuji…';try{await adminEmailApi('POST',{action:'configure-webhook'});await loadEmailing();renderEmailing();alert('Webhook je nastavený.');}catch(err){alert('Webhook se nepovedlo nastavit: '+errText(err));emailWebhook.disabled=false;emailWebhook.textContent='Nastavit webhook';}return;}
-    var emailNew=e.target.closest('[data-email-new]');if(emailNew){collectEmailEditor();var fresh=newEmailDraft();emailNew.disabled=true;try{if(!IS_LOCAL)await rpc('admin_upsert_email_sequence',{p_id:fresh.id,p_name:fresh.name,p_description:fresh.description,p_audience:fresh.audience,p_status:fresh.status,p_from_name:fresh.from_name,p_from_email:fresh.from_email,p_reply_to:fresh.reply_to,p_ecomail_pipeline_id:null,p_steps:fresh.steps});cache.emailSequences=(cache.emailSequences||[]).concat([fresh]);selectedEmailSequenceId=fresh.id;selectedEmailStepId='mail-1';renderEmailing();var ed=document.getElementById('email-editor');if(ed)ed.scrollIntoView({behavior:'smooth',block:'start'});}catch(err){alert('Nový e-mail se nepovedlo založit: '+errText(err));emailNew.disabled=false;}return;}
+    var emailNew=e.target.closest('[data-email-new]');if(emailNew){collectEmailEditor();var freshMail=newEmailDraft();emailNew.disabled=true;try{if(!IS_LOCAL)await rpc('admin_upsert_email_sequence',{p_id:freshMail.id,p_name:freshMail.name,p_description:freshMail.description,p_audience:freshMail.audience,p_status:freshMail.status,p_from_name:freshMail.from_name,p_from_email:freshMail.from_email,p_reply_to:freshMail.reply_to,p_ecomail_pipeline_id:null,p_steps:freshMail.steps});cache.emailSequences=(cache.emailSequences||[]).concat([freshMail]);selectedEmailSequenceId=freshMail.id;selectedEmailStepId='mail-1';renderEmailing();var ed=document.getElementById('email-editor');if(ed)ed.scrollIntoView({behavior:'smooth',block:'start'});}catch(err){alert('Nový e-mail se nepovedlo založit: '+errText(err));emailNew.disabled=false;}return;}
     var emailOpen=e.target.closest('[data-email-open]');if(emailOpen){collectEmailEditor();selectedEmailSequenceId=emailOpen.getAttribute('data-email-open');selectedEmailStepId=null;renderEmailing();var ed2=document.getElementById('email-editor');if(ed2)ed2.scrollIntoView({behavior:'smooth',block:'start'});return;}
     var emailClose=e.target.closest('[data-email-close]');if(emailClose){collectEmailEditor();try{await saveEmailSequence(false);}catch(err){}selectedEmailSequenceId=null;selectedEmailStepId=null;renderEmailing();return;}
     var emailArchive=e.target.closest('[data-email-archive]');if(emailArchive){var dA=collectEmailEditor();if(!dA)return;if(!confirm('Smazat tento koncept? Odeslané e-maily zůstávají v historii, tenhle zmizí ze seznamu.'))return;dA.step.archived_at=new Date().toISOString();dA.sequence.status='paused';try{await saveEmailSequence(false);}catch(err){alert('Nepovedlo se: '+errText(err));return;}selectedEmailSequenceId=null;selectedEmailStepId=null;renderEmailing();return;}
@@ -708,33 +675,29 @@
     var emailStep=e.target.closest('[data-email-step]');if(emailStep){collectEmailEditor();selectedEmailStepId=emailStep.getAttribute('data-email-step');renderEmailing();return;}
     var emailSave=e.target.closest('[data-email-save]');if(emailSave){emailSave.disabled=true;try{await saveEmailSequence(true);}catch(err){alert('Koncept se nepovedlo uložit: '+errText(err));}emailSave.disabled=false;return;}
     var emailExport=e.target.closest('[data-email-export]');if(emailExport){var draft=collectEmailEditor();if(!draft)return;if(!confirm('Uložit koncept a vytvořit z tohoto e-mailu šablonu v Ecomailu? Nic se ještě nerozešle.'))return;emailExport.disabled=true;emailExport.textContent='Vytvářím…';try{await saveEmailSequence(false);if(IS_LOCAL){draft.step.ecomail_template_id='DEMO';draft.step.ecomail_synced_at=new Date().toISOString();}else{await adminEmailApi('POST',{action:'export-template',sequenceId:draft.sequence.id,stepId:draft.step.id});await loadEmailing();}renderEmailing();alert('Šablona je připravená v Ecomailu. Nic nebylo rozesláno.');}catch(err){alert('Šablonu se nepovedlo vytvořit: '+errText(err));emailExport.disabled=false;emailExport.textContent='Vytvořit šablonu v Ecomailu';}return;}
-    var qb=e.target.closest('[data-quick-block]');if(qb){var qbEmail=qb.getAttribute('data-quick-block');var qbUser=cache.users.find(function(x){return x.email===qbEmail;});var newStatus=(qbUser&&qbUser.account_status==='blocked')?'active':'blocked';if(qbUser)qbUser.account_status=newStatus;try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:qbEmail,p_status:newStatus});}catch(err){fail(err);return;}renderPeople();return;}
-    var qlink=e.target.closest('[data-quick-link]');if(qlink){var lEmail=qlink.getAttribute('data-quick-link');qlink.disabled=true;try{if(IS_LOCAL){alert('(Lokálně) Přihlašovací odkaz by šel na: '+lEmail);}else{var A=window.KenjiAuth;if(A&&A.requestMagicLink){var r=await A.requestMagicLink(lEmail,{redirect:'index.html'});if(!r||!r.ok)throw new Error('nepovedlo se odeslat');}alert('Přihlašovací odkaz odeslán na '+lEmail);}}catch(err){alert('Odkaz se nepovedlo odeslat: '+((err&&err.message)||'chyba'));}qlink.disabled=false;return;}
-    var saveDetail=e.target.closest('[data-detail-save]');if(saveDetail){var sEmail=saveDetail.getAttribute('data-detail-save');var wrap=saveDetail.closest('.admin-inline-detail');var sTier=wrap.querySelector('[data-d="tier"]').value,sRole=wrap.querySelector('[data-d="role"]').value,sStatus=wrap.querySelector('[data-d="status"]').value;var dmsg=wrap.querySelector('[data-detail-msg]');saveDetail.disabled=true;try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:sEmail,p_tier:sTier,p_role:sRole,p_status:sStatus});var su=cache.users.find(function(x){return x.email===sEmail;});if(su){su.tier=sTier;su.role=sRole;su.account_status=sStatus;}if(dmsg){dmsg.textContent='Uloženo ✓';dmsg.className='admin-inline-msg is-ok';}setTimeout(function(){renderPeople();},600);}catch(err){if(dmsg){dmsg.textContent='Nepovedlo se uložit.';dmsg.className='admin-inline-msg is-err';}saveDetail.disabled=false;}return;}
-    var row=e.target.closest('tr[data-email]');if(row&&!e.target.closest('[data-noopen]')){toggleUser(row.getAttribute('data-email'),row).catch(fail);return;}
-    if(e.target.id==='admin-user-filter'){await loadUsers(document.getElementById('admin-user-search').value,document.getElementById('admin-user-tier').value,document.getElementById('admin-user-status').value);renderPeople();return;}
-    var tool=e.target.closest('[data-tool-filter]');if(tool){try{await loadTools(tool.getAttribute('data-tool-filter'));}catch(err){fail(err);return;}renderTools();return;}
-    var sortBtn=e.target.closest('[data-tool-sort]');if(sortBtn){toolSort=sortBtn.getAttribute('data-tool-sort');renderTools();return;}
-    var toolRowEl=e.target.closest('tr[data-tool-row]');if(toolRowEl){toggleTool(toolRowEl.getAttribute('data-tool-row'),toolRowEl);return;}
+    // Obsah
     var editItem=e.target.closest('[data-content-edit]');if(editItem){editContent(editItem.getAttribute('data-content-edit'));return;}
     if(e.target.closest('[data-content-reset]')){resetContentForm();return;}
     var delContent=e.target.closest('[data-content-delete]');if(delContent&&confirm('Opravdu smazat tento obsah?')){if(!IS_LOCAL)await rpc('admin_delete_content',{p_id:delContent.getAttribute('data-content-delete')});cache.content=cache.content.filter(function(x){return x.id!==delContent.getAttribute('data-content-delete');});renderContent();return;}
-    var toggleCoupon=e.target.closest('[data-coupon-toggle]');if(toggleCoupon){var coupon=cache.coupons.find(function(x){return x.code===toggleCoupon.getAttribute('data-coupon-toggle');});if(coupon){if(!IS_LOCAL)await rpc('admin_upsert_coupon_v2',{p_code:coupon.code,p_percent:coupon.percent_off,p_products:coupon.products||[],p_active:!coupon.active,p_max_uses:coupon.max_uses,p_description:coupon.description,p_valid_until:coupon.valid_until});coupon.active=!coupon.active;renderCoupons();}return;}
-    var delCoupon=e.target.closest('[data-coupon-delete]');if(delCoupon&&confirm('Opravdu smazat kupón '+delCoupon.getAttribute('data-coupon-delete')+'?')){if(!IS_LOCAL)await rpc('admin_delete_coupon_v2',{p_code:delCoupon.getAttribute('data-coupon-delete')});cache.coupons=cache.coupons.filter(function(x){return x.code!==delCoupon.getAttribute('data-coupon-delete');});renderCoupons();}
+    // Kupóny
+    var toggleCoupon=e.target.closest('[data-coupon-toggle]');if(toggleCoupon){var coupon=cache.coupons.find(function(x){return x.code===toggleCoupon.getAttribute('data-coupon-toggle');});if(coupon){if(!IS_LOCAL)await rpc('admin_upsert_coupon_v2',{p_code:coupon.code,p_percent:coupon.percent_off,p_products:coupon.products||[],p_active:!coupon.active,p_max_uses:coupon.max_uses,p_description:coupon.description,p_valid_until:coupon.valid_until});coupon.active=!coupon.active;renderSales();}return;}
+    var delCoupon=e.target.closest('[data-coupon-delete]');if(delCoupon&&confirm('Opravdu smazat kupón '+delCoupon.getAttribute('data-coupon-delete')+'?')){if(!IS_LOCAL)await rpc('admin_delete_coupon_v2',{p_code:delCoupon.getAttribute('data-coupon-delete')});cache.coupons=cache.coupons.filter(function(x){return x.code!==delCoupon.getAttribute('data-coupon-delete');});renderSales();}
   });
 
-  // Rychlá změna tieru přímo v řádku.
   document.addEventListener('change',async function(e){
-    var qt=e.target.closest('[data-quick-tier]');if(!qt)return;
-    var email=qt.getAttribute('data-quick-tier'),tier=qt.value;
-    var u=cache.users.find(function(x){return x.email===email;});if(u)u.tier=tier;
-    // vizuální potvrzení
-    qt.classList.add('is-saved');setTimeout(function(){qt.classList.remove('is-saved');},900);
-    try{if(!IS_LOCAL)await rpc('admin_set_user_v2',{p_target:email,p_tier:tier});}catch(err){fail(err);}
+    var ls=e.target.closest('[data-lead-status]');
+    if(ls){
+      var id=ls.getAttribute('data-lead-status'),person=(cache.people||[]).find(function(p){return String(p.lead_id)===String(id);});
+      try{if(!IS_LOCAL)await rpc('admin_update_plan_request',{p_id:Number(id),p_status:ls.value,p_note:null});if(person)person.lead_status=ls.value;var det=person&&cache.detail[person.email];if(det&&det.plan_requests&&det.plan_requests[0])det.plan_requests[0].status=ls.value;ls.classList.add('is-saved');setTimeout(function(){ls.classList.remove('is-saved');},900);refreshPeopleTable();}
+      catch(err){alert('Stav se neuložil: '+errText(err));}
+      return;
+    }
+    if(e.target.id==='admin-people-sort'){peopleSort=e.target.value;refreshPeopleTable();}
   });
 
   document.addEventListener('input',function(e){
     if(e.target.closest('[data-email-editor]'))refreshEmailPreview();
+    if(e.target.id==='admin-people-search'){peopleQuery=e.target.value;refreshPeopleTable();}
   });
 
   document.addEventListener('submit',async function(e){
@@ -745,20 +708,21 @@
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(aEmail)){if(msg){msg.textContent='Zadej platný e-mail.';msg.className='admin-addform-msg is-err';}return;}
       try{
         if(IS_LOCAL){
-          var ex=cache.users.find(function(x){return x.email===aEmail;});
-          if(ex){ex.tier=aTier;ex.account_status='active';}
-          else cache.users.unshift({email:aEmail,display_name:'',instagram:'',tier:aTier,account_status:'active',role:'member',created_at:new Date().toISOString(),last_seen_at:null});
+          var ex=(cache.people||[]).find(function(x){return x.email===aEmail;});
+          if(ex){ex.has_account=true;ex.tier=aTier;ex.account_status='active';}
+          else cache.people.unshift({email:aEmail,has_account:true,tier:aTier,account_status:'active',role:'member',created_at:new Date().toISOString(),tools:[]});
         } else {
           await rpc('admin_upsert_user',{p_email:aEmail,p_tier:aTier});
-          await loadUsers();
+          delete cache.detail[aEmail];
+          await loadPeople();
         }
-        renderPeople();
-        var msg2=document.getElementById('admin-add-msg');if(msg2){msg2.textContent='Hotovo: '+aEmail+' → '+aTier;msg2.className='admin-addform-msg is-ok';}
+        selectedPerson=aEmail;renderPeople();
+        var msg2=document.getElementById('admin-add-msg');if(msg2){msg2.textContent='Hotovo: '+aEmail+' → '+(TIER_LABEL[aTier]||aTier);msg2.className='admin-addform-msg is-ok';}
       }catch(err){var m=document.getElementById('admin-add-msg');if(m){m.textContent='Nepovedlo se: '+((err&&err.message)||'chyba');m.className='admin-addform-msg is-err';}}
       return;
     }
     // Obsah řeší wireContentForm() přímo na formuláři.
-    if(e.target.id==='admin-coupon-form'){e.preventDefault();var c=new FormData(e.target),code=String(c.get('code')||'').trim().toUpperCase(),products=c.get('products')?[c.get('products')]:[];if(IS_LOCAL)cache.coupons.unshift({code:code,description:c.get('description'),percent_off:Number(c.get('percent')),products:products,active:true,used_count:0,max_uses:Number(c.get('max_uses'))||null});else{await rpc('admin_upsert_coupon_v2',{p_code:code,p_percent:Number(c.get('percent')),p_products:products,p_active:true,p_max_uses:Number(c.get('max_uses'))||null,p_description:c.get('description')||null,p_valid_until:null});await loadCoupons();}renderCoupons();}
+    if(e.target.id==='admin-coupon-form'){e.preventDefault();var c=new FormData(e.target),code=String(c.get('code')||'').trim().toUpperCase(),products=c.get('products')?[c.get('products')]:[];if(IS_LOCAL)cache.coupons.unshift({code:code,description:c.get('description'),percent_off:Number(c.get('percent')),products:products,active:true,used_count:0,max_uses:Number(c.get('max_uses'))||null});else{await rpc('admin_upsert_coupon_v2',{p_code:code,p_percent:Number(c.get('percent')),p_products:products,p_active:true,p_max_uses:Number(c.get('max_uses'))||null,p_description:c.get('description')||null,p_valid_until:null});await loadCoupons();}renderSales();}
   });
 
   document.addEventListener('kenji-auth-ready',boot,{once:true});

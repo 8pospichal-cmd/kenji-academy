@@ -6,10 +6,10 @@
     "semantic_hash": "9c801e6812809e04dd7b2b613fb8b238"
   },
   "assets/admin.js": {
-    "mtime": 1790014234.0509531,
-    "seen": 1790164356.0775979,
-    "ast_hash": "4d3c2340d83d787495cc7d52b92aab35",
-    "semantic_hash": "4d3c2340d83d787495cc7d52b92aab35"
+    "mtime": 1793027951.8268316,
+    "seen": 1793027989.187275,
+    "ast_hash": "36c5c2979d17f7c358e9d6ed0f629af7",
+    "semantic_hash": ""
   },
   "assets/articles.js": {
     "mtime": 1788801261.106896,
@@ -42,9 +42,9 @@
     "semantic_hash": "4433cece8e408c9b1089ad3384261bfe"
   },
   "assets/dashboard.js": {
-    "mtime": 1790410955.9341629,
-    "seen": 1790410984.1841862,
-    "ast_hash": "a733d7c1a2f7d41fb07961dc0f1e1860",
+    "mtime": 1793027520.63168,
+    "seen": 1793027989.18728,
+    "ast_hash": "d233d8514c7fa77412266c42c2373537",
     "semantic_hash": ""
   },
   "assets/feed.js": {
@@ -150,10 +150,10 @@
     "semantic_hash": "1abf00cba6e205b2704532dcb08d7b16"
   },
   "netlify/functions/stripe-webhook.js": {
-    "mtime": 1789025183.1107917,
-    "seen": 1790164356.077613,
-    "ast_hash": "71bdd95b1baaa2fd5ea0948e68eb41e7",
-    "semantic_hash": "71bdd95b1baaa2fd5ea0948e68eb41e7"
+    "mtime": 1793027505.2406957,
+    "seen": 1793027989.187297,
+    "ast_hash": "130de6aba3c3b589f0b3facad4aab86f",
+    "semantic_hash": ""
   },
   "package.json": {
     "mtime": 1786986494.986645,
@@ -384,9 +384,9 @@
     "semantic_hash": "85af09e5def761c71ea1db84599c54d0"
   },
   "STRIPE_SETUP.md": {
-    "mtime": 1790613891.8921309,
-    "seen": 1790613903.857481,
-    "ast_hash": "9ecd6fda7cd01cd3e938806d99947633",
+    "mtime": 1793024806.870543,
+    "seen": 1793024809.254278,
+    "ast_hash": "8090b58c216056f32eed99d18afd13d6",
     "semantic_hash": ""
   },
   "SUPABASE_SETUP.md": {
@@ -396,15 +396,15 @@
     "semantic_hash": "35e355b3bb792f8979f6c8a0871e7598"
   },
   "academy.html": {
-    "mtime": 1790509543.6903784,
-    "seen": 1790613521.782479,
-    "ast_hash": "2a2ca45bd87f3a896aff84b560ecad30",
+    "mtime": 1793027870.3366735,
+    "seen": 1793027989.187333,
+    "ast_hash": "43180801402372ea02e09166f121cb85",
     "semantic_hash": ""
   },
   "admin.html": {
-    "mtime": 1790509543.6987147,
-    "seen": 1790613521.7824798,
-    "ast_hash": "f0e0702ff0573e3a061e57b3e05b0353",
+    "mtime": 1793027865.0618906,
+    "seen": 1793027989.1873338,
+    "ast_hash": "a89f96a99492d27e7c6edd0a185cc241",
     "semantic_hash": ""
   },
   "audit.html": {
@@ -414,9 +414,9 @@
     "semantic_hash": ""
   },
   "index.html": {
-    "mtime": 1790509543.687588,
-    "seen": 1790613521.782537,
-    "ast_hash": "dd1fb83817f78ace69b4739667d7ffb4",
+    "mtime": 1793027870.3410265,
+    "seen": 1793027989.1873899,
+    "ast_hash": "eca68226cbc0da06cf863bddf775c124",
     "semantic_hash": ""
   },
   "nastaveni.html": {
@@ -1089,6 +1089,66 @@
     "mtime": 1790613840.8849604,
     "seen": 1790613903.857449,
     "ast_hash": "91e67582fef3531c8bb612fe2409182a",
+    "semantic_hash": ""
+  },
+  "assets/academy-b.js": {
+    "mtime": 1793027520.5757446,
+    "seen": 1793027989.1872692,
+    "ast_hash": "bd093c1b9970b297a253c03b7a238034",
+    "semantic_hash": ""
+  },
+  "assets/dc-mini.js": {
+    "mtime": 1793025568.2752116,
+    "seen": 1793027989.187281,
+    "ast_hash": "3c47768aca7ac2e507cf9dcb27c32011",
+    "semantic_hash": ""
+  },
+  "netlify/functions/_mail.js": {
+    "mtime": 1793024480.2508805,
+    "seen": 1793024809.254241,
+    "ast_hash": "102786d3f4a9d2141e6c7751f7bea516",
+    "semantic_hash": ""
+  },
+  "netlify/functions/plan-request.js": {
+    "mtime": 1793025596.2477608,
+    "seen": 1793027989.187296,
+    "ast_hash": "2da25b6ba019e0b63309c067a4b13735",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20261026120000_plan_requests.sql": {
+    "mtime": 1793025066.2582452,
+    "seen": 1793027989.187315,
+    "ast_hash": "dbb9daa8a00849656cfa7705fa5abfae",
+    "semantic_hash": ""
+  },
+  "tools/build-academy-b.py": {
+    "mtime": 1793026142.8472862,
+    "seen": 1793027989.187317,
+    "ast_hash": "1f8d1f9f893a5347165436a9170c3145",
+    "semantic_hash": ""
+  },
+  "tools/build-plan-na-miru.py": {
+    "mtime": 1793025762.751627,
+    "seen": 1793027989.18732,
+    "ast_hash": "cdcd6495a9f0adeb84b56f281ae27d75",
+    "semantic_hash": ""
+  },
+  "plan-na-miru.html": {
+    "mtime": 1793025762.7918398,
+    "seen": 1793027989.187397,
+    "ast_hash": "ee086d8b0ec8682c7b33c7f18a5b65f9",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20261026150000_admin_plan_requests.sql": {
+    "mtime": 1793025678.2698717,
+    "seen": 1793027989.187316,
+    "ast_hash": "df009015d16f4c1ced5fe2003940b3c4",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/20261027120000_admin_redesign.sql": {
+    "mtime": 1793027513.8608809,
+    "seen": 1793027989.187317,
+    "ast_hash": "c372e4724e72c252d3aa9a22fa7b68cb",
     "semantic_hash": ""
   }
 }

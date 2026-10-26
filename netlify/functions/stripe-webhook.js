@@ -1,5 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
 const Ecomail = require('./_ecomail');
+const Mail = require('./_mail');
 
 function response(statusCode, body) {
   return {
@@ -83,6 +84,69 @@ async function sendPresetEmail(email) {
   if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
 }
 
+// Uvítání po nákupu Academy nebo Databáze. Odkaz vede na stránku po platbě,
+// která podle session_id předvyplní e-mail a pošle přihlašovací odkaz — člověk
+// se tak dostane dovnitř, i když stránku po platbě zavřel.
+const WELCOME = {
+  academy: { name: 'Kenji Academy', what: 'Máš odemčené všechny kurzy, komunitu, databázi, Kenji AI i bonusy. Napořád.' },
+  knihovna: { name: 'Databázi', what: 'Máš odemčenou celou databázi praktických článků. Napořád.' }
+};
+
+function welcomeEmailHtml(tier, sessionId) {
+  const w = WELCOME[tier];
+  const link = `${Mail.siteUrl()}/platba-uspesna.html?product=${tier === 'academy' ? 'academy' : 'databaze'}&session_id=${encodeURIComponent(sessionId)}`;
+  const body = Mail.heading(`Vítej v Kenji Academy`)
+    + Mail.paragraph(`Díky, platba proběhla. ${w.what}`)
+    + Mail.button(link, 'Vstoupit dovnitř →')
+    + Mail.paragraph('<strong style="color:#0E0E10;">Jak se přihlásit:</strong> klikni na tlačítko a nech si poslat přihlašovací odkaz. Přihlas se <strong style="color:#0E0E10;">stejným e-mailem, na který ti přišel tenhle e-mail</strong>, přístup je přiřazený k němu.');
+  return Mail.layout({ title: `Vítej v ${w.name}`, preheader: 'Přístup máš odemčený. Tady je, jak se dostaneš dovnitř.', body });
+}
+
+async function markPlanRequestBought(email) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return;
+  try {
+    await fetch(`${process.env.SUPABASE_URL}/rest/v1/plan_requests?email=eq.${encodeURIComponent(email)}&status=neq.koupil`, {
+      method: 'PATCH',
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({ status: 'koupil' })
+    });
+  } catch (e) { console.warn('plan_requests: označení nákupu selhalo:', e.message); }
+}
+
+// Záznam objednávky pro admin (Prodej, karta člověka). Selhání nesmí shodit
+// webhook — přístup už je přidělený a Stripe by doručení zkoušel znovu.
+async function recordOrder(session, email, meta) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return;
+  try {
+    const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/orders?on_conflict=stripe_session_id`, {
+      method: 'POST',
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=ignore-duplicates,return=minimal'
+      },
+      body: JSON.stringify({
+        stripe_session_id: session.id,
+        email: email.toLowerCase(),
+        product: meta.product || null,
+        tier: meta.tier || null,
+        presets: meta.presets === '1',
+        amount_total: typeof session.amount_total === 'number' ? Math.round(session.amount_total / 100) : null,
+        currency: session.currency || null,
+        coupon: meta.coupon || null,
+        source: meta.source || null
+      })
+    });
+    if (!res.ok) console.warn('orders: zápis selhal', res.status, await res.text());
+  } catch (e) { console.warn('orders: zápis selhal:', e.message); }
+}
+
 async function grantAccess(session) {
   const email = session.customer_details && session.customer_details.email;
   const meta = session.metadata || {};
@@ -119,12 +183,17 @@ async function grantAccess(session) {
     const text = await res.text();
     throw new Error(`Supabase grant failed: ${res.status} ${text}`);
   }
+  await recordOrder(session, email, meta);
 
   // Přístup je přidělený — teď dej vědět e-mailem. Selhání odesílání nesmí
   // shodit webhook, jinak by Stripe zkoušel doručení znovu a znovu.
   if (presets) {
     try { await sendPresetEmail(email); }
     catch (e) { console.warn('e-mail o presetech se neodeslal:', e.message); }
+  }
+  if (WELCOME[tier]) {
+    await Mail.sendEmail({ to: email, subject: tier === 'academy' ? 'Vítej v Kenji Academy — tady je vstup' : 'Databáze je tvoje — tady je vstup', html: welcomeEmailHtml(tier, session.id) });
+    await markPlanRequestBought(email.toLowerCase());
   }
 
   // Nákup promítni i do marketingového profilu, ale jen pokud už má člověk

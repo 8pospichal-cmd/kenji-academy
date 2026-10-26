@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css?v=20260926-login-v1">
-<link rel="stylesheet" href="assets/admin.css?v=20260914-emaily-v1">
+<link rel="stylesheet" href="assets/admin.css?v=20261027-redesign-v1">
 </head>
 <body class="admin-body">
 <header class="admin-topbar">
@@ -29,12 +29,11 @@
 
 <div class="admin-shell">
   <nav class="admin-nav" aria-label="Administrace">
-    <button class="active" type="button" data-admin-view="people">Lidé</button>
-    <button type="button" data-admin-view="tools">Nástroje</button>
+    <button class="active" type="button" data-admin-view="overview">Přehled</button>
+    <button type="button" data-admin-view="people">Lidé</button>
+    <button type="button" data-admin-view="sales">Prodej</button>
+    <button type="button" data-admin-view="emailing">E-maily</button>
     <button type="button" data-admin-view="content">Obsah</button>
-    <button type="button" data-admin-view="coupons">Kupóny</button>
-    <button type="button" data-admin-view="emailing">Emailing</button>
-    <button type="button" data-admin-view="activity">Aktivita</button>
   </nav>
   <main class="admin-main" id="admin-root" aria-live="polite">
     <div class="admin-loading">Ověřuji administrátorský přístup…</div>
@@ -45,6 +44,6 @@
 
 <script src="assets/articles.js?v=20260907-presety-v2"></script>
 <script src="assets/auth.js?v=20260926-public-articles-v1"></script>
-<script src="assets/admin.js?v=20260921-audit-v1"></script>
+<script src="assets/admin.js?v=20261027-redesign-v1"></script>
 </body>
 </html>

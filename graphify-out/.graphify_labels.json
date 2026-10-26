@@ -26,6 +26,7 @@
   "24": "community-pinning.sql",
   "25": "pwreset.js",
   "26": "checkout-email.js",
+  "27": "build-academy-b.py",
   "28": "Local-first deployment policy",
   "29": "articles.js",
   "30": "img-util.js",
@@ -50,7 +51,7 @@
   "49": "20260823171000_register_lead_secure.sql",
   "50": "20260823172000_save_progress_secure.sql",
   "51": "course-content.js",
-  "52": "script.js",
+  "52": "plan-request.js",
   "53": "20260823150000_ai_profile_context.sql",
   "54": "public.users",
   "55": "20260823170000_avatars_bucket.sql",
@@ -58,5 +59,10 @@
   "57": "Komunitní příspěvky - nastavení Supabase",
   "58": "Profily + Nastavení + Admin — Supabase",
   "59": "SUPABASE_KUPONY.md",
-  "60": "_stripe.js"
+  "60": "_stripe.js",
+  "61": "dc-mini.js",
+  "62": "academy-b.js",
+  "63": "20261026120000_plan_requests.sql",
+  "64": "20261027120000_admin_redesign.sql",
+  "65": "20261026150000_admin_plan_requests.sql"
 }

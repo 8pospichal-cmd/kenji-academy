@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Kenji Academy — plán na míru</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Inter:wght@400;500;600;700;800;900&amp;display=swap">
+<style>
+body{margin:0;background:#FBFAF6}
+a{color:#0E0E10}a:hover{color:#8A5A14}
+.ob{position:relative;min-height:100vh;background:#FBFAF6;color:#0E0E10;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+.glass{background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 22px 60px -30px rgba(110,72,16,.35);border-radius:28px;box-sizing:border-box}
+.bebas{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;letter-spacing:.01em}
+.acc{background:linear-gradient(100deg,#7E5210 0%,#B07A22 30%,#CF9B42 50%,#B07A22 70%,#7E5210 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gold{background-image:linear-gradient(120deg,#A87420 0%,#E2B55E 45%,#C8913A 70%,#9A6418 100%)}
+.q{margin:0;font-size:clamp(28px,4.4vw,44px);line-height:1.06;font-weight:900;letter-spacing:-.05em;text-align:center}
+.qs{margin:12px auto 0;max-width:460px;font-size:16px;line-height:1.5;color:#55555C;text-align:center}
+.tile{font:inherit;color:#0E0E10;cursor:pointer;border:0;text-align:left;transition:transform .2s ease,box-shadow .2s ease}
+.tile:hover{transform:translateY(-3px)}
+.chip:hover{border-color:#C8913A !important;box-shadow:0 0 0 4px rgba(200,145,58,.15),0 12px 24px -14px rgba(154,100,24,.6) !important}
+.chip:active{transform:scale(.97)}
+.btn{font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:999px;cursor:pointer;min-height:52px;padding:0 28px;font-size:17px;font-weight:800;text-decoration:none;box-sizing:border-box}
+.back{font:inherit;background:none;border:0;cursor:pointer;color:#55555C;font-size:15px;font-weight:600;min-height:44px;padding:0 10px;display:inline-flex;align-items:center;gap:6px}
+input[type=range]{width:100%;accent-color:#B07A22;height:28px}
+.fade{animation:obin .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.92)}to{opacity:1;transform:none}}
+.spin{animation:spin .9s linear infinite}
+.pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.ico{transition:transform .25s ease}
+.tile:hover .ico{transform:scale(1.08) rotate(-4deg)}
+@keyframes obin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.fade,.spin,.pop{animation:none}.tile{transition:none}}
+</style>
+</helmet>
+
+<div class="ob">
+
+  <!-- horní lišta: logo, průběh, body -->
+  <header style="position:relative;max-width:1080px;margin:0 auto;padding:22px 24px 0;display:flex;align-items:center;gap:18px;box-sizing:border-box">
+    <img src="/_blob/aee35dd3d3e235f23718328156323fe9" alt="Kenji Academy" style="height:20px;width:auto;filter:invert(1);flex:none">
+    <sc-if value="{{showProgress}}" hint-placeholder-val="{{true}}">
+      <div style="flex:1 1 auto;display:flex;align-items:center;gap:12px">
+        <div style="flex:1 1 auto;height:8px;border-radius:99px;background:rgba(160,130,80,.18);overflow:hidden">
+          <div class="gold" style="height:100%;border-radius:99px;transition:width .5s cubic-bezier(.2,.8,.2,1);{{progressStyle}}"></div>
+        </div>
+        <span style="font-size:13px;font-weight:700;color:#55555C;white-space:nowrap">{{stepLabel}}</span>
+      </div>
+    </sc-if>
+  </header>
+
+  <main style="position:relative;max-width:1080px;margin:0 auto;padding:40px 24px 80px;box-sizing:border-box">
+
+    <!-- 1 · OBOR -->
+    <sc-if value="{{s1}}" hint-placeholder-val="{{false}}">
+      <section class="fade">
+        <h2 class="q">Co fotíš nebo točíš?</h2>
+        <p class="qs">Vyber až tři obory.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:30px">
+          <sc-for list="{{obory}}" as="o" hint-placeholder-count="10">
+            <button type="button" class="tile glass" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="position:relative;padding:24px 16px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;{{o.ring}}">
+              <span class="ico" style="width:72px;height:72px;border-radius:22px;display:flex;align-items:center;justify-content:center;{{o.badge}}">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="{{o.stroke}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{o.d}}"></path></svg>
+              </span>
+              <span style="font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1.2">{{o.label}}</span>
+              <sc-if value="{{o.on}}" hint-placeholder-val="{{false}}">
+                <span class="gold" style="position:absolute;right:10px;top:10px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+                </span>
+              </sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 2 · ÚROVEŇ -->
+    <sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+      <section class="fade">
+        <h2 class="q">Jak dlouho se tomu věnuješ?</h2>
+        <p class="qs">Podle toho poskládáme, kde začít.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:30px">
+          <sc-for list="{{levels}}" as="l" hint-placeholder-count="4">
+            <button type="button" class="tile glass" onClick="{{l.pick}}" aria-pressed="{{l.pressed}}" style="padding:22px;display:flex;flex-direction:column;gap:14px;{{l.ring}}">
+              <span class="bebas acc" style="font-size:20px;letter-spacing:.08em">{{l.lvl}}</span>
+              <span style="display:flex;gap:4px;align-items:flex-end;height:46px">
+                <sc-for list="{{l.bars}}" as="b" hint-placeholder-count="4"><span style="{{b.style}}"></span></sc-for>
+              </span>
+              <span><span style="display:block;font-size:20px;font-weight:800;letter-spacing:-.02em">{{l.title}}</span><span style="display:block;font-size:14px;color:#55555C;margin-top:2px">{{l.sub}}</span></span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 3 · ZAKÁZKY A CENA -->
+    <sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+      <section class="fade" style="max-width:720px;margin:0 auto">
+        <h2 class="q">Kolik máš zakázek a za kolik?</h2>
+        <p class="qs">Stačí odhad. Nikde se to nezobrazí, slouží jen pro tvůj plán.</p>
+        <div class="glass" style="margin-top:30px;padding:clamp(22px,4vw,36px)">
+          <div style="font-size:14px;font-weight:800;letter-spacing:.1em;color:#6A6A72">ZAKÁZEK MĚSÍČNĚ</div>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px">
+            <sc-for list="{{jobs}}" as="j" hint-placeholder-count="5">
+              <button type="button" class="tile chip" onClick="{{j.pick}}" aria-pressed="{{j.pressed}}" style="{{j.style}}">{{j.label}}<span style="font-size:11px;font-weight:700;letter-spacing:.08em;opacity:.6;margin-top:2px">ZAKÁZEK</span></button>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:30px">
+            <label for="ob-cena" style="font-size:14px;font-weight:800;letter-spacing:.1em;color:#6A6A72">PRŮMĚRNÁ CENA ZAKÁZKY</label>
+            <span class="bebas acc" style="font-size:46px;line-height:1">{{priceLabel}}</span>
+          </div>
+          <input id="ob-cena" type="range" min="1000" max="40000" step="500" value="{{price}}" onInput="{{setPrice}}" style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#8A8A92"><span>1 000 Kč</span><span>40 000 Kč</span></div>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 4 · CO TĚ BRZDÍ -->
+    <sc-if value="{{s4}}" hint-placeholder-val="{{false}}">
+      <section class="fade">
+        <h2 class="q">Co tě teď nejvíc brzdí?</h2>
+        <p class="qs">Vyber jednu nebo dvě věci.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:30px">
+          <button type="button" class="tile glass" onClick="{{bk.cena.pick}}" aria-pressed="{{bk.cena.pressed}}" style="padding:22px;display:flex;flex-direction:column;gap:16px;{{bk.cena.ring}}">
+            <span class="gold" style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"></path><circle cx="7.5" cy="7.5" r="1.4"></circle></svg></span>
+            <span style="font-size:18px;font-weight:800;letter-spacing:-.02em">Nevím, kolik si říct</span>
+          </button>
+          <button type="button" class="tile glass" onClick="{{bk.klienti.pick}}" aria-pressed="{{bk.klienti.pressed}}" style="padding:22px;display:flex;flex-direction:column;gap:16px;{{bk.klienti.ring}}">
+            <span class="gold" style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"></path><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.2 2.5 3.6 5.2"></path></svg></span>
+            <span style="font-size:18px;font-weight:800;letter-spacing:-.02em">Nemám dost klientů</span>
+          </button>
+          <button type="button" class="tile glass" onClick="{{bk.nabidka.pick}}" aria-pressed="{{bk.nabidka.pressed}}" style="padding:22px;display:flex;flex-direction:column;gap:16px;{{bk.nabidka.ring}}">
+            <span class="gold" style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"></path><path d="m3 8 9 5 9-5M12 13v8"></path></svg></span>
+            <span style="font-size:18px;font-weight:800;letter-spacing:-.02em">Nevím, co přesně nabízet</span>
+          </button>
+          <button type="button" class="tile glass" onClick="{{bk.portfolio.pick}}" aria-pressed="{{bk.portfolio.pressed}}" style="padding:22px;display:flex;flex-direction:column;gap:16px;{{bk.portfolio.ring}}">
+            <span class="gold" style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><circle cx="9" cy="10" r="2"></circle><path d="m21 16-5-5-9 9"></path></svg></span>
+            <span style="font-size:18px;font-weight:800;letter-spacing:-.02em">Slabé portfolio</span>
+          </button>
+          <button type="button" class="tile glass" onClick="{{bk.chaos.pick}}" aria-pressed="{{bk.chaos.pressed}}" style="padding:22px;display:flex;flex-direction:column;gap:16px;{{bk.chaos.ring}}">
+            <span class="gold" style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg></span>
+            <span style="font-size:18px;font-weight:800;letter-spacing:-.02em">Chaos v zakázkách</span>
+          </button>
+          <button type="button" class="tile glass" onClick="{{bk.technika.pick}}" aria-pressed="{{bk.technika.pressed}}" style="padding:22px;display:flex;flex-direction:column;gap:16px;{{bk.technika.ring}}">
+            <span class="gold" style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg></span>
+            <span style="font-size:18px;font-weight:800;letter-spacing:-.02em">Technika a úpravy fotek</span>
+          </button>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 5 · CÍL -->
+    <sc-if value="{{s5}}" hint-placeholder-val="{{false}}">
+      <section class="fade">
+        <h2 class="q">Kolik chceš focením vydělávat?</h2>
+        <p class="qs">Teď jsi zhruba na <strong style="color:#0E0E10">{{currentLabel}}</strong> měsíčně. Kam to chceš dostat?</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:30px;align-items:end">
+          <sc-for list="{{goals}}" as="g" hint-placeholder-count="4">
+            <button type="button" class="tile glass" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="padding:20px;display:flex;flex-direction:column;gap:14px;justify-content:flex-end;{{g.ring}}">
+              <span style="display:block;height:140px;position:relative">
+                <span class="gold" style="position:absolute;left:0;right:0;bottom:0;border-radius:12px;{{g.bar}}"></span>
+              </span>
+              <span><span class="bebas" style="display:block;font-size:36px;line-height:.9">{{g.label}}</span><span style="display:block;font-size:14px;color:#55555C;margin-top:4px">měsíčně z focení</span></span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 6 · ČAS -->
+    <sc-if value="{{s6}}" hint-placeholder-val="{{false}}">
+      <section class="fade">
+        <h2 class="q">Kolik času tomu dáš týdně?</h2>
+        <p class="qs">Podle toho spočítáme, za jak dlouho plán projdeš.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:30px">
+          <sc-for list="{{hoursOpts}}" as="h" hint-placeholder-count="4">
+            <button type="button" class="tile glass" onClick="{{h.pick}}" aria-pressed="{{h.pressed}}" style="padding:22px;display:flex;flex-direction:column;gap:16px;{{h.ring}}">
+              <span style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px">
+                <sc-for list="{{h.cells}}" as="c" hint-placeholder-count="4"><span style="{{c.style}}"></span></sc-for>
+              </span>
+              <span><span class="bebas" style="display:block;font-size:40px;line-height:.9">{{h.label}}</span><span style="display:block;font-size:14px;color:#55555C;margin-top:4px">{{h.sub}}</span></span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 6½ · SESTAVUJU PLÁN -->
+    <sc-if value="{{sGen}}" hint-placeholder-val="{{false}}">
+      <section class="fade" style="max-width:620px;margin:0 auto;text-align:center;padding-top:10px">
+        <div style="position:relative;width:200px;height:200px;margin:0 auto">
+          <svg width="200" height="200" viewBox="0 0 200 200" aria-hidden="true" style="transform:rotate(-90deg)">
+            <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E2B55E"></stop><stop offset="1" stop-color="#9A6418"></stop></linearGradient></defs>
+            <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(160,130,80,.16)" stroke-width="14"></circle>
+            <circle cx="100" cy="100" r="86" fill="none" stroke="url(#gg)" stroke-width="14" stroke-linecap="round" stroke-dasharray="540.4" style="transition:stroke-dashoffset .12s linear;{{genRing}}"></circle>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <span class="bebas acc" style="font-size:64px;line-height:.9">{{genPct}}</span>
+            <span style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#6A6A72">HOTOVO</span>
+          </div>
+        </div>
+        <h2 class="q" style="margin-top:26px">Sestavuju tvůj plán…</h2>
+        <div class="glass" style="margin-top:24px;padding:10px 22px;text-align:left">
+          <sc-for list="{{genSteps}}" as="g" hint-placeholder-count="5">
+            <div style="display:flex;align-items:center;gap:14px;padding:12px 0;{{g.rowStyle}}">
+              <sc-if value="{{g.done}}" hint-placeholder-val="{{true}}">
+                <span class="gold pop" style="flex:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+              </sc-if>
+              <sc-if value="{{g.active}}" hint-placeholder-val="{{false}}">
+                <span class="spin" style="flex:none;width:28px;height:28px;border-radius:50%;border:3px solid rgba(160,130,80,.2);border-top-color:#B07A22;box-sizing:border-box"></span>
+              </sc-if>
+              <sc-if value="{{g.wait}}" hint-placeholder-val="{{false}}">
+                <span style="flex:none;width:28px;height:28px;border-radius:50%;border:2px dashed rgba(160,130,80,.35);box-sizing:border-box"></span>
+              </sc-if>
+              <span style="font-size:16px;font-weight:700;line-height:1.35">{{g.text}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:20px;min-height:52px">
+          <sc-for list="{{genThumbs}}" as="t" hint-placeholder-count="4">
+            <img class="pop" src="{{t}}" alt="" style="width:92px;aspect-ratio:16 / 9;object-fit:cover;border-radius:10px;box-shadow:0 12px 26px -14px rgba(60,40,10,.6)">
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 7 · KONTAKT -->
+    <sc-if value="{{s7}}" hint-placeholder-val="{{false}}">
+      <section class="fade" style="max-width:560px;margin:0 auto">
+        <div style="display:flex;justify-content:center">
+          <span class="gold" style="width:76px;height:76px;border-radius:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px -16px rgba(154,100,24,.7)">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+          </span>
+        </div>
+        <h2 class="q" style="margin-top:22px">Tvůj plán je připravený.</h2>
+        <p class="qs">Kam ti ho máme poslat? Uvidíš ho hned a pošleme ti ho i e-mailem. Instagram potřebujeme, abychom plán sladili s tvým portfoliem.</p>
+        <div class="glass" style="margin-top:26px;padding:26px;display:flex;flex-direction:column;gap:14px">
+          <label for="ob-jmeno" style="font-size:14px;font-weight:700">Křestní jméno</label>
+          <input id="ob-jmeno" type="text" autocomplete="given-name" placeholder="Honza" value="{{name}}" onInput="{{setName}}" style="font:inherit;font-size:17px;padding:15px 18px;border:1px solid rgba(255,255,255,.95);border-radius:14px;background:rgba(255,255,255,.85);min-height:48px;box-sizing:border-box">
+          <label for="ob-email" style="font-size:14px;font-weight:700">E-mail</label>
+          <input id="ob-email" type="email" autocomplete="email" placeholder="tvuj@email.cz" value="{{email}}" onInput="{{setEmail}}" style="font:inherit;font-size:17px;padding:15px 18px;border:1px solid rgba(255,255,255,.95);border-radius:14px;background:rgba(255,255,255,.85);min-height:48px;box-sizing:border-box">
+          <label for="ob-tel" style="font-size:14px;font-weight:700">Telefon</label>
+          <input id="ob-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="+420 777 123 456" value="{{tel}}" onInput="{{setTel}}" style="font:inherit;font-size:17px;padding:15px 18px;border:1px solid rgba(255,255,255,.95);border-radius:14px;background:rgba(255,255,255,.85);min-height:48px;box-sizing:border-box">
+          <label for="ob-ig" style="font-size:14px;font-weight:700">Instagram</label>
+          <input id="ob-ig" type="text" placeholder="@tvujprofil" value="{{ig}}" onInput="{{setIg}}" style="font:inherit;font-size:17px;padding:15px 18px;border:1px solid rgba(255,255,255,.95);border-radius:14px;background:rgba(255,255,255,.85);min-height:48px;box-sizing:border-box">
+          <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;color:#55555C;margin-top:4px;cursor:pointer">
+            <input type="checkbox" onChange="{{toggleMkt}}" style="width:18px;height:18px;margin-top:2px;accent-color:#0E0E10;flex:none">
+            Chci dostávat tipy a články e-mailem. Odhlásit se jde jedním klikem.
+          </label>
+          <button type="button" class="btn gold" onClick="{{unlock}}" aria-disabled="{{contactDisabled}}" style="color:#0E0E10;margin-top:6px;{{contactBtnStyle}}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"></rect><path d="M8 11V7a4 4 0 0 1 7.5-2"></path></svg>
+            Odemknout můj plán
+          </button>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 8 · PLÁN -->
+    <sc-if value="{{s8}}" hint-placeholder-val="{{false}}">
+      <section class="fade">
+        <div style="text-align:center">
+          <span style="display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#5E4210;padding:8px 15px;border-radius:999px;background:#F3E7CC">Plán sestavený pro tebe</span>
+          <h1 style="margin:18px 0 0;font-size:clamp(36px,5.6vw,62px);line-height:1;font-weight:900;letter-spacing:-.055em">{{planTitle}}</h1>
+          <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:18px">
+            <sc-for list="{{profileChips}}" as="c" hint-placeholder-count="4">
+              <span class="glass" style="padding:8px 14px;border-radius:999px;font-size:14px;font-weight:700">{{c}}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- kde jsi a kam míříš -->
+        <div class="glass" style="margin-top:34px;padding:clamp(22px,4vw,36px)">
+          <div style="font-size:13px;font-weight:800;letter-spacing:.14em;color:#6A6A72">KDE JSI A KAM MÍŘÍŠ</div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:18px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="flex:none;width:58px;font-size:14px;font-weight:700;color:#55555C">Teď</span>
+              <div style="flex:1 1 auto;height:44px;border-radius:12px;background:rgba(160,130,80,.12);overflow:hidden"><div style="height:100%;background:#3A3A40;border-radius:12px;display:flex;align-items:center;padding-left:14px;color:#FFFFFF;font-size:14px;font-weight:800;white-space:nowrap;box-sizing:border-box;{{curBar}}">{{currentLabel}}</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="flex:none;width:58px;font-size:14px;font-weight:700;color:#55555C">Cíl</span>
+              <div style="flex:1 1 auto;height:44px;border-radius:12px;background:rgba(160,130,80,.12);overflow:hidden"><div class="gold" style="height:100%;border-radius:12px;display:flex;align-items:center;padding-left:14px;font-size:14px;font-weight:800;white-space:nowrap;box-sizing:border-box;{{goalBar}}">{{goalLabel}}</div></div>
+            </div>
+          </div>
+          <p style="margin:18px 0 0;font-size:17px;line-height:1.55">{{gapText}}</p>
+        </div>
+
+        <!-- tři fáze -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px">
+          <sc-for list="{{phases}}" as="ph" hint-placeholder-count="3">
+            <div class="glass" style="padding:22px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                <span class="bebas acc" style="font-size:34px;line-height:1">{{ph.num}}</span>
+                <span style="font-size:12px;font-weight:800;letter-spacing:.12em;color:#6A6A72">{{ph.when}}</span>
+              </div>
+              <div style="font-size:20px;font-weight:800;letter-spacing:-.025em;margin-top:-6px">{{ph.title}}</div>
+              <sc-for list="{{ph.items}}" as="it" hint-placeholder-count="2">
+                <div style="display:flex;gap:12px;align-items:center;padding:8px;border-radius:16px;background:rgba(255,255,255,.75)">
+                  <img src="{{it.thumb}}" alt="" style="flex:none;width:84px;aspect-ratio:16 / 9;object-fit:cover;border-radius:10px">
+                  <div style="min-width:0"><div style="font-size:15px;font-weight:800;line-height:1.2">{{it.title}}</div><div style="font-size:13px;color:#6A6A72;margin-top:3px">{{it.dur}}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- čas a návratnost -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px">
+          <div class="glass" style="padding:24px;display:flex;gap:18px;align-items:center">
+            <span class="bebas acc" style="font-size:64px;line-height:.85;flex:none">{{weeks}}</span>
+            <span style="font-size:16px;line-height:1.45"><strong>{{weeksWord}}</strong> při {{hoursLabel}} týdně. Celý plán má {{planTime}} videa.</span>
+          </div>
+          <div class="gold" style="padding:24px;border-radius:28px;display:flex;gap:18px;align-items:center;box-shadow:0 20px 50px -26px rgba(154,100,24,.7)">
+            <span class="bebas" style="font-size:64px;line-height:.85;flex:none">{{roiJobs}}</span>
+            <span style="font-size:16px;line-height:1.45;font-weight:600">{{roiText}}</span>
+          </div>
+        </div>
+
+        <!-- rozhodnutí -->
+        <div class="glass" style="margin-top:16px;padding:clamp(24px,4vw,40px);text-align:center">
+          <div style="font-size:clamp(24px,3vw,32px);font-weight:900;letter-spacing:-.04em">Jak chceš pokračovat?</div>
+          <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:22px">
+            <a href="#" class="btn gold" style="color:#0E0E10;box-shadow:0 16px 36px -14px rgba(154,100,24,.7)">Začít podle plánu · 24 997 Kč
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            </a>
+            <button type="button" class="btn" onClick="{{toCall}}" style="background:#0E0E10;color:#FFFFFF">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2.5"></rect><path d="m16 10 5-3v10l-5-3"></path></svg>
+              Probrat plán s námi · 15 min
+            </button>
+          </div>
+          <p style="margin:14px 0 0;font-size:14px;color:#6A6A72">Jednorázově, přístup navždy · platba přes Stripe</p>
+          <a href="#" style="display:inline-block;margin-top:16px;font-size:15px;font-weight:700">Ještě nejsi připravený? Začni Databází za 1 497 Kč →</a>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 9 · TERMÍN HOVORU -->
+    <sc-if value="{{s9}}" hint-placeholder-val="{{false}}">
+      <section class="fade" style="max-width:720px;margin:0 auto">
+        <h2 class="q">Kdy se ti to hodí?</h2>
+        <p class="qs">15 minut videohovoru s námi. Projdeme tvůj plán a řekneme ti na rovinu, jestli ti Academy pomůže.</p>
+        <div class="glass" style="margin-top:28px;padding:clamp(22px,4vw,34px)">
+          <div style="font-size:14px;font-weight:800;letter-spacing:.1em;color:#6A6A72">DEN</div>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px">
+            <sc-for list="{{days}}" as="d" hint-placeholder-count="5">
+              <button type="button" class="tile chip" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" style="{{d.style}}">
+                <span style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.75">{{d.dow}}</span>
+                <span class="bebas" style="display:block;font-size:34px;line-height:1;margin-top:4px">{{d.num}}</span>
+                <span style="display:block;font-size:12px;opacity:.75">{{d.mon}}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font-size:14px;font-weight:800;letter-spacing:.1em;color:#6A6A72;margin-top:26px">ČAS</div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px">
+            <sc-for list="{{slots}}" as="t" hint-placeholder-count="4">
+              <button type="button" class="tile chip" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="{{t.style}}">{{t.label}}</button>
+            </sc-for>
+          </div>
+          <button type="button" class="btn gold" onClick="{{book}}" aria-disabled="{{bookDisabled}}" style="width:100%;color:#0E0E10;margin-top:26px;{{bookBtnStyle}}">Potvrdit termín</button>
+          <p style="margin:12px 0 0;font-size:13px;color:#6A6A72;text-align:center">Odkaz na videohovor ti přijde na {{emailShown}}.</p>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- 10 · POTVRZENO -->
+    <sc-if value="{{s10}}" hint-placeholder-val="{{false}}">
+      <section class="fade" style="max-width:560px;margin:0 auto;text-align:center;padding-top:30px">
+        <span class="gold" style="width:84px;height:84px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px -16px rgba(154,100,24,.7)">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        </span>
+        <h2 class="q" style="margin-top:22px">Máš to v kalendáři, {{nameShown}}.</h2>
+        <p class="qs" style="font-size:18px">{{bookedText}}</p>
+        <div class="glass" style="margin-top:26px;padding:20px;display:flex;align-items:center;gap:14px;text-align:left">
+          <img src="/_blob/7cfd7d4f840f9d383ffebb204b21b1af" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:top;background:#F3E7CC;flex:none">
+          <span style="font-size:15px;line-height:1.5">Do té doby si projdi svůj plán. Poslali jsme ti ho i na e-mail.</span>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- navigace -->
+    <sc-if value="{{showNav}}" hint-placeholder-val="{{false}}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:720px;margin:34px auto 0">
+        <sc-if value="{{showBack}}" hint-placeholder-val="{{true}}"><button type="button" class="back" onClick="{{goBack}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Zpět
+        </button></sc-if>
+        <sc-if value="{{showNext}}" hint-placeholder-val="{{false}}">
+          <button type="button" class="btn" onClick="{{goNext}}" aria-disabled="{{nextDisabled}}" style="margin-left:auto;background:#0E0E10;color:#FFFFFF;{{nextStyle}}">Pokračovat
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </button>
+        </sc-if>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 1, obory: [], years: null, jobs: null, price: 6000, blockers: [], goal: null, hours: null, name: '', email: '', ig: '', tel: '', mkt: false, day: null, slot: null, gen: 0 };
+  }
+  startGen() {
+    clearInterval(this._gt);
+    this.setState({ step: 11, gen: 0 });
+    this._gt = setInterval(() => {
+      const g = Math.min(100, this.state.gen + 2);
+      this.setState({ gen: g });
+      if (g >= 100) {
+        clearInterval(this._gt);
+        setTimeout(() => { if (this.state.step === 11) this.setState({ step: 7 }); }, 800);
+      }
+    }, 90);
+  }
+  renderVals() {
+    const S = this.state;
+    const set = (o) => this.setState(o);
+    const go = (n) => this.setState({ step: n });
+    const kc = (n) => Math.round(n).toLocaleString('cs-CZ').replace(/ /g, ' ') + ' Kč';
+    const ringOn = 'box-shadow:0 0 0 3px #C8913A,0 20px 44px -22px rgba(154,100,24,.7);transform:translateY(-3px)';
+    const ringOff = 'box-shadow:0 12px 30px -22px rgba(60,40,10,.45)';
+    const chip = (on) => 'font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:64px;border-radius:16px;font-size:20px;font-weight:800;letter-spacing:-.02em;cursor:pointer;box-sizing:border-box;' + (on
+      ? 'background-image:linear-gradient(135deg,#E8C47A 0%,#D4A24C 50%,#B07A22 100%);color:#0E0E10;border:2px solid #9A6418;box-shadow:0 14px 30px -14px rgba(154,100,24,.8);transform:translateY(-2px)'
+      : 'background:#FFFFFF;color:#0E0E10;border:2px solid rgba(176,122,34,.28);box-shadow:0 2px 0 rgba(176,122,34,.18),0 10px 22px -16px rgba(60,40,10,.5)');
+
+    // --- data pro plán ---
+    const T = {
+      zaklady: '/_blob/6c9750631d8817dd5d20fba695b28462', svatby: '/_blob/4114a61dca38a170216674f8bc27492f', vyzva: '/_blob/59b6737e82c977de5c3056c188485318', akce: '/_blob/bedf600bb1e7a5654cd781e62a302c08',
+      vybaveni: '/_blob/6bf909bb20a87555bb04df3233c8a91e', automat: '/_blob/4077cf123d38f386c39db26ab8bcae5b', zakulisi: '/_blob/e051e11d9a382d13371d49f700736aba', ceny: '/_blob/30a2f3ed67f6d752a6b60ed51a805ffd',
+      stul: '/_blob/a12425e61f1174eb26d2ccd6fe5d950d', after1: '/_blob/731558e0e8a52c3e23868f913ff7d74f', after2: '/_blob/3ae22df71f96d963db06672769e80146', svatbaBA: '/_blob/492415807f9b7c8144511cdc5a9b9089',
+      workshop: '/_blob/b21b0317247198bdf4c4efee9874587b', lidi: '/_blob/1a485c0f8c7baa4e0fa6b24ec0bcf516', klient: '/_blob/567ace83fc782be9be87269f5981a399', platforma: '/_blob/d2d4f4787db9cd62093940827e474c10', vysvetluje: '/_blob/7b22e41daded71661904e96592be31f1'
+    };
+    const B = {
+      'Začínám fotografovat': [20016, 'zaklady'], 'Technika a vybavení': [2182, 'vybaveni'], 'Masterclass úpravy fotek': [34300, 'after2'], 'Cenotvorba': [2013, 'ceny'],
+      'Jak získávat klienty': [8535, 'workshop'], 'Značka a portfolio': [1205, 'lidi'], 'Prodej, follow-up a upsell': [8160, 'klient'], 'Prodejní web a SEO': [11220, 'platforma'],
+      'Účetnictví a právo': [7620, 'stul'], 'Systémy a automatizace': [8700, 'automat'], 'Svatba od A do Z': [2880, 'svatby'], 'Úprava svatebních fotek': [5040, 'svatbaBA'],
+      '90denní výzva': [4200, 'vyzva'], 'Kenji v akci': [2160, 'zakulisi'], 'Realitní fotografie': [8100, 'akce'], 'Horké křeslo': [9900, 'vysvetluje']
+    };
+    const dur = (sec) => { const m = Math.round(sec / 60), h = Math.floor(m / 60); return (h ? h + ' h ' : '') + (m % 60) + ' min videa'; };
+
+    // --- 1 obory ---
+    const OB = [
+      ['svatby', 'Svatby', 'M3 14a5 5 0 1 0 10 0a5 5 0 1 0-10 0M11 14a5 5 0 1 0 10 0a5 5 0 1 0-10 0M10 5l2-2 2 2-2 2z'],
+      ['rodina', 'Rodinné focení', 'M5 6.5a2 2 0 1 0 4 0a2 2 0 1 0-4 0M15 6.5a2 2 0 1 0 4 0a2 2 0 1 0-4 0M3.5 20v-5a3.5 3.5 0 0 1 7 0M13.5 15a3.5 3.5 0 0 1 7 0v5M10.5 14a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M9.5 20v-1.5a2.5 2.5 0 0 1 5 0V20'],
+      ['lifestyle', 'Lifestyle', 'M4 10h12v4.5a5.5 5.5 0 0 1-5.5 5.5h-1A5.5 5.5 0 0 1 4 14.5zM16 11.5h1.5a2.5 2.5 0 0 1 0 5H16M8 3.5c-.8 1 .8 2 0 3.5M12 3.5c-.8 1 .8 2 0 3.5'],
+      ['portret', 'Portrét', 'M4 3h16v18H4zM9 10a3 3 0 1 0 6 0a3 3 0 1 0-6 0M7 21a5 5 0 0 1 10 0'],
+      ['plesy', 'Plesy a eventy', 'M5 3h5l-.4 4.6a2.1 2.1 0 0 1-4.2 0zM7.5 10v8M5 18h5M14 3h5l-.4 4.6a2.1 2.1 0 0 1-4.2 0zM16.5 10v8M14 18h5'],
+      ['reality', 'Nemovitosti', 'M3 11 12 4l9 7M5.5 9.5V20h13V9.5M10 20v-5.5h4V20'],
+      ['produkty', 'Produktovky', 'M9.5 3h5v3.2l2.5 3.3V21H7V9.5l2.5-3.3zM7 13h10M9.5 6.2h5'],
+      ['video', 'Video a reels', 'M3 7h13v10H3zM16 10.5l5-3v9l-5-3'],
+      ['sport', 'Sport', 'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M12 3v18M5.6 5.6c2.5 2.5 2.5 10.3 0 12.8M18.4 5.6c-2.5 2.5-2.5 10.3 0 12.8'],
+      ['nevim', 'Ještě nevím', 'M9 9a3 3 0 1 1 4.4 2.7c-.9.5-1.4 1.2-1.4 2.3M12 18h.01']
+    ];
+    const togg = (arr, id, max) => arr.includes(id) ? arr.filter((x) => x !== id) : (arr.length >= max ? arr.slice(1).concat(id) : arr.concat(id));
+    const obory = OB.map(([id, label, d]) => {
+      const on = S.obory.includes(id);
+      return {
+        label, d, on, pressed: on ? 'true' : 'false', ring: on ? ringOn : ringOff,
+        badge: on ? 'background:#0E0E10' : 'background-image:linear-gradient(135deg,#F6E3B8 0%,#E8C47A 55%,#D4A24C 100%)',
+        stroke: on ? '#E2B55E' : '#0E0E10',
+        pick: () => set({ obory: togg(S.obory, id, 3) })
+      };
+    });
+
+    // --- 2 úroveň ---
+    const LV = [['zacinam', 'LVL 1', 'Začínám', 'méně než rok', 1], ['1-3', 'LVL 2', 'Rozjíždím to', '1–3 roky', 2], ['3-5', 'LVL 3', 'Profík', '3–5 let', 3], ['5+', 'LVL 4', 'Veterán', '5 a víc let', 4]];
+    const levels = LV.map(([id, lvl, title, sub, n]) => ({
+      lvl, title, sub, pressed: S.years === id ? 'true' : 'false', ring: S.years === id ? ringOn : ringOff,
+      bars: [1, 2, 3, 4].map((k) => ({ style: 'flex:1;border-radius:6px;height:' + (k * 25) + '%;' + (k <= n ? 'background:linear-gradient(180deg,#E2B55E,#A87420)' : 'background:rgba(160,130,80,.16)') })),
+      pick: () => set({ years: id, step: 3 })
+    }));
+
+    // --- 3 zakázky a cena ---
+    const JB = [['0', '0', 0], ['1-2', '1–2', 1.5], ['3-5', '3–5', 4], ['6-10', '6–10', 8], ['10+', '10+', 12]];
+    const jobs = JB.map(([id, label]) => ({ label, pressed: S.jobs === id ? 'true' : 'false', style: chip(S.jobs === id), pick: () => set({ jobs: id }) }));
+    const jobsMid = (JB.find((j) => j[0] === S.jobs) || [0, 0, 0])[2];
+    const current = jobsMid * S.price;
+
+    // --- 4 brzdy ---
+    const BK = ['cena', 'klienti', 'nabidka', 'portfolio', 'chaos', 'technika'];
+    const bk = {};
+    BK.forEach((id) => { const on = S.blockers.includes(id); bk[id] = { pressed: on ? 'true' : 'false', ring: on ? ringOn : ringOff, pick: () => set({ blockers: togg(S.blockers, id, 2) }) }; });
+
+    // --- 5 cíl ---
+    const GL = [[20000, '20 000 Kč'], [40000, '40 000 Kč'], [60000, '60 000 Kč'], [100000, '100 000+ Kč']];
+    const goals = GL.map(([v, label], i) => ({ label, pressed: S.goal === v ? 'true' : 'false', ring: S.goal === v ? ringOn : ringOff, bar: 'height:' + (25 + i * 25) + '%', pick: () => set({ goal: v, step: 6 }) }));
+
+    // --- 6 čas ---
+    const HR = [[2, '2 h', 'pár hodin týdně', 1], [5, '5 h', 'večer nebo dva', 2], [10, '10 h', 'beru to vážně', 3], [20, '20+ h', 'jdu do toho naplno', 4]];
+    const hoursOpts = HR.map(([v, label, sub, n]) => ({
+      label, sub, pressed: S.hours === v ? 'true' : 'false', ring: S.hours === v ? ringOn : ringOff,
+      cells: [1, 2, 3, 4].map((k) => ({ style: 'height:34px;border-radius:8px;' + (k <= n ? 'background:linear-gradient(180deg,#E2B55E,#A87420)' : 'background:rgba(160,130,80,.16)') })),
+      pick: () => { set({ hours: v }); this.startGen(); }
+    }));
+
+    // --- 7 kontakt ---
+    const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.email.trim());
+    const telOk = S.tel.replace(/\D/g, '').length >= 9;
+    const igOk = S.ig.replace(/^@/, '').trim().length >= 2;
+    const contactOk = S.name.trim().length > 1 && emailOk && telOk && igOk;
+
+    // --- 8 plán ---
+    const map = {
+      cena: ['Cenotvorba', 'Prodej, follow-up a upsell'], klienti: ['Jak získávat klienty', 'Prodejní web a SEO'], nabidka: ['Značka a portfolio', 'Cenotvorba'],
+      portfolio: ['Značka a portfolio', 'Masterclass úpravy fotek'], chaos: ['Systémy a automatizace', 'Účetnictví a právo'], technika: ['Technika a vybavení', 'Masterclass úpravy fotek']
+    };
+    const oborMap = { svatby: ['Svatba od A do Z', 'Úprava svatebních fotek'], reality: ['Realitní fotografie'], video: ['Kenji v akci'], produkty: ['Prodej, follow-up a upsell'], plesy: ['Kenji v akci', 'Značka a portfolio'], rodina: ['Značka a portfolio', 'Masterclass úpravy fotek'], lifestyle: ['Značka a portfolio', 'Masterclass úpravy fotek'], sport: ['Značka a portfolio'], portret: ['Značka a portfolio'], nevim: ['Začínám fotografovat'] };
+    const used = new Set();
+    const take = (list, n) => { const out = []; for (const t of list) { if (out.length >= n) break; if (B[t] && !used.has(t)) { used.add(t); out.push(t); } } return out; };
+    const bl = S.blockers.length ? S.blockers : ['klienti'];
+    const p1src = (S.years === 'zacinam' ? ['Začínám fotografovat'] : []).concat(map[bl[0]] || []);
+    const ph1 = take(p1src.concat(['Cenotvorba', 'Jak získávat klienty']), 2);
+    const ob = S.obory.length ? S.obory : ['nevim'];
+    const p2src = [].concat(...ob.map((o) => oborMap[o] || [])).concat(map[bl[1]] || []).concat(map[bl[0]] || []).concat(['Značka a portfolio', 'Jak získávat klienty', 'Prodej, follow-up a upsell']);
+    const ph2 = take(p2src, 2);
+    const ph3 = take(['90denní výzva', 'Systémy a automatizace', 'Horké křeslo', 'Prodej, follow-up a upsell'], 2);
+    const item = (t) => ({ title: t, dur: dur(B[t][0]), thumb: T[B[t][1]] });
+    const phases = [
+      { num: 'Fáze 1', when: 'PRVNÍCH 14 DNÍ', title: 'Odstraníme, co tě brzdí', items: ph1.map(item) },
+      { num: 'Fáze 2', when: 'DO 45 DNÍ', title: 'Postavíme tvůj obor', items: ph2.map(item) },
+      { num: 'Fáze 3', when: 'DO 90 DNÍ', title: 'Rozjedeme systém', items: ph3.map(item) }
+    ];
+    const planSec = ph1.concat(ph2, ph3).reduce((a, t) => a + B[t][0], 0);
+    const hrs = S.hours || 5;
+    const weeks = Math.max(1, Math.ceil(planSec / 3600 / hrs));
+    const goal = S.goal || 40000;
+    const maxV = Math.max(goal, current, 1);
+    const needJobs = Math.ceil(goal / S.price);
+    const roiJobs = Math.ceil(24997 / S.price);
+    const lvlName = (LV.find((l) => l[0] === S.years) || [0, 0, ''])[2];
+    const oborNames = S.obory.map((o) => (OB.find((x) => x[0] === o) || [0, ''])[1]);
+
+    // --- sestavování plánu ---
+    const BKN = { cena: 'Nevím, kolik si říct', klienti: 'Nemám dost klientů', nabidka: 'Nevím, co nabízet', portfolio: 'Slabé portfolio', chaos: 'Chaos v zakázkách', technika: 'Technika a úpravy' };
+    const genTexts = [
+      'Procházím tvých 6 odpovědí',
+      'Vybírám lekce pro ' + (oborNames.length ? oborNames.join(', ').toLowerCase() : 'tvůj obor'),
+      'Řeším, co tě brzdí: ' + bl.map((b) => BKN[b].toLowerCase()).join(' + '),
+      'Počítám, za kolik zakázek se ti Academy vrátí',
+      'Skládám tvůj plán na 90 dní'
+    ];
+    const gp = S.gen;
+    const genSteps = genTexts.map((text, i) => {
+      const done = gp >= (i + 1) * 20, active = !done && gp >= i * 20;
+      return { text, done, active, wait: !done && !active, rowStyle: (i ? 'border-top:1px solid rgba(160,130,80,.14);' : '') + (done || active ? '' : 'opacity:.45') };
+    });
+    const allItems = ph1.concat(ph2, ph3);
+    const genThumbs = allItems.slice(0, Math.min(allItems.length, Math.floor(gp / 17))).map((t) => T[B[t][1]]);
+
+    // --- 9 termín ---
+    const DOW = ['NE', 'PO', 'ÚT', 'ST', 'ČT', 'PÁ', 'SO'], MON = ['led', 'úno', 'bře', 'dub', 'kvě', 'čvn', 'čvc', 'srp', 'zář', 'říj', 'lis', 'pro'];
+    const daysArr = []; const d0 = new Date(); let dd = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + 1);
+    while (daysArr.length < 5) { if (dd.getDay() !== 0 && dd.getDay() !== 6) daysArr.push(new Date(dd)); dd = new Date(dd.getFullYear(), dd.getMonth(), dd.getDate() + 1); }
+    const days = daysArr.map((d, i) => ({ dow: DOW[d.getDay()], num: String(d.getDate()), mon: MON[d.getMonth()], pressed: S.day === i ? 'true' : 'false', style: chip(S.day === i) + ';padding:12px 4px;min-height:84px', pick: () => set({ day: i }) }));
+    const SL = ['10:00', '13:00', '16:00', '19:00'];
+    const slots = SL.map((t, i) => ({ label: t, pressed: S.slot === i ? 'true' : 'false', style: chip(S.slot === i), pick: () => set({ slot: i }) }));
+    const booked = S.day !== null && S.slot !== null;
+    const dSel = booked ? daysArr[S.day] : null;
+
+    // --- průběh ---
+    const answered = [S.obory.length > 0, !!S.years, !!S.jobs, S.blockers.length > 0, !!S.goal, !!S.hours, contactOk].filter(Boolean).length;
+    const canNext = { 1: S.obory.length > 0, 3: !!S.jobs, 4: S.blockers.length > 0 }[S.step];
+    const disabledStyle = 'opacity:.4;pointer-events:none';
+
+    return {
+      s1: S.step === 1, s2: S.step === 2, s3: S.step === 3, s4: S.step === 4, s5: S.step === 5, s6: S.step === 6, s7: S.step === 7, s8: S.step === 8, s9: S.step === 9, s10: S.step === 10, sGen: S.step === 11,
+      genPct: gp + ' %', genRing: 'stroke-dashoffset:' + (540.4 * (1 - gp / 100)).toFixed(1), genSteps, genThumbs,
+      showProgress: S.step >= 1 && S.step <= 7,
+      progressStyle: 'width:' + Math.round((S.step - 1) / 7 * 100 + 100 / 14) + '%',
+      stepLabel: 'Otázka ' + S.step + ' ze 7',
+      xp: answered * 15,
+      obory, levels, jobs, bk, goals, hoursOpts,
+      price: S.price, priceLabel: kc(S.price), setPrice: (e) => set({ price: Number(e.target.value) }),
+      currentLabel: current ? kc(current) : '0 Kč',
+      name: S.name, email: S.email, ig: S.ig, tel: S.tel, setTel: (e) => set({ tel: e.target.value }),
+      setName: (e) => set({ name: e.target.value }), setEmail: (e) => set({ email: e.target.value }), setIg: (e) => set({ ig: e.target.value }),
+      toggleMkt: () => set({ mkt: !S.mkt }),
+      contactDisabled: contactOk ? 'false' : 'true', contactBtnStyle: contactOk ? 'box-shadow:0 16px 36px -14px rgba(154,100,24,.7)' : disabledStyle,
+      unlock: () => { if (contactOk) go(8); },
+      planTitle: (S.name.trim() ? S.name.trim() + ', tady' : 'Tady') + ' je tvůj plán na 90 dní.',
+      profileChips: oborNames.concat(lvlName ? [lvlName] : []).concat([kc(S.price) + ' za zakázku']),
+      curBar: 'width:' + Math.max(16, Math.round(current / maxV * 100)) + '%',
+      goalBar: 'width:' + Math.round(goal / maxV * 100) + '%',
+      goalLabel: kc(goal) + (goal >= 100000 ? '+' : ''),
+      gapText: current >= goal
+        ? 'Na svém cíli už jsi. Teď jde o to, aby to bylo stabilní a nestálo tě to všechen čas.'
+        : 'Při tvé ceně ' + kc(S.price) + ' je to ' + needJobs + ' zakázek měsíčně. Nebo méně zakázek za vyšší cenu, a právě to tě naučíme jako první.',
+      phases,
+      weeks: String(weeks), weeksWord: weeks === 1 ? 'Týden' : (weeks < 5 ? 'Týdny' : 'Týdnů'),
+      hoursLabel: hrs >= 20 ? '20+ h' : hrs + ' h', planTime: dur(planSec).replace(' videa', ''),
+      roiJobs: String(roiJobs),
+      roiText: (roiJobs === 1 ? 'Zakázka' : (roiJobs < 5 ? 'Zakázky' : 'Zakázek')) + ' za tvou cenu ' + kc(S.price) + ' a Academy je zaplacená. Všechno další je zisk.',
+      toCall: () => go(9),
+      days, slots,
+      bookDisabled: booked ? 'false' : 'true', bookBtnStyle: booked ? '' : disabledStyle,
+      book: () => { if (booked) go(10); },
+      emailShown: S.email.trim() || 'tvůj e-mail',
+      nameShown: S.name.trim() || 'hotovo',
+      bookedText: dSel ? 'Uvidíme se ' + DOW[dSel.getDay()].toLowerCase() + ' ' + dSel.getDate() + '. ' + MON[dSel.getMonth()] + ' v ' + SL[S.slot] + '. Odkaz na videohovor ti přišel na e-mail.' : '',
+      showBack: S.step > 1,
+      showNav: S.step >= 1 && S.step <= 9 && S.step !== 8,
+      showNext: S.step === 1 || S.step === 3 || S.step === 4,
+      nextDisabled: canNext ? 'false' : 'true', nextStyle: canNext ? '' : disabledStyle,
+      goNext: () => { if (canNext) go(S.step + 1); },
+      goBack: () => { clearInterval(this._gt); go(S.step === 9 ? 8 : (S.step === 11 ? 6 : Math.max(1, S.step - 1))); }
+    };
+  }
+}
+</script>
+</body>
+</html>

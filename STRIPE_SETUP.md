@@ -112,3 +112,34 @@ Příklad do e-mailu:
 
 Tier je navázaný na e-mail z platby. Změníš ho v adminu (sekce Uživatelé,
 výběr tieru u konkrétního člověka) nebo přímo v Supabase v tabulce `users`.
+
+## Uvítací e-mail po nákupu
+
+Po zaplacení Academy nebo Databáze pošle `stripe-webhook.js` přes Resend e-mail
+„Vítej v Kenji Academy" s tlačítkem na `platba-uspesna.html?session_id=…`
+(předvyplní e-mail a pošle přihlašovací odkaz). Potřebuje `RESEND_API_KEY`
+(volitelně `RESEND_FROM`). Bez klíče se e-mail jen přeskočí, přístup se přidělí vždy.
+
+## Plán na míru (`/plan-na-miru`)
+
+Pro nerozhodnuté zájemce místo bezplatného účtu. Stránka `plan-na-miru.html`
+položí 6 otázek, sestaví plán a pošle odpovědi do `plan-request.js`, který:
+
+- uloží je do tabulky `plan_requests` (migrace `supabase/migrations/20261026120000_plan_requests.sql`),
+- pošle zájemci jeho plán a týmu upozornění se všemi odpověďmi.
+
+Env proměnné:
+
+```txt
+LEAD_NOTIFY_EMAIL=kam-chodi-novi-zajemci@...
+RESEND_API_KEY=...
+```
+
+Po nákupu se řádek se stejným e-mailem přepne na `status = 'koupil'`.
+
+Obě stránky se generují z návrhu na plátně (`_source/academy-b/`):
+
+```bash
+python3 tools/build-academy-b.py _source/academy-b/B-Web.dc.html
+python3 tools/build-plan-na-miru.py _source/academy-b/Onboarding.dc.html
+```
