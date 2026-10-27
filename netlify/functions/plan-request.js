@@ -224,12 +224,14 @@ exports.handler = async function handler(event) {
   }
 
   const saved = await store(row);
-  const notify = process.env.LEAD_NOTIFY_EMAIL;
+  // Upozornění nesmí tiše zmizet: bez proměnné jde na Danielův e-mail.
+  const notify = process.env.LEAD_NOTIFY_EMAIL || '8pospichal@gmail.com';
   const [toLead, toTeam] = await Promise.all([
     Mail.sendEmail({ to: row.email, subject: 'Tvůj plán na míru (a co bude dál)', html: leadEmail(row), text: leadText(row), replyTo: notify || undefined, from: process.env.PLAN_FROM || undefined }),
     notify ? Mail.sendEmail({ to: notify, subject: `Nový zájemce: ${row.name} (${row.obory.map((o) => OBORY[o]).join(', ') || 'bez oboru'})`, html: teamEmail(row), replyTo: row.email }) : Promise.resolve(false)
   ]);
 
+  console.log(`plan-request: uloženo=${saved} e-mail zájemci=${toLead} upozornění=${toTeam} (${process.env.LEAD_NOTIFY_EMAIL ? 'z proměnné' : 'záložní adresa'})`);
   // Zájemce nesmí zmizet: aspoň jedno z uložení a upozornění týmu musí projít.
   if (!saved && !toTeam) return reply(502, { error: 'Odeslání se nepovedlo. Zkus to prosím za chvíli znovu.' });
   return reply(200, { ok: true, emailed: toLead });
