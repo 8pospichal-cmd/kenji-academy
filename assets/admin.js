@@ -108,9 +108,12 @@
     if (started) return; started = true;
     A = window.KenjiAuth || A;
     try {
-      if (IS_LOCAL) { document.getElementById('admin-env').hidden = false; demoData(); render(); return; }
+      // Odkaz z upozornění na nového zájemce: admin.html?osoba=e-mail otevře rovnou jeho kartu.
+      var target = ''; try { target = (new URLSearchParams(location.search).get('osoba') || '').trim().toLowerCase(); } catch (e) {}
+      if (IS_LOCAL) { document.getElementById('admin-env').hidden = false; demoData(); if (target) { selectedPerson = target; view = 'people'; } render(); return; }
       var adminEmail = await rpc('current_admin_email');
       if (!adminEmail) throw new Error('not admin');
+      if (target) { selectedPerson = target; await go('people'); return; }
       await loadOverview(); render();
     } catch (e) { fail(e); }
   }

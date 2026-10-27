@@ -88,20 +88,93 @@ async function store(row) {
   return true;
 }
 
-function leadEmail(row) {
+// Osobní e-mail od Kenjiho: prostý text bez grafiky, postavený z odpovědí.
+// Věty o zájemci jsou bez rodu, sedí na muže i ženy.
+const OBORY_VETA = {
+  svatby: 'svatby', rodina: 'rodinné focení', lifestyle: 'lifestyle', portret: 'portréty',
+  plesy: 'plesy a eventy', reality: 'nemovitosti', produkty: 'produktovky', video: 'video a reels', sport: 'sport'
+};
+const BRZDA_VETA = {
+  cena: 'nevíš, kolik si říct', klienti: 'máš málo klientů', nabidka: 'nevíš, co přesně nabízet',
+  portfolio: 'portfolio zatím neprodává tak, jak by mělo', chaos: 'máš v zakázkách chaos',
+  technika: 'technika a úpravy fotek ti berou moc času'
+};
+const CHYBI = {
+  cena: 'jednoduchý systém, jak si říct o férovou cenu a obhájit ji',
+  klienti: 'systém, díky kterému chodí poptávky pravidelně, ne jen náhodou',
+  nabidka: 'jasná nabídka, které klient porozumí za deset vteřin',
+  portfolio: 'portfolio, které ukazuje přesně tu práci, kterou chtějí prodávat',
+  chaos: 'postup, díky kterému jim zakázky neberou všechen volný čas',
+  technika: 'workflow, které zkrátí úpravy na zlomek času'
+};
+
+function aJoin(list) {
+  return list.length < 2 ? (list[0] || '') : list.slice(0, -1).join(', ') + ' a ' + list[list.length - 1];
+}
+function tydnu(n) { return n === 1 ? '1 týden' : n < 5 ? n + ' týdny' : n + ' týdnů'; }
+
+function leadMessage(row) {
   const site = Mail.siteUrl();
-  const phases = row.plan.phases.filter((p) => p.title).map((p, i) =>
-    `<tr><td style="padding:12px 32px 0;"><div style="padding:14px 16px;border-radius:14px;background:#FBF6EA;border:1px solid #F0E3C4;">
-      <div style="font:800 12px/1.4 Helvetica,Arial,sans-serif;letter-spacing:1.4px;color:#8A5A14;">FÁZE ${i + 1}</div>
-      <div style="font:800 16px/1.35 Helvetica,Arial,sans-serif;color:#0E0E10;margin-top:4px;">${Mail.esc(p.title)}</div>
-      <div style="font:400 14px/1.6 Helvetica,Arial,sans-serif;color:#55555C;margin-top:4px;">${p.items.map(Mail.esc).join(' · ')}</div>
-    </div></td></tr>`).join('');
-  const body = Mail.heading(`${Mail.esc(row.name)}, tady je tvůj plán`)
-    + Mail.paragraph('Díky za odpovědi. Podle nich jsme ti poskládali, čím začít, aby ses co nejrychleji dostal k zakázkám, které tě uživí.')
+  const obory = row.obory.map((o) => OBORY_VETA[o]).filter(Boolean);
+  const brzdy = row.blockers.map((b) => BRZDA_VETA[b]);
+  const hlavni = row.blockers[0] || 'klienti';
+  const cil = row.goal ? (row.goal >= 100000 ? kc(row.goal) + ' a víc' : kc(row.goal)) + ' měsíčně' : '';
+  const kdeJsi = (obory.length ? 'Fotíš ' + aJoin(obory) : 'Ještě hledáš, co přesně fotit')
+    + ', za zakázku si říkáš kolem ' + kc(row.price)
+    + (cil ? ' a chceš se dostat na ' + cil : '') + '.'
+    // „nevíš, kolik si říct" je vedlejší věta: před dalším „a" patří čárka.
+    + (brzdy.length ? ' Nejvíc tě teď brzdí, že ' + (brzdy.length > 1 && brzdy[0].includes(',') ? brzdy[0] + ', a ' + brzdy[1] : aJoin(brzdy)) + '.' : '');
+  const phases = row.plan.phases.filter((p) => p.title);
+  const hodiny = row.hours ? (row.hours >= 20 ? '20 a víc hodin' : row.hours + (row.hours < 5 ? ' hodiny' : ' hodin')) : '';
+  const delka = hodiny && row.plan.weeks && phases.length ? `Když tomu dáš ${hodiny} týdně, máš plán prošlý zhruba za ${tydnu(row.plan.weeks)}.` : '';
+  const ig = '@' + row.instagram;
+  return {
+    greeting: `Ahoj ${row.name},`,
+    paragraphs: [
+      'díky za vyplnění. Tvoje odpovědi jsem si prošel a tady je, co z nich vidím.',
+      kdeJsi,
+      `Tohle je místo, kde se zasekne většina fotografů. Talent jim nechybí. Chybí jim ${CHYBI[hlavni]}. Dá se to naučit a nemusí to trvat roky.`
+    ],
+    planIntro: 'Na tvém místě bych začal takhle:',
+    phases,
+    afterPlan: delka,
+    next: `do dvou pracovních dnů ti napíšu na Instagram na ${ig}. Mrkni prosím i do Žádostí o zprávy. Zatím se nesledujeme, tak tam Instagram zprávy schovává. Probereme, jestli ti Academy dává smysl, a když ne, poradím ti, co dělat i bez ní.`,
+    reply: 'Kdyby tě mezitím cokoli napadlo, prostě odpověz na tenhle e-mail. Čtu je sám.',
+    ps: `Jestli chceš mezitím vidět, co v Academy je, podívej se na ${site.replace(/^https?:\/\//, '')}/academy`,
+    academyUrl: `${site}/academy`
+  };
+}
+
+function leadEmail(row) {
+  const m = leadMessage(row);
+  const p = (html, extra) => `<p style="margin:0 0 16px;${extra || ''}">${html}</p>`;
+  const phases = m.phases.length
+    ? p(`<strong>${Mail.esc(m.planIntro)}</strong>`) + `<ol style="margin:0 0 16px;padding-left:22px;">${m.phases.map((ph) =>
+      `<li style="margin:0 0 8px;"><strong>${Mail.esc(ph.title)}</strong>${ph.items.length ? ' · <span style="color:#55555C;">' + Mail.esc(ph.items.join(', ')) + '</span>' : ''}</li>`).join('')}</ol>`
+    : '';
+  const body = p(Mail.esc(m.greeting))
+    + m.paragraphs.map((t) => p(Mail.esc(t))).join('')
     + phases
-    + Mail.paragraph('<strong style="color:#0E0E10;">Co bude dál?</strong> Projdeme si tvoje odpovědi, připravíme ti k plánu návrh přímo na míru a do dvou pracovních dnů se ti ozveme. Řekneme ti na rovinu, jestli ti Academy pomůže. Sleduj proto e-mail.')
-    + Mail.button(`${site}/academy#b-cena`, 'Podívat se na Academy →');
-  return Mail.layout({ title: 'Tvůj plán na míru', preheader: 'Tvůj osobní plán, čím začít. A co bude dál.', body });
+    + (m.afterPlan ? p(Mail.esc(m.afterPlan)) : '')
+    + p('<strong>Co bude dál:</strong> ' + Mail.esc(m.next))
+    + p(Mail.esc(m.reply))
+    + p('Měj se,<br><strong>Kenji</strong><br><span style="font-size:14px;color:#6b6a72;">Kenji Academy · <a href="https://www.instagram.com/kenjiacademycz" style="color:#8A5A14;">@kenjiacademycz</a></span>')
+    + p(`P.S. Jestli chceš mezitím vidět, co v Academy je, podívej se na <a href="${m.academyUrl}" style="color:#8A5A14;">kenjiacademy.cz/academy</a>.`, 'padding-top:14px;border-top:1px solid #ECE7DB;font-size:14px;color:#55555C;');
+  return `<!DOCTYPE html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tvůj plán na míru</title></head>
+<body style="margin:0;padding:0;background:#ffffff;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Do 2 pracovních dnů ti napíšu na Instagram. Tady je, čím začít.</div>
+  <div style="max-width:560px;margin:0 auto;padding:28px 20px;font:400 16px/1.6 Helvetica,Arial,sans-serif;color:#2a2a30;">${body}</div>
+</body></html>`;
+}
+
+function leadText(row) {
+  const m = leadMessage(row);
+  return [
+    m.greeting, '', ...m.paragraphs.flatMap((t) => [t, '']),
+    ...(m.phases.length ? [m.planIntro, ...m.phases.map((ph, i) => `${i + 1}. ${ph.title}${ph.items.length ? ' · ' + ph.items.join(', ') : ''}`), ''] : []),
+    ...(m.afterPlan ? [m.afterPlan, ''] : []),
+    'Co bude dál: ' + m.next, '', m.reply, '', 'Měj se,', 'Kenji', 'Kenji Academy · @kenjiacademycz', '', 'P.S. ' + m.ps
+  ].join('\n');
 }
 
 function teamEmail(row) {
@@ -122,9 +195,16 @@ function teamEmail(row) {
     ${line('Marketing', row.marketing_consent ? 'souhlas ano' : 'bez souhlasu')}
     ${line('Odkud', Mail.esc(row.source || '—'))}
   </table></td></tr>`;
-  const body = Mail.heading('Nový zájemce o Academy')
-    + Mail.paragraph(`${Mail.esc(row.name)} vyplnil(a) plán na míru. Ozvi se do dvou pracovních dnů, tak jsme to slíbili.`)
-    + table;
+  const site = Mail.siteUrl();
+  const phases = row.plan.phases.filter((p) => p.title);
+  const planHtml = phases.length ? Mail.paragraph('<strong style="color:#0E0E10;">Plán, který dostal(a):</strong><br>'
+    + phases.map((p, i) => `${i + 1}. ${Mail.esc(p.title)}${p.items.length ? ' · ' + Mail.esc(p.items.join(', ')) : ''}`).join('<br>')) : '';
+  const body = Mail.heading(`Nový zájemce: ${Mail.esc(row.name)}`)
+    + Mail.paragraph(`Vyplnil(a) plán na míru a právě dostal(a) e-mail od Kenjiho. V něm stojí, že mu do <strong style="color:#0E0E10;">dvou pracovních dnů napíšeš na Instagram</strong> na @${Mail.esc(row.instagram)}.`)
+    + Mail.button(`https://ig.me/m/${encodeURIComponent(row.instagram)}`, `Napsat DM @${Mail.esc(row.instagram)} →`)
+    + Mail.paragraph(`<a href="${site}/admin.html?osoba=${encodeURIComponent(row.email)}" style="color:#8A5A14;">Otevřít kartu v adminu</a> · po napsání přepni stav na Kontaktovaný.`)
+    + table
+    + planHtml;
   return Mail.layout({ title: 'Nový zájemce o Academy', preheader: `${row.name} · ${row.obory.map((o) => OBORY[o]).join(', ')}`, body });
 }
 
@@ -146,7 +226,7 @@ exports.handler = async function handler(event) {
   const saved = await store(row);
   const notify = process.env.LEAD_NOTIFY_EMAIL;
   const [toLead, toTeam] = await Promise.all([
-    Mail.sendEmail({ to: row.email, subject: `${row.name}, tady je tvůj plán na míru`, html: leadEmail(row), replyTo: notify || undefined }),
+    Mail.sendEmail({ to: row.email, subject: 'Tvůj plán na míru (a co bude dál)', html: leadEmail(row), text: leadText(row), replyTo: notify || undefined, from: process.env.PLAN_FROM || undefined }),
     notify ? Mail.sendEmail({ to: notify, subject: `Nový zájemce: ${row.name} (${row.obory.map((o) => OBORY[o]).join(', ') || 'bez oboru'})`, html: teamEmail(row), replyTo: row.email }) : Promise.resolve(false)
   ]);
 

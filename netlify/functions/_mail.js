@@ -12,7 +12,9 @@ function esc(value) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-async function sendEmail({ to, subject, html, replyTo }) {
+// `from` přepíše výchozího odesílatele (osobní e-mail od Kenjiho), `text` je
+// prostá verze pro klienty bez HTML — osobní zprávy pak méně padají do spamu.
+async function sendEmail({ to, subject, html, text, replyTo, from }) {
   if (!process.env.RESEND_API_KEY) {
     console.warn('RESEND_API_KEY chybí — e-mail „' + subject + '" se neodeslal.');
     return false;
@@ -25,10 +27,11 @@ async function sendEmail({ to, subject, html, replyTo }) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'Kenji Academy <noreply@kenjiacademy.cz>',
+        from: from || process.env.RESEND_FROM || 'Kenji Academy <noreply@kenjiacademy.cz>',
         to: Array.isArray(to) ? to : [to],
         subject,
         html,
+        ...(text ? { text } : {}),
         ...(replyTo ? { reply_to: replyTo } : {})
       })
     });

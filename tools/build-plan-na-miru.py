@@ -36,7 +36,7 @@ def patch_template(tpl):
 
     # Kontakt: odeslání na server, souhlas, skryté pole proti robotům.
     tpl = sub1(tpl, 'Kam ti ho máme poslat? Uvidíš ho hned a pošleme ti ho i e-mailem. Instagram potřebujeme, abychom plán sladili s tvým portfoliem.',
-               'Kam ti ho máme poslat? Uvidíš ho hned a pošleme ti ho i e-mailem. Podle Instagramu se podíváme, kde teď s portfoliem jsi.')
+               'Kam ti ho máme poslat? Plán ti přijde e-mailem a do dvou pracovních dnů ti napíšeme na Instagram. Podle něj se podíváme, kde teď s portfoliem jsi.')
     tpl = sub1(tpl, '<input id="ob-ig" type="text" placeholder="@tvujprofil" value="{{ig}}" onInput="{{setIg}}"',
                '<input id="ob-ig" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@tvujprofil" value="{{ig}}" onInput="{{setIg}}"')
     tpl = sub1(tpl, '<input type="checkbox" onChange="{{toggleMkt}}"', '<input type="checkbox" checked="{{mkt}}" onChange="{{toggleMkt}}"')
@@ -51,36 +51,31 @@ def patch_template(tpl):
           <sc-if value="{{sendError}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin:0;font-size:14px;font-weight:600;color:#B42318">{{sendError}}</p></sc-if>
           <p style="margin:2px 0 0;font-size:12.5px;line-height:1.5;color:#8A8A92">Údaje použijeme jen k tomu, abychom ti poslali plán a ozvali se ti k němu. Víc v <a href="zasady-ochrany-udaju.html" target="_blank" rel="noopener" style="color:#55555C">zásadách ochrany osobních údajů</a>.</p>''')
 
-    # Hned pod nadpisem plánu: co se stane dál a ať sleduje e-mail.
-    tpl = sub1(tpl, '        <!-- kde jsi a kam míříš -->',
-               '''        <div role="status" style="margin:26px auto 0;max-width:760px;display:flex;gap:16px;align-items:flex-start;padding:18px 20px;border-radius:22px;background:#0E0E10;color:#FFFFFF;box-shadow:0 20px 50px -30px rgba(0,0,0,.6)">
-          <span class="gold" style="flex:none;width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><path d="m3.5 7 8.5 6 8.5-6"></path></svg></span>
-          <span style="font-size:15.5px;line-height:1.55;color:rgba(255,255,255,.82)"><strong style="color:#FFFFFF">Sleduj e-mail {{emailShown}}.</strong> Plán ti tam posíláme a k němu připravíme návrh přímo na míru pro tebe. Do dvou pracovních dnů se ti ozveme. Kdyby e-mail nepřišel, mrkni i do spamu nebo do Hromadných.</span>
-        </div>
+    # Po odeslání: plán se na stránce neukazuje, přijde osobním e-mailem od Kenjiho
+    # a do dvou pracovních dnů následuje DM na Instagramu.
+    start = tpl.index('    <!-- 8 · PLÁN -->')
+    end = tpl.index('    <!-- 9 · TERMÍN HOVORU -->')
+    step = '<span style="flex:none;width:30px;height:30px;border-radius:50%%;background:#0E0E10;color:#E2B55E;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center">%d</span>'
+    tpl = tpl[:start] + '''    <!-- 8 · HOTOVO -->
+    <sc-if value="{{s8}}" hint-placeholder-val="{{false}}">
+      <section class="fade" data-k="hotovo" style="max-width:560px;margin:0 auto">
+        <span class="gold" style="width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+        </span>
+        <h1 style="margin:22px 0 0;font-size:clamp(34px,5vw,52px);line-height:1.04;font-weight:900;letter-spacing:-.05em">{{doneTitle}}<br>Mrkni do e-mailu.</h1>
+        <p style="margin:14px 0 0;font-size:17px;line-height:1.55;color:#55555C">Tvůj plán ti právě odešel na <strong style="color:#0E0E10">{{emailShown}}</strong>. Napsal jsem ti k němu pár řádků.</p>
+        <ol class="glass" style="list-style:none;margin:26px 0 0;padding:22px;display:flex;flex-direction:column;gap:18px">
+          <li style="display:flex;gap:14px;align-items:flex-start">%s<span style="font-size:16px;line-height:1.45"><strong>Otevři e-mail od Kenjiho</strong><br><span style="color:#55555C">Nevidíš ho? Koukni do Promoakcí nebo spamu.</span></span></li>
+          <li style="display:flex;gap:14px;align-items:flex-start">%s<span style="font-size:16px;line-height:1.45"><strong>Do 2 pracovních dnů ti napíšu na Instagram</strong><br><span style="color:#55555C">na {{igShown}} · mrkni i do Žádostí o zprávy</span></span></li>
+          <li style="display:flex;gap:14px;align-items:flex-start">%s<span style="font-size:16px;line-height:1.45"><strong>Probereme, co dál</strong><br><span style="color:#55555C">jestli ti Academy pomůže, nebo co dělat i bez ní</span></span></li>
+        </ol>
+        <a class="btn" href="https://www.instagram.com/kenjiacademycz/" target="_blank" rel="noopener" style="margin-top:22px;width:100%%;justify-content:center;background:#0E0E10;color:#FFFFFF;text-decoration:none">Sledovat @kenjiacademycz</a>
+        <p style="margin:10px 0 0;text-align:center;font-size:14px;color:#6A6A72">Když nás sleduješ, zpráva ti přijde rovnou do DM.</p>
+        <p style="margin:26px 0 0;text-align:center"><a href="academy.html" style="color:#8A5A14;font-size:15px;font-weight:700;text-decoration:none;display:inline-block;min-height:44px;line-height:44px">Mezitím se podívat, co je v Academy →</a></p>
+      </section>
+    </sc-if>
 
-        <!-- kde jsi a kam míříš -->''')
-
-    # Plán: co bude dál + nákup s předvyplněným e-mailem.
-    start = tpl.index('        <!-- rozhodnutí -->')
-    end = tpl.index('      </section>\n    </sc-if>\n\n    <!-- 9 · TERMÍN HOVORU -->')
-    tpl = tpl[:start] + '''        <!-- co bude dál -->
-        <div class="glass" style="margin-top:16px;padding:clamp(24px,4vw,40px);text-align:center">
-          <span class="gold" style="width:56px;height:56px;border-radius:18px;margin:0 auto;display:flex;align-items:center;justify-content:center">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0E0E10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><path d="m3.5 7 8.5 6 8.5-6"></path></svg>
-          </span>
-          <div style="font-size:clamp(24px,3vw,32px);font-weight:900;letter-spacing:-.04em;margin-top:16px">Co bude dál?</div>
-          <p style="margin:10px auto 0;max-width:520px;font-size:17px;line-height:1.55;color:#55555C">Projdeme si tvoje odpovědi a připravíme ti návrh na míru. Do dvou pracovních dnů se ti ozveme na <strong style="color:#0E0E10">{{emailShown}}</strong> a řekneme ti na rovinu, jestli ti Academy pomůže.</p>
-          <div style="font-size:15px;font-weight:700;margin-top:26px">Nechceš čekat?</div>
-          <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:12px">
-            <button type="button" class="btn gold" onClick="{{buyAcademy}}" aria-disabled="{{buyDisabled}}" style="color:#0E0E10;box-shadow:0 16px 36px -14px rgba(154,100,24,.7)">{{buyLabel}}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-            </button>
-          </div>
-          <p style="margin:14px 0 0;font-size:14px;color:#6A6A72">Jednorázově, přístup navždy · zabezpečená platba přes Stripe</p>
-          <sc-if value="{{buyError}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin:10px 0 0;font-size:14px;font-weight:600;color:#B42318">{{buyError}}</p></sc-if>
-          <button type="button" onClick="{{buyDatabaze}}" style="font:inherit;background:none;border:0;cursor:pointer;color:#0E0E10;text-decoration:underline;display:inline-block;margin-top:16px;font-size:15px;font-weight:700;min-height:44px">Ještě nejsi připravený? Začni Databází za 1 497 Kč →</button>
-        </div>
-''' + tpl[end:]
+''' % (step % 1, step % 2, step % 3) + tpl[end:]
 
     # Během otázek: rychlá cesta pro ty, kdo se mezitím rozhodli koupit.
     tpl = sub1(tpl, '  </main>', '''    <sc-if value="{{showQuickBuy}}" hint-placeholder-val="{{true}}">
@@ -172,7 +167,8 @@ def patch_script(script):
     script = script[:start] + script[end:]
     script = sub1(script, "      unlock: () => { if (contactOk) go(8); },",
                   "      unlock: () => { if (contactOk && !S.sending) this.submit(); },\n"
-                  "      unlockLabel: S.sending ? 'Odesílám…' : 'Odemknout můj plán',\n"
+                  "      unlockLabel: S.sending ? 'Odesílám…' : 'Poslat mi plán',\n"
+                  "      doneTitle: (S.name.trim() ? 'Hotovo, ' + S.name.trim() + '.' : 'Hotovo.'), igShown: S.ig.trim() ? '@' + S.ig.trim().replace(/^@/, '') : 'tvůj Instagram',\n"
                   "      hp: S.hp, setHp: (e) => set({ hp: e.target.value }), mkt: S.mkt, sendError: S.sendError,\n"
                   "      buyAcademy: () => this.checkout('academy'), buyDatabaze: () => this.checkout('databaze'),\n"
                   "      buyLabel: S.buying === 'academy' ? 'Připravuju platbu…' : 'Začít podle plánu · 24 997 Kč', buyDisabled: S.buying ? 'true' : 'false', buyError: S.buyError,\n"
@@ -201,7 +197,7 @@ PAGE = """<!DOCTYPE html>
 <title>Zjisti, jestli je Academy pro tebe — Kenji Academy</title>
 <meta name="description" content="Naklikej pár otázek o svém focení a dostaneš osobní plán, čím začít. Zdarma a bez platební karty.">
 <meta name="robots" content="noindex">
-<link rel="canonical" href="https://kenjiacademy.cz/plan-na-miru">
+<link rel="canonical" href="https://www.kenjiacademy.cz/plan-na-miru">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
