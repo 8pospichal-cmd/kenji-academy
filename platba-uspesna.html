@@ -5,8 +5,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vítej v Kenji Academy — platba proběhla</title>
-<link rel="canonical" href="https://kenjiacademy.cz/platba-uspesna">
-<meta property="og:image" content="https://kenjiacademy.cz/assets/og-image.jpg">
+<link rel="canonical" href="https://www.kenjiacademy.cz/platba-uspesna">
+<meta property="og:image" content="https://www.kenjiacademy.cz/assets/og-image.jpg">
 <meta name="description" content="Platba proběhla. Přihlas se e-mailem a máš plný přístup do Kenji Academy.">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -79,27 +79,47 @@
       .catch(function () { /* nevadí — pole zůstane k ručnímu vyplnění */ });
   })();
 
-  // Po nákupu presetů pošli člověka rovnou ke stažení, ne na dashboard.
-  var koupilPresety = /(^|[?&])(product|produkt)=presets/.test(location.search);
-  // U presetů upravíme i text pro nepřihlášeného — jinak mluví o vstupu do Academy.
-  if (koupilPresety) {
-    // Kdo koupil presety, nekoupil Academy — nadpis tomu musí odpovídat.
-    document.title = 'Presety jsou tvoje — platba proběhla';
+  // Texty podle toho, co člověk koupil. Bez toho by kupec Databáze nebo presetů
+  // četl „Vítej v Kenji Academy“ a hledal kurzy, které nemá.
+  var produkt = ((location.search.match(/[?&](?:product|produkt)=([a-z]+)/) || [])[1] || 'academy');
+  var koupilPresety = produkt === 'presets';
+  var TEXTY = {
+    databaze: {
+      doc: 'Databáze je tvoje — platba proběhla',
+      kicker: 'Platba proběhla · Databáze je tvoje',
+      title: 'Databáze je tvoje. 🎉',
+      lead: 'Databázi máš zaplacenou napořád. Zbývá jediný krok — přihlas se <strong>stejným e-mailem, který jsi zadal u platby</strong>. Pošleme ti odkaz a hned se dostaneš ke všem článkům.',
+      logged: 'Hotovo. Celou databázi praktických článků máš odemčenou napořád.',
+      go: 'Otevřít Databázi →'
+    },
+    presets: {
+      doc: 'Presety jsou tvoje — platba proběhla',
+      kicker: 'Platba proběhla · presety jsou tvoje',
+      title: 'Presety máš. 🎉',
+      lead: 'Presety máš zaplacené. Zbývá jediný krok — přihlas se <strong>stejným e-mailem, který jsi zadal u platby</strong>. Pošleme ti odkaz a hned se dostaneš ke stažení.',
+      logged: 'Hotovo. Presety máš odemčené — stáhneš si je kdykoli v sekci Moje presety.',
+      go: 'Stáhnout presety →',
+      href: 'moje-presety.html'
+    }
+  };
+  var t = TEXTY[produkt];
+  if (t) {
+    document.title = t.doc;
     var kicker = document.getElementById('cs-kicker');
-    if (kicker) kicker.textContent = 'Platba proběhla · presety jsou tvoje';
+    if (kicker) kicker.textContent = t.kicker;
     var titulek = document.getElementById('cs-title');
-    if (titulek) titulek.textContent = 'Presety máš. 🎉';
+    if (titulek) titulek.textContent = t.title;
     var uvod = loginBox.querySelector('.checkout-lead');
-    if (uvod) uvod.innerHTML = 'Presety máš zaplacené. Zbývá jediný krok — přihlas se <strong>stejným e-mailem, který jsi zadal u platby</strong>. Pošleme ti odkaz a hned se dostaneš ke stažení.';
+    if (uvod) uvod.innerHTML = t.lead;
   }
 
   function showLogged() {
     loginBox.hidden = true; loggedBox.hidden = false;
-    if (koupilPresety) {
+    if (t) {
       var odkaz = document.getElementById('cs-go');
-      if (odkaz) { odkaz.href = 'moje-presety.html'; odkaz.textContent = 'Stáhnout presety →'; }
+      if (odkaz) { if (t.href) odkaz.href = t.href; odkaz.textContent = t.go; }
       var text = loggedBox.querySelector('.checkout-lead');
-      if (text) text.textContent = 'Hotovo. Presety máš odemčené — stáhneš si je kdykoli v sekci Moje presety.';
+      if (text) text.textContent = t.logged;
     }
   }
 

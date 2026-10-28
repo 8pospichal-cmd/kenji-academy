@@ -10,95 +10,51 @@ function response(statusCode, body) {
 }
 
 // E-mail po zaplacení presetů. Bez něj má člověk v poště jen účtenku ze Stripu
-// a musí si sám vzpomenout, že se má přihlásit na web. Odesílá se přes Resend
-// (stejná doména jako přihlašovací odkazy). Když klíč chybí, jen se to přeskočí —
-// nedoručený e-mail nikdy nesmí shodit webhook a zablokovat přidělení přístupu.
-function presetEmailHtml(siteUrl) {
-  const odkaz = `${siteUrl}/moje-presety.html`;
-  return `<!DOCTYPE html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tvoje presety jsou připravené</title></head>
-<body style="margin:0;padding:0;background:#0a0a0a;">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Presety máš odemčené — tady je najdeš.</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0a0a;">
-    <tr><td align="center" style="padding:32px 16px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background:#141414;border:1px solid #262626;border-radius:16px;">
-        <tr><td style="padding:36px 32px 0;">
-          <img src="${siteUrl}/assets/logo-kenji.png" alt="Kenji Academy" width="170" height="29" style="display:block;border:0;outline:none;width:170px;height:29px;">
-        </td></tr>
-        <tr><td style="padding:26px 32px 0;">
-          <h1 style="margin:0;font:700 25px/1.2 Helvetica,Arial,sans-serif;color:#ffffff;">Presety jsou tvoje</h1>
-        </td></tr>
-        <tr><td style="padding:14px 32px 0;">
-          <p style="margin:0;font:400 15px/1.65 Helvetica,Arial,sans-serif;color:#a8a8a8;">Díky za nákup. Devět presetů máš odemčených napořád — stáhneš si je kdykoli, i za dva roky na novém počítači.</p>
-        </td></tr>
-        <tr><td style="padding:26px 32px 0;">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-            <td align="center" bgcolor="#ffffff" style="border-radius:10px;">
-              <a href="${odkaz}" style="display:block;padding:15px 26px;font:700 15px/1 Helvetica,Arial,sans-serif;color:#0a0a0a;text-decoration:none;">Stáhnout presety →</a>
-            </td>
-          </tr></table>
-        </td></tr>
-        <tr><td style="padding:26px 32px 0;">
-          <p style="margin:0 0 10px;font:700 13px/1.5 Helvetica,Arial,sans-serif;color:#ffffff;">Jak na to</p>
-          <p style="margin:0;font:400 14px/1.7 Helvetica,Arial,sans-serif;color:#a8a8a8;">
-            <strong style="color:#d8d8d4;">1.</strong> Klikni na tlačítko výš a přihlas se <strong style="color:#d8d8d4;">stejným e-mailem, na který ti přišel tenhle e-mail</strong>.<br>
-            <strong style="color:#d8d8d4;">2.</strong> Stáhni si soubory — jednotlivě, nebo všechny naráz.<br>
-            <strong style="color:#d8d8d4;">3.</strong> Pusť si video návod (3 minuty), projdeme spolu instalaci v Lightroomu i Photoshopu.
-          </p>
-        </td></tr>
-        <tr><td style="padding:22px 32px 0;">
-          <div style="padding:14px 16px;border:1px solid rgba(255,107,26,.3);border-radius:10px;background:rgba(255,107,26,.08);">
-            <p style="margin:0;font:400 13.5px/1.6 Helvetica,Arial,sans-serif;color:#a8a8a8;"><strong style="color:#ff9a5c;">Bonus navíc:</strong> na stejné stránce najdeš dvě dlouhá videa, kde upravuju fotky odshora dolů — přes tři a půl hodiny.</p>
-          </div>
-        </td></tr>
-        <tr><td style="padding:22px 32px 32px;">
-          <div style="border-top:1px solid #262626;padding-top:18px;">
-            <p style="margin:0;font:400 12.5px/1.6 Helvetica,Arial,sans-serif;color:#6f6f6f;">Nejde ti něco? Napiš mi na <a href="https://www.instagram.com/kenjiacademycz" style="color:#ff9a5c;">Instagram @kenjiacademycz</a> a rozchodíme to spolu.</p>
-          </div>
-        </td></tr>
-      </table>
-      <p style="margin:18px 0 0;font:400 11.5px/1.6 Helvetica,Arial,sans-serif;color:#5a5a5a;">Kenji Academy · <a href="${siteUrl}" style="color:#7a7a7a;">kenjiacademy.cz</a></p>
-    </td></tr>
-  </table>
-</body></html>`;
+// a musí si sám vzpomenout, že se má přihlásit na web. Stejný světlý vzhled jako
+// ostatní e-maily (_mail.js); nedoručený e-mail nikdy nesmí shodit webhook.
+function presetEmailHtml() {
+  const odkaz = `${Mail.siteUrl()}/moje-presety.html`;
+  const body = Mail.heading('Presety jsou tvoje')
+    + Mail.paragraph('Díky za nákup. Devět presetů máš odemčených napořád — stáhneš si je kdykoli, i za dva roky na novém počítači.')
+    + Mail.button(odkaz, 'Stáhnout presety →')
+    + Mail.paragraph('<strong style="color:#0E0E10;">Jak na to</strong><br>'
+      + '1. Klikni na tlačítko a přihlas se <strong style="color:#0E0E10;">stejným e-mailem, na který ti přišel tenhle e-mail</strong>.<br>'
+      + '2. Stáhni si soubory — jednotlivě, nebo všechny naráz.<br>'
+      + '3. Pusť si video návod (3 minuty), projdeme spolu instalaci v Lightroomu i Photoshopu.')
+    + Mail.paragraph('<strong style="color:#8A5A14;">Bonus navíc:</strong> na stejné stránce najdeš dvě dlouhá videa, kde upravuju fotky odshora dolů — přes tři a půl hodiny.');
+  return Mail.layout({ title: 'Tvoje presety jsou připravené', preheader: 'Presety máš odemčené — tady je najdeš.', body });
 }
 
 async function sendPresetEmail(email) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY chybi — e-mail o presetech se neodeslal.');
-    return;
-  }
-  const siteUrl = process.env.SITE_URL || 'https://kenjiacademy.cz';
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM || 'Kenji Academy <noreply@kenjiacademy.cz>',
-      to: [email],
-      subject: 'Tvoje presety jsou připravené',
-      html: presetEmailHtml(siteUrl)
-    })
-  });
-  if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
+  return Mail.sendEmail({ to: email, subject: 'Tvoje presety jsou připravené', html: presetEmailHtml() });
 }
 
 // Uvítání po nákupu Academy nebo Databáze. Odkaz vede na stránku po platbě,
 // která podle session_id předvyplní e-mail a pošle přihlašovací odkaz — člověk
 // se tak dostane dovnitř, i když stránku po platbě zavřel.
 const WELCOME = {
-  academy: { name: 'Kenji Academy', what: 'Máš odemčené všechny kurzy, komunitu, databázi, Kenji AI i bonusy. Napořád.' },
-  knihovna: { name: 'Databázi', what: 'Máš odemčenou celou databázi praktických článků. Napořád.' }
+  academy: {
+    name: 'Kenji Academy', heading: 'Vítej v Kenji Academy', product: 'academy',
+    subject: 'Vítej v Kenji Academy — tady je vstup',
+    what: 'Máš odemčené všechny kurzy, komunitu, databázi, Kenji AI i bonusy. Napořád.'
+  },
+  knihovna: {
+    name: 'Databázi', heading: 'Databáze je tvoje', product: 'databaze',
+    subject: 'Databáze je tvoje — tady je vstup',
+    what: 'Máš odemčenou celou databázi praktických článků. Napořád.'
+  }
 };
 
-function welcomeEmailHtml(tier, sessionId) {
+// Koupil-li k Academy i presety, dostane jeden e-mail se zmínkou o presetech,
+// ne dva vedle sebe.
+function welcomeEmailHtml(tier, sessionId, withPresets) {
   const w = WELCOME[tier];
-  const link = `${Mail.siteUrl()}/platba-uspesna.html?product=${tier === 'academy' ? 'academy' : 'databaze'}&session_id=${encodeURIComponent(sessionId)}`;
-  const body = Mail.heading(`Vítej v Kenji Academy`)
+  const link = `${Mail.siteUrl()}/platba-uspesna.html?product=${w.product}&session_id=${encodeURIComponent(sessionId)}`;
+  const body = Mail.heading(w.heading)
     + Mail.paragraph(`Díky, platba proběhla. ${w.what}`)
     + Mail.button(link, 'Vstoupit dovnitř →')
-    + Mail.paragraph('<strong style="color:#0E0E10;">Jak se přihlásit:</strong> klikni na tlačítko a nech si poslat přihlašovací odkaz. Přihlas se <strong style="color:#0E0E10;">stejným e-mailem, na který ti přišel tenhle e-mail</strong>, přístup je přiřazený k němu.');
+    + Mail.paragraph('<strong style="color:#0E0E10;">Jak se přihlásit:</strong> klikni na tlačítko a nech si poslat přihlašovací odkaz. Přihlas se <strong style="color:#0E0E10;">stejným e-mailem, na který ti přišel tenhle e-mail</strong>, přístup je přiřazený k němu.')
+    + (withPresets ? Mail.paragraph(`<strong style="color:#0E0E10;">Presety:</strong> máš je taky odemčené. Po přihlášení je stáhneš v sekci <a href="${Mail.siteUrl()}/moje-presety.html" style="color:#8A5A14;">Moje presety</a>.`) : '');
   return Mail.layout({ title: `Vítej v ${w.name}`, preheader: 'Přístup máš odemčený. Tady je, jak se dostaneš dovnitř.', body });
 }
 
@@ -161,10 +117,21 @@ async function grantAccess(session) {
   }
 
   const endpoint = `${process.env.SUPABASE_URL}/rest/v1/users`;
+  // Člen Academy, který si dokoupí Databázi, nesmí spadnout na nižší tier.
+  let grantTier = tier;
+  if (tier === 'knihovna') {
+    try {
+      const cur = await fetch(`${endpoint}?email=eq.${encodeURIComponent(email.toLowerCase())}&select=tier`, {
+        headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` }
+      });
+      const rows = cur.ok ? await cur.json() : [];
+      if (Array.isArray(rows) && rows[0] && rows[0].tier === 'academy') grantTier = 'academy';
+    } catch (e) { console.warn('stripe-webhook: kontrola tieru selhala:', e.message); }
+  }
   const body = {
     email: email.toLowerCase(),
     updated_at: new Date().toISOString(),
-    ...(tier ? { tier } : {}),
+    ...(grantTier ? { tier: grantTier } : {}),
     ...(presets ? { has_presets: true } : {})
   };
 
@@ -187,13 +154,13 @@ async function grantAccess(session) {
 
   // Přístup je přidělený — teď dej vědět e-mailem. Selhání odesílání nesmí
   // shodit webhook, jinak by Stripe zkoušel doručení znovu a znovu.
-  if (presets) {
-    try { await sendPresetEmail(email); }
-    catch (e) { console.warn('e-mail o presetech se neodeslal:', e.message); }
-  }
   if (WELCOME[tier]) {
-    await Mail.sendEmail({ to: email, subject: tier === 'academy' ? 'Vítej v Kenji Academy — tady je vstup' : 'Databáze je tvoje — tady je vstup', html: welcomeEmailHtml(tier, session.id) });
+    const sent = await Mail.sendEmail({ to: email, subject: WELCOME[tier].subject, html: welcomeEmailHtml(tier, session.id, presets) });
+    console.log(`stripe-webhook: přístup ${tier}${presets ? ' + presety' : ''} pro objednávku ${session.id}, uvítací e-mail ${sent ? 'odeslán' : 'NEODESLÁN'}`);
     await markPlanRequestBought(email.toLowerCase());
+  } else if (presets) {
+    const sent = await sendPresetEmail(email);
+    console.log(`stripe-webhook: presety pro objednávku ${session.id}, e-mail ${sent ? 'odeslán' : 'NEODESLÁN'}`);
   }
 
   // Nákup promítni i do marketingového profilu, ale jen pokud už má člověk
