@@ -27,6 +27,7 @@
   const aliasesFor = (id) => [id].concat(Object.keys(CAT_ALIASES).filter((k) => CAT_ALIASES[k] === id));
   const catLabel = (id) => (CATS.find((c) => c.id === normCat(id)) || {}).label || id;
   const FEED_ICONS = {
+    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
     grid: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
     diamond: '<path d="m12 3 8 6-8 12L4 9zM4 9h16"/>', tag: '<path d="M3 12V5h7l11 11-5 5z"/><circle cx="7.5" cy="8.5" r="1"/>',
     help: '<circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.5 2.5 0 1 1 3.5 2.3c-.9.4-1.2 1-1.2 1.7M12 17h.01"/>',
@@ -55,6 +56,7 @@
       if (!p) return cached;
       const prof = { displayName: p.display_name || '', bio: p.bio || '', instagram: p.instagram || '', avatar: p.avatar_url || '' };
       try { localStorage.setItem('kenji_profile_v1', JSON.stringify(prof)); } catch (e) {}
+      try { document.dispatchEvent(new CustomEvent('kenji-profile-updated')); } catch (e) {}
       return prof;
     } catch (e) { return cached; }
   }
@@ -347,7 +349,9 @@
     });
   }
   function catTabs() {
-    return '<div class="feed-tabs">' + CATS.map((c) => {
+    // Členům Academy je „Vše" (nejnovější ze všech kanálů) první a výchozí.
+    const ordered = canPremiumCommunity ? CATS.filter((c) => c.id === '').concat(CATS.filter((c) => c.id !== '')) : CATS;
+    return '<div class="feed-tabs">' + ordered.map((c) => {
       const locked = !canAccessCategory(c.id);
       return '<button class="feed-tab' + (c.id === activeCat ? ' active' : '') + (locked ? ' locked' : '') + '" data-cat="' + c.id + '"' + (locked ? ' title="Součást Kenji Academy"' : '') + '>' +
         feedIcon(c.icon) + '<span>' + c.label + '</span><small>' + (locked ? '🔒' : categoryCount(c.id)) + '</small></button>';
@@ -407,7 +411,7 @@
     '</section>';
   }
   function searchBar() {
-    return '<div class="feed-search" role="search">' +
+    return '<div class="feed-search' + (searchQuery ? '' : ' is-collapsed') + '" role="search">' +
       '<span class="feed-search-ico">⌕</span>' +
       '<input id="feed-search-input" type="search" value="' + esc(searchQuery) + '" placeholder="Hledat v příspěvcích">' +
       '<button id="feed-search-clear" type="button" aria-label="Vymazat hledání"' + (searchQuery ? '' : ' hidden') + '>×</button>' +
@@ -432,8 +436,16 @@
   }
 
   ROOT_EL.innerHTML =
-    '<div class="feed-wrap">' + communityViewTabs() + '<div class="feed-mobile-categories"><span>Kategorie</span>' + catTabs() + '</div>' + weeklyChallengeBanner() + searchBar() +
-    '<div id="community-reconnect" class="community-reconnect" hidden></div>' + composer() +
+    '<div class="feed-wrap">' +
+    '<div class="feed-head">' + communityViewTabs() +
+      '<button type="button" class="feed-search-toggle" id="feed-search-toggle" aria-label="Hledat v příspěvcích" aria-expanded="' + (searchQuery ? 'true' : 'false') + '">' + feedIcon('search') + '</button>' +
+      '<button type="button" class="feed-write" id="feed-write" hidden><span aria-hidden="true">+</span><b>Napsat příspěvek</b></button>' +
+    '</div>' +
+    searchBar() + '<div class="feed-mobile-categories">' + catTabs() + '</div>' + weeklyChallengeBanner() +
+    '<div id="community-reconnect" class="community-reconnect" hidden></div>' +
+    '<div class="composer-sheet" id="composer-sheet" hidden><div class="composer-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="composer-sheet-title">' +
+      '<div class="composer-sheet-head"><b id="composer-sheet-title">Nový příspěvek</b><button type="button" class="composer-sheet-x" id="composer-sheet-x" aria-label="Zavřít">✕</button></div>' +
+      composer() + '</div></div>' +
     '<div id="feed-list" class="feed-list"><div class="feed-loading">Načítám příspěvky…</div></div></div>';
   // Když profil ještě není v cache, doplň fotku u psaní příspěvku hned po načtení ze serveru.
   if (email && !myProfile().avatar) ensureMyProfile().then((me) => {
@@ -939,6 +951,7 @@
         document.getElementById('composer-text').value = '';
         document.getElementById('composer-link').value = '';
         pendingImages = []; preview.hidden = true; preview.innerHTML = '';
+        closeComposer();
         await loadFeed();
         try { if (window.KenjiNotify) { window.KenjiNotify.markSeen(cat); window.KenjiNotify.refresh(true); } } catch (e4) {}
         if (weeklyXpAwarded) showWeeklyXpToast();
@@ -983,6 +996,43 @@
       return;
     }
     loadFeed();
+  }
+  // Psaní příspěvku: tlačítko „Napsat" (na telefonu plovoucí vpravo dole) otevře formulář v panelu.
+  // Tlačítko kopíruje viditelnost formuláře — ta říká, jestli se v tomto kanálu smí psát.
+  function openComposer() {
+    const sheet = document.getElementById('composer-sheet');
+    if (!sheet) return;
+    sheet.hidden = false;
+    document.body.classList.add('composer-open');
+    const text = document.getElementById('composer-text');
+    if (text) setTimeout(() => text.focus(), 60);
+  }
+  function closeComposer() {
+    const sheet = document.getElementById('composer-sheet');
+    if (sheet) sheet.hidden = true;
+    document.body.classList.remove('composer-open');
+  }
+  function wireComposerSheet() {
+    const sheet = document.getElementById('composer-sheet');
+    const write = document.getElementById('feed-write');
+    const composerEl = document.querySelector('.composer');
+    if (!sheet || !write || !composerEl) return;
+    // Panel musí viset přímo v <body>, jinak ho obal obsahu uvězní a vyjede mimo obrazovku.
+    document.body.appendChild(sheet);
+    const sync =() => { write.hidden = composerEl.hidden; if (composerEl.hidden) closeComposer(); };
+    new MutationObserver(sync).observe(composerEl, { attributes: true, attributeFilter: ['hidden'] });
+    sync();
+    write.addEventListener('click', openComposer);
+    document.getElementById('composer-sheet-x').addEventListener('click', closeComposer);
+    sheet.addEventListener('click', (e) => { if (e.target === sheet) closeComposer(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sheet.hidden) closeComposer(); });
+    const toggle = document.getElementById('feed-search-toggle');
+    const search = document.querySelector('.feed-search');
+    if (toggle && search) toggle.addEventListener('click', () => {
+      const open = search.classList.toggle('is-collapsed') === false;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) { const input = document.getElementById('feed-search-input'); if (input) input.focus(); }
+    });
   }
   function updateSearchUrl() {
     const url = new URL(location.href);
@@ -1042,6 +1092,7 @@
     if (meta) meta.textContent = 'Tento týden · +' + Number(challenge.xp || 250) + ' KP';
   });
   wireSearch();
+  wireComposerSheet();
   updateCategoryUI([]);
   // Čtení komunity nikdy neblokujeme — kdo je přihlášený, ten se sem dostal přes ověřený
   // e-mail. Živá Supabase relace je potřeba jen pro ZÁPIS (příspěvky, komentáře, lajky,

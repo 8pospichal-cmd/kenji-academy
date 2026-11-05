@@ -924,6 +924,15 @@
     document.addEventListener('keydown', function esc3(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc3); } });
   }
 
+  // Fotka v tlačítku účtu (vpravo nahoře) — z profilu, jinak obecná ikona.
+  function headerAvatarHtml(src) {
+    const icon = '<svg class="acct-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>';
+    src = String(src || '').trim();
+    if (!src) return icon;
+    return '<span class="acct-av"><img src="' + escapeHtml(src) + '" alt="" onerror="this.parentNode.classList.add(\'no-img\')">' + icon + '</span>';
+  }
+  // Když stránka (dashboard, komunita) donačte profil ze serveru, doplň fotku a jméno do hlavičky.
+  document.addEventListener('kenji-profile-updated', function () { if (isLoggedIn()) renderHeaderUI(); });
   function renderHeaderUI() {
     const actions = document.querySelector('.header-actions');
     if (!actions) return;
@@ -931,11 +940,12 @@
     const tierLabel = currentTier() === 'academy' ? 'ACADEMY' : (currentTier() === 'knihovna' ? 'DATABÁZE' : 'FREE');
     const tierClass = currentTier() === 'free' ? 'free' : 'member';
     const tierSub = currentTier() === 'academy' ? 'Plný přístup' : (currentTier() === 'knihovna' ? 'Celá databáze' : 'Free přístup');
-    const handle = user.instagram ? '@' + user.instagram : user.email;
+    let pcH = {}; try { pcH = JSON.parse(localStorage.getItem('kenji_profile_v1') || '{}') || {}; } catch (e) {}
+    const handle = String(pcH.displayName || '').trim() || (user.instagram ? '@' + user.instagram : user.email);
     actions.innerHTML = `
       <div class="auth-acct">
         <button class="acct-trigger" id="kenji-acct" aria-haspopup="true" aria-expanded="false" aria-label="Účet">
-          <svg class="acct-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+          ${headerAvatarHtml(pcH.avatar)}
           <span class="acct-caret" aria-hidden="true">▾</span>
         </button>
         <div class="acct-menu" id="kenji-acct-menu" role="menu">

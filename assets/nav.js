@@ -1000,7 +1000,7 @@
     { n: 'Míša', t: 'dodělala rebranding portfolia a hned přišla poptávka' }
   ];
 
-  // Pop-up „Úspěch komunity" — jednou denně v náhodný čas, glass box, nekliknutelný.
+  // Oznámení „Úspěch komunity" — jednou denně v náhodný čas, zlatý pruh nahoře.
   function renderWinAnnouncement() {
     if (currentFile === 'kenji-ai.html') return;             // celoobrazovkový chat
     const WINS = window.KENJI_COMMUNITY_WINS || [];
@@ -1022,13 +1022,14 @@
       box.className = 'kenji-winpop';
       box.setAttribute('role', 'status');
       box.innerHTML =
-        '<button type="button" class="wp-close" aria-label="Zavřít">✕</button>' +
-        '<span class="wp-badge">Úspěch komunity</span>' +
-        '<p class="wp-text"><strong>' + esc(win.n) + '</strong> ' + esc(win.t) + '</p>' +
-        '<a class="wp-add" href="' + ROOT + 'index.html?addwin=1">＋ Zapiš svůj úspěch</a>';
+        '<span class="wp-ico" aria-hidden="true">' + uiIcon('trophy') + '</span>' +
+        '<div class="wp-body"><span class="wp-badge">Úspěch komunity</span>' +
+        '<p class="wp-text"><strong>' + esc(win.n) + '</strong> ' + esc(win.t) + '</p></div>' +
+        '<a class="wp-add" href="' + ROOT + 'index.html?addwin=1">Zapiš svůj</a>' +
+        '<button type="button" class="wp-close" aria-label="Zavřít">✕</button>';
       document.body.appendChild(box);
       requestAnimationFrame(function () { box.classList.add('show'); });
-      let hideT = setTimeout(dismiss, 8000);
+      let hideT = setTimeout(dismiss, 9000);
       function dismiss() { clearTimeout(hideT); box.classList.remove('show'); setTimeout(function () { box.remove(); }, 500); }
       box.querySelector('.wp-close').addEventListener('click', dismiss);
     }, delay);

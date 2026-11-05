@@ -283,11 +283,29 @@
 
   // ---------- Jméno ----------
   function firstName() {
-    try { var u = jget('kenji_user', null); var n = u && (u.name || (u.email ? u.email.split('@')[0] : '')); if (!n) return ''; n = String(n).split(/[\s.@]/)[0]; return n.charAt(0).toUpperCase() + n.slice(1); } catch (e) { return ''; }
+    try { var u = jget('kenji_user', null); var n = u && u.name; if (!n || /@/.test(n)) return ''; n = String(n).split(/[\s.]/)[0]; return n.charAt(0).toUpperCase() + n.slice(1); } catch (e) { return ''; }
   }
   function profileCache() { try { return JSON.parse(localStorage.getItem('kenji_profile_v1') || '{}') || {}; } catch (e) { return {}; } }
-  // Vybere se jednou za načtení stránky → mění se při každém reloadu, ale nebliká při re-renderu.
-  var GREETING_SEED = Math.floor(Math.random() * 100000);
+  // Cache profilu vzniká v Nastavení — na novém zařízení chybí, tak ji jednou načti ze serveru a překresli.
+  var profileFetched = false;
+  function ensureProfileCache() {
+    if (profileFetched) return;
+    var pc = profileCache(), A = window.KenjiAuth, u = A && A.getUser ? A.getUser() : null;
+    if (pc.displayName || pc.avatar || !u || !u.email || !A.getSupabase) return;
+    profileFetched = true;
+    A.getSupabase().then(function (sb) {
+      if (!sb) return null;
+      return sb.rpc('get_profile', { p_email: u.email });
+    }).then(function (res) {
+      var p = res && !res.error ? (Array.isArray(res.data) ? res.data[0] : res.data) : null;
+      if (!p || !(p.display_name || p.avatar_url)) return;
+      jset('kenji_profile_v1', { displayName: p.display_name || '', bio: p.bio || '', instagram: p.instagram || '', avatar: p.avatar_url || '' });
+      try { document.dispatchEvent(new CustomEvent('kenji-profile-updated')); } catch (e) {}
+      render();
+    }).catch(function () {});
+  }
+  // Kenjiho věta v bublině se mění jednou denně (stejná po celý den, i po reloadu).
+  function dayNumber() { var d = new Date(); return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); }
   function daysSinceLast(days) {
     if (!Array.isArray(days) || !days.length) return null;
     var today = dstr(new Date());
@@ -301,7 +319,7 @@
       'No konečně! Už jsem myslel, že fotíš na mobil. 😅',
       'Dlouho jsme se neviděli — ať to za to stojí. 👊'
     ];
-    if (gap === null || gap >= 7) return away[GREETING_SEED % away.length];
+    if (gap === null || gap >= 7) return away[dayNumber() % away.length];
     var reg = [
       'Nezapomněl jsi na odrazovou desku? 🪞',
       'Už jsi tady měl bejt před čtyřma minutama, ty magore. ⏱️',
@@ -314,7 +332,7 @@
       'Tvoje portfolio se samo neudělá. 💪',
       'Klapka, jede se. 🎬'
     ];
-    return reg[GREETING_SEED % reg.length];
+    return reg[dayNumber() % reg.length];
   }
 
   function industryNames(b) {
@@ -386,6 +404,7 @@
     document.body.classList.remove('kenji-onboarding-active');
     reconcileMemberBaseline();
     reconcileActivationXp(b);
+    ensureProfileCache();
 
     var x = xpGet(), lvl = levelOf(x.xp), streak = streakOf(days);
     var floor = levelFloor(lvl);
@@ -404,11 +423,6 @@
     var pc = profileCache();
     var fullName = (pc.displayName || '').trim();
     var fname = fullName ? fullName.split(/\s+/)[0] : name;
-    var avatarSrc = (pc.avatar || '').trim();
-    var initial = esc((fullName || fname || '?').charAt(0).toUpperCase());
-    var avatarHtml = avatarSrc
-      ? '<span class="kc-av has-image"><img src="' + esc(avatarSrc) + '" alt="" onerror="this.parentNode.classList.remove(\'has-image\');this.remove()"><b>' + initial + '</b></span>'
-      : '<span class="kc-av"><b>' + initial + '</b></span>';
     var wk = weekStrip(days);
     var weekOn = wk.filter(function (d) { return d.on; }).length;
     var doneToday = todayTaskXpCount(x);
@@ -419,11 +433,10 @@
 
     // 1) HLAVIČKA — kdo jsem a kde jsem
     h += '<header class="kc-head"><div>' +
-      '<p class="kc-greet">' + esc(isGuest ? 'Tvůj plán je připravený.' : greetingFor(days)) + '</p>' +
       '<h1 class="kc-hi">Ahoj' + (fname ? ' ' + esc(fname) : '') + ', <span class="kc-gold-text">jdeme na to.</span></h1>' +
       (b.goal ? '<p class="kc-goal">Cíl: ' + esc(fmtCzk(b.goal)) + ' / měsíc</p>' : '') +
-      '</div><div class="kc-me">' + avatarHtml + '<span>Level ' + lvl + '</span>' +
-      (isGuest ? '<button class="kc-me-save" type="button" data-act="save-plan">Ulož si plán</button>' : '') + '</div></header>';
+      (isGuest ? '<button class="kc-me-save" type="button" data-act="save-plan">Ulož si plán</button>' : '') +
+      '</div></header>';
 
     if (!jget('kenji_kp_intro_v1', false) && !profileComplete() && !readSlugs().length && !xpGet().xp) {
       h += '<div class="kc-note"><div><strong>Co jsou Kenji Points (KP)?</strong>' +
@@ -437,7 +450,7 @@
     }
 
     h += '<div class="kc-bento">';
-    h += kcNow(b, active);
+    h += kcNow(b, active, isGuest ? 'Tvůj plán je připravený!' : greetingFor(days));
     h += kcRings(x.xp, lvl, levelPct, toNext, nextAt, streak, weekOn, doneToday, todayTotal);
     if (!jget('kenji_activation_hidden_v1', false)) h += kcStart(b);
     h += kcWebinar();
@@ -459,7 +472,7 @@
   function kcKicker(text, cls) { return '<span class="kc-k' + (cls ? ' ' + cls : '') + '"><i></i>' + esc(text) + '</span>'; }
 
   // Dnešní priorita — Kenji ukazuje na první aktivní úkol.
-  function kcNow(b, active) {
+  function kcNow(b, active, line) {
     var reasonMap = {
       klienti: 'Nejrychlejší cesta k dalším zakázkám.',
       cena: 'Než sháníš víc klientů, zvedni hodnotu jedné zakázky.',
@@ -483,7 +496,7 @@
         '<h2>Aktivní úkoly máš splněné.</h2><p>Kenji AI ti podle profilu najde další konkrétní krok.</p>' +
         '<div class="kc-actions"><a class="kc-btn-gold" href="' + esc(aiUrl(fallback.aiQ || fallback.text)) + '"><span class="kc-ck">' + uiIcon('sparkles') + '</span>Najít další krok</a></div></div>';
     }
-    return h + '<span class="kc-bubble" aria-hidden="true">Tohle dneska dáš!</span>' +
+    return h + '<p class="kc-bubble">' + esc(line) + '</p>' +
       '<img class="kc-kenji" src="assets/kenji-cutout.webp" alt="" width="960" height="1350" decoding="async"></section>';
   }
 

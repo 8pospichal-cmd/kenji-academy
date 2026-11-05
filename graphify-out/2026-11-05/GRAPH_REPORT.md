@@ -1,17 +1,17 @@
 # Graph Report - kenji-knihovna  (2026-11-05)
 
 ## Corpus Check
-- 84 files · ~255,991 words
+- 84 files · ~256,037 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 18 file(s) not represented in the graph (top: (none) 12, .css 3, .lock 1)
 
 ## Summary
-- 1053 nodes · 1924 edges · 66 communities (46 shown, 20 thin omitted)
+- 1053 nodes · 1925 edges · 66 communities (46 shown, 20 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 140 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2286d556`
+- Built from commit: `355ec9a1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
