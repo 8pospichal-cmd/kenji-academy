@@ -1,17 +1,17 @@
 # Graph Report - kenji-knihovna  (2026-10-26)
 
 ## Corpus Check
-- 81 files · ~250,417 words
+- 83 files · ~253,876 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: (none) 12, .css 2, .lock 1)
 
 ## Summary
-- 986 nodes · 1778 edges · 64 communities (44 shown, 20 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 136 edges (avg confidence: 0.85)
+- 1025 nodes · 1858 edges · 65 communities (45 shown, 20 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 139 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `66d0e8a1`
+- Built from commit: `c7a1e2be`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -73,30 +73,31 @@
 - _stripe.js
 - dc-mini.js
 - 20261026120000_plan_requests.sql
+- 20261027120000_admin_redesign.sql
 
 ## God Nodes (most connected - your core abstractions)
 1. `render()` - 27 edges
 2. `esc()` - 24 edges
-3. `email()` - 24 edges
-4. `getSupabase()` - 17 edges
-5. `esc()` - 17 edges
-6. `rpc()` - 16 edges
-7. `adoptSession()` - 16 edges
-8. `n()` - 15 edges
-9. `jget()` - 15 edges
-10. `syncOnLoad()` - 14 edges
+3. `email()` - 23 edges
+4. `n()` - 17 edges
+5. `openPerson()` - 17 edges
+6. `getSupabase()` - 17 edges
+7. `esc()` - 17 edges
+8. `rpc()` - 16 edges
+9. `adoptSession()` - 16 edges
+10. `jget()` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Graphify-first codebase workflow` --semantically_similar_to--> `Graphify-first codebase workflow`  [INFERRED] [semantically similar]
   AGENTS.md → CLAUDE.md
-- `save()` --indirect_call--> `store()`  [INFERRED]
-  assets/kenji-ai.js → netlify/functions/plan-request.js
-- `toggle()` --indirect_call--> `key()`  [INFERRED]
-  assets/nav.js → tools/build-legacy-uspechy.mjs
-- `addCoupon()` --indirect_call--> `email()`  [INFERRED]
-  assets/settings.js → netlify/functions/_ecomail.js
-- `loadCoupons()` --indirect_call--> `email()`  [INFERRED]
-  assets/settings.js → netlify/functions/_ecomail.js
+- `loadLegacyPinOverrides()` --indirect_call--> `email()`  [INFERRED]
+  assets/feed.js → netlify/functions/_ecomail.js
+- `loadFeed()` --indirect_call--> `email()`  [INFERRED]
+  assets/feed.js → netlify/functions/_ecomail.js
+- `wirePosts()` --indirect_call--> `email()`  [INFERRED]
+  assets/feed.js → netlify/functions/_ecomail.js
+- `toggleComments()` --indirect_call--> `email()`  [INFERRED]
+  assets/feed.js → netlify/functions/_ecomail.js
 
 ## Import Cycles
 - None detected.
@@ -106,27 +107,27 @@
 - **User data and personalization pipeline** — supabase_setup_supabase_lead_and_progress, audit_lead_gate, nastaveni_community_profile, kenji_ai_setup_kenji_ai_edge_function [INFERRED 0.75]
 - **Tier-aware platform experience** — stav_projektu_access_tiers, stav_projektu_capability_matrix, index_member_aware_upgrade_strip, academy_academy_offer [INFERRED 0.85]
 
-## Communities (64 total, 20 thin omitted)
+## Communities (65 total, 20 thin omitted)
 
 ### Community 0 - "admin.js"
 Cohesion: 0.07
-Nodes (78): activeEmailSequence(), activeEmailStep(), adminEmailApi(), audienceLabel(), audienceTag(), blockButton(), boot(), campaignStatsLine() (+70 more)
+Nodes (78): activeEmailSequence(), activeEmailStep(), adminEmailApi(), audienceLabel(), audienceTag(), boot(), campaignStatsLine(), chip() (+70 more)
 
 ### Community 1 - "dashboard.js"
 Cohesion: 0.06
-Nodes (73): activationPanel(), activationTasks(), addXp(), aiUrl(), article(), awardTaskXp(), bizGet(), bizSet() (+65 more)
+Nodes (74): activationPanel(), activationTasks(), addXp(), aiUrl(), article(), awardTaskXp(), bizGet(), bizSet() (+66 more)
 
 ### Community 2 - "auth.js"
 Cohesion: 0.06
-Nodes (67): adoptSession(), anonymousId(), applyGating(), bizComplete(), cleanAuthLocation(), currentCampaignUrl(), dismissPointsIntro(), doLogout() (+59 more)
+Nodes (71): adoptSession(), anonymousId(), applyGating(), bizComplete(), cleanAuthLocation(), currentCampaignUrl(), dismissPointsIntro(), doLogout() (+63 more)
 
 ### Community 3 - "feed.js"
 Cohesion: 0.08
-Nodes (60): avatar(), awardWeeklyChallengeXp(), bodyBlocks(), buildProfiles(), canAccessCategory(), categoryCount(), catTabs(), composer() (+52 more)
+Nodes (59): avatar(), awardWeeklyChallengeXp(), bodyBlocks(), buildProfiles(), canAccessCategory(), categoryCount(), catTabs(), composer() (+51 more)
 
 ### Community 4 - "_ecomail.js"
 Cohesion: 0.08
-Nodes (45): E, handler(), status(), webhookUrl(), adminUser(), articleBlock(), articleEmailHtml(), articlePlainText() (+37 more)
+Nodes (46): E, handler(), status(), webhookUrl(), adminUser(), articleBlock(), articleEmailHtml(), articlePlainText() (+38 more)
 
 ### Community 5 - "nav.js"
 Cohesion: 0.09
@@ -141,8 +142,8 @@ Cohesion: 0.14
 Nodes (29): activeConvo(), anonymousId(), autosize(), closeDrawer(), esc(), fmt(), flushPara(), hideTyping() (+21 more)
 
 ### Community 8 - "settings.js"
-Cohesion: 0.12
-Nodes (22): addCoupon(), bizGet(), couponProductsFromForm(), emailApi(), esc(), freshSession(), getSB(), loadCoupons() (+14 more)
+Cohesion: 0.09
+Nodes (25): animate(), track(), wrap(), addCoupon(), bizGet(), couponProductsFromForm(), emailApi(), esc() (+17 more)
 
 ### Community 9 - "Ecomail marketing integration handoff"
 Cohesion: 0.07
@@ -217,8 +218,8 @@ Cohesion: 0.67
 Nodes (3): handler(), json(), stripe
 
 ### Community 27 - "build-academy-b.py"
-Cohesion: 0.15
-Nodes (23): importlib, os, re, subprocess, sys, tempfile, time, blob_map() (+15 more)
+Cohesion: 0.13
+Nodes (27): importlib, os, re, subprocess, sys, tempfile, time, add_dimensions() (+19 more)
 
 ### Community 28 - "Local-first deployment policy"
 Cohesion: 0.33
@@ -234,7 +235,7 @@ Nodes (5): compress(), decode(), loadImage(), readAsDataURL(), toBlob()
 
 ### Community 31 - "20260824090000_ai_user_quota.sql"
 Cohesion: 0.47
-Nodes (4): auth.users, ai_question_usage_user_asked_idx, public.ai_question_usage, public.get_ai_question_quota()
+Nodes (4): ai_question_usage_user_asked_idx, public.ai_question_usage, public.get_ai_question_quota(), auth.users
 
 ### Community 32 - "challenges.js"
 Cohesion: 0.80
@@ -258,7 +259,7 @@ Nodes (3): Data-driven navigation, Kenji Knihovna — Jak to funguje, Soft JavaS
 
 ### Community 52 - "plan-request.js"
 Cohesion: 0.08
-Nodes (29): button(), esc(), layout(), siteUrl(), BLOCKERS, clean(), GOALS, handler() (+21 more)
+Nodes (30): button(), esc(), layout(), siteUrl(), BLOCKERS, clean(), GOALS, handler() (+22 more)
 
 ### Community 56 - "KENJI KNIHOVNA — Kontext projektu pro Claude Code"
 Cohesion: 0.08
@@ -277,32 +278,36 @@ Cohesion: 0.12
 Nodes (13): handler(), json(), S, stripe, fallback(), handler(), redirect(), S (+5 more)
 
 ### Community 61 - "dc-mini.js"
-Cohesion: 0.33
-Nodes (7): DCLogic(), expand(), interp(), lookup(), mount(), render(), renderInto()
+Cohesion: 0.27
+Nodes (11): bindEvents(), DCLogic(), expand(), interp(), lookup(), morphChildren(), mount(), render() (+3 more)
 
 ### Community 63 - "20261026120000_plan_requests.sql"
 Cohesion: 0.83
 Nodes (3): plan_requests_created_idx, plan_requests_email_idx, public.plan_requests
 
+### Community 64 - "20261027120000_admin_redesign.sql"
+Cohesion: 0.12
+Nodes (13): public.analytics_events, public.plan_requests, public.tool_submissions, orders_created_idx, orders_email_idx, public.admin_list_people(), public.admin_overview(), public.orders (+5 more)
+
 ## Knowledge Gaps
 - **130 isolated node(s):** `KENJI_CATEGORIES`, `KENJI_ARTICLES`, `KENJI_FREE_SLUGS`, `KENJI_VIDEOS`, `KENJI_PRESET_PROMO` (+125 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 291 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 307 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **20 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `email()` connect `feed.js` to `admin.js`, `settings.js`, `_ecomail.js`?**
-  _High betweenness centrality (0.063) - this node is a cross-community bridge._
+- **Why does `email()` connect `_ecomail.js` to `settings.js`, `feed.js`?**
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Why does `store()` connect `plan-request.js` to `kenji-ai.js`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+  _High betweenness centrality (0.014) - this node is a cross-community bridge._
 - **Why does `save()` connect `kenji-ai.js` to `plan-request.js`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Are the 12 inferred relationships involving `email()` (e.g. with `admin.js` and `loadFeed()`) actually correct?**
-  _`email()` has 12 INFERRED edges - model-reasoned connections that need verification._
+  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+- **Are the 11 inferred relationships involving `email()` (e.g. with `loadFeed()` and `loadLegacyPinOverrides()`) actually correct?**
+  _`email()` has 11 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `KENJI_CATEGORIES`, `KENJI_ARTICLES`, `KENJI_FREE_SLUGS` to the rest of the system?**
   _130 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `admin.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.06835290575127974 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07317073170731707 - nodes in this community are weakly interconnected._
 - **Should `dashboard.js` be split into smaller, more focused modules?**
   _Cohesion score 0.06329113924050633 - nodes in this community are weakly interconnected._

@@ -196,7 +196,7 @@ HEAD = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kenji Academy — z tvorby fungující byznys</title>
-<link rel="canonical" href="https://kenjiacademy.cz/academy">
+<link rel="canonical" href="https://www.kenjiacademy.cz/academy">
 <meta name="description" content="Videokurzy, komunita, nástroje a byznys know-how pro fotografy a kameramany. Nauč se získávat klienty a říkat si o správnou cenu. 4,65 ze 173+ hodnocení.">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -205,7 +205,7 @@ HEAD = """<!DOCTYPE html>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Kenji Academy — z tvorby fungující byznys">
 <meta property="og:description" content="Videokurzy, komunita, nástroje a byznys know-how pro fotografy a kameramany. Nauč se získávat klienty a říkat si o správnou cenu.">
-<meta property="og:image" content="https://kenjiacademy.cz/assets/og-image.jpg">
+<meta property="og:image" content="https://www.kenjiacademy.cz/assets/og-image.jpg">
 <meta name="theme-color" content="#FBFAF6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

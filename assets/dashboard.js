@@ -354,33 +354,6 @@
     activationTasks(b).forEach(function (task) { if (task.done) addXp(task.xp, task.title, 'activation:' + task.key); });
   }
 
-  function activationPanel(b) {
-    var tasks = activationTasks(b), doneCount = tasks.filter(function (t) { return t.done; }).length;
-    var next = tasks.find(function (t) { return !t.done; });
-    var currentIndex = next ? tasks.indexOf(next) : tasks.length - 1;
-    var focus = next || { key: 'complete', title: 'Start máš hotový', sub: 'Máš připravený základ a můžeš pokračovat vlastním tempem.', href: '', xp: 0, done: true, icon: 'target' };
-    var focusTag = focus.href ? 'a' : 'div';
-    var focusHref = focus.href ? ' href="' + esc(focus.href) + '"' : '';
-    var focusCard = '<' + focusTag + ' class="co-activation-focus' + (!next ? ' is-complete' : '') + '"' + focusHref + '>' +
-      '<span class="co-activation-focus-icon">' + (next ? uiIcon(focus.icon) : '✓') + '</span>' +
-      '<span class="co-activation-focus-copy"><small>' + (next ? 'DALŠÍ KROK · ' + (currentIndex + 1) + ' / ' + tasks.length : 'START DOKONČEN') + '</small><strong>' + esc(focus.title) + '</strong><span>' + esc(focus.sub) + '</span></span>' +
-      (next ? '<span class="co-activation-focus-action"><b>+' + focus.xp + ' KP</b><em>Začít <span aria-hidden="true">→</span></em></span>' : '<span class="co-activation-focus-done">' + tasks.length + ' / ' + tasks.length + '</span>') +
-    '</' + focusTag + '>';
-    var steps = tasks.map(function (t, index) {
-      var isCurrent = !!(next && next.key === t.key);
-      return '<span class="co-activation-step' + (t.done ? ' is-done' : '') + (isCurrent ? ' is-current' : '') + '"' + (isCurrent ? ' aria-current="step"' : '') + '>' +
-        '<span class="co-activation-step-dot">' + (t.done ? '✓' : (index + 1)) + '</span>' +
-        '<span class="co-activation-step-copy"><small>' + (t.done ? 'Hotovo' : (isCurrent ? 'Teď' : 'Potom')) + '</small><strong>' + esc(t.title) + '</strong></span>' +
-      '</span>';
-    }).join('');
-    return '<section class="co-activation' + (doneCount === tasks.length ? ' is-complete' : '') + '" data-tour="plan">' +
-      '<div class="co-activation-head"><div><span class="co-activation-kicker">TVŮJ START</span><h2>' + (doneCount === tasks.length ? 'Základ máš hotový.' : 'Jeden krok. Potom další.') + '</h2></div><strong><span>' + doneCount + '</span> / ' + tasks.length + '</strong><button class="co-activation-close" type="button" data-act="activation-dismiss" aria-label="Skrýt úvodní průvodce" title="Skrýt úvodní průvodce">✕</button></div>' +
-      '<div class="co-activation-progress"><i style="width:' + (doneCount / tasks.length * 100) + '%"></i></div>' +
-      focusCard +
-      '<div class="co-activation-steps" aria-label="Postup prvními kroky">' + steps + '</div>' +
-    '</section>';
-  }
-
   // ============================================================
   //  RENDER
   // ============================================================
@@ -427,207 +400,226 @@
     var startToday = new Date(); startToday.setHours(0, 0, 0, 0);
     var earnedToday = (x.log || []).some(function (e) { return e.t >= startToday.getTime(); });
 
-    var h = '';
-
-    // 1) HLAVIČKA
     var isGuest = !!(window.KenjiAuth && window.KenjiAuth.isLoggedIn && !window.KenjiAuth.isLoggedIn());
     var pc = profileCache();
     var fullName = (pc.displayName || '').trim();
     var fname = fullName ? fullName.split(/\s+/)[0] : name;
     var avatarSrc = (pc.avatar || '').trim();
-    var greeting = isGuest ? 'Tvůj plán je připravený.' : greetingFor(days);
-    var whoAvatar = avatarSrc
-      ? '<span class="co-whoami-av has-image"><img src="' + esc(avatarSrc) + '" alt="" onerror="this.parentNode.classList.remove(\'has-image\');this.remove()"><b>' + esc((fullName || fname || '?').charAt(0).toUpperCase()) + '</b></span>'
-      : '<span class="co-whoami-av">' + esc((fullName || fname || '?').charAt(0).toUpperCase()) + '</span>';
-
-    h += '<div class="co-head">';
-    h += '<div class="co-head-main">';
-    h += '<div class="co-whoami co-whoami-top">' + whoAvatar +
-      '<span class="co-whoami-name">' + esc(fullName || fname || 'Tvůj profil') + '</span>' +
-      (isGuest ? '<button class="co-saveplan-link" data-act="save-plan">💾 Ulož si plán</button>' : '') + '</div>';
-    h += '<h1 class="co-hi">' + esc(greeting) + '</h1>';
-    if (b.goal) h += '<p class="co-goal"><span class="co-goal-amt">Cíl: ' + esc(fmtCzk(b.goal)) + ' / měsíc</span></p>';
-    h += '</div>';
-    h += '<div class="co-badges">';
+    var initial = esc((fullName || fname || '?').charAt(0).toUpperCase());
+    var avatarHtml = avatarSrc
+      ? '<span class="kc-av has-image"><img src="' + esc(avatarSrc) + '" alt="" onerror="this.parentNode.classList.remove(\'has-image\');this.remove()"><b>' + initial + '</b></span>'
+      : '<span class="kc-av"><b>' + initial + '</b></span>';
     var wk = weekStrip(days);
-    h += '<div class="co-streak-badge"><div class="co-badge-num"><strong>' + streak + '</strong><span>' + (streak === 1 ? 'den v kuse' : 'dní v kuse') + '</span></div>' +
-      '<div class="co-week" aria-label="Aktivita tento týden">' + wk.map(function (d) {
-        return '<span class="co-week-day' + (d.on ? ' on' : '') + (d.today ? ' today' : '') + (d.future ? ' future' : '') + '" title="' + d.name + (d.on ? ' · aktivní' : '') + '"><i></i><b>' + esc(d.name) + '</b></span>';
-      }).join('') + '</div></div>';
-    h += '<div class="co-xp-badge"><div class="co-badge-num"><strong>' + x.xp + '</strong><span>KP · Level ' + lvl + '</span></div>' +
-      '<span class="co-xpbar"><i style="width:' + levelPct + '%"></i></span>' +
-      '<span class="co-kp-todo">' + (nextAt == null ? 'maximální level' : ('ještě ' + toNext + ' KP do levelu ' + (lvl + 1))) + '</span></div>';
-    h += '</div>';
-    h += '</div>';
+    var weekOn = wk.filter(function (d) { return d.on; }).length;
+    var doneToday = todayTaskXpCount(x);
+    var todayTotal = Math.max(1, doneToday + active.length);
+
+    var h = '<div class="kc' + (kcAnimated ? '' : ' kc-anim') + '">';
+    kcAnimated = true;
+
+    // 1) HLAVIČKA — kdo jsem a kde jsem
+    h += '<header class="kc-head"><div>' +
+      '<p class="kc-greet">' + esc(isGuest ? 'Tvůj plán je připravený.' : greetingFor(days)) + '</p>' +
+      '<h1 class="kc-hi">Ahoj' + (fname ? ' ' + esc(fname) : '') + ', <span class="kc-gold-text">jdeme na to.</span></h1>' +
+      (b.goal ? '<p class="kc-goal">Cíl: ' + esc(fmtCzk(b.goal)) + ' / měsíc</p>' : '') +
+      '</div><div class="kc-me">' + avatarHtml + '<span>Level ' + lvl + '</span>' +
+      (isGuest ? '<button class="kc-me-save" type="button" data-act="save-plan">Ulož si plán</button>' : '') + '</div></header>';
 
     if (!jget('kenji_kp_intro_v1', false) && !profileComplete() && !readSlugs().length && !xpGet().xp) {
-      h += '<div class="co-kpintro"><span class="co-kpintro-ico">⚡</span>' +
-        '<div class="co-kpintro-body"><strong>Co jsou Kenji Points (KP)?</strong>' +
-        '<p>Sbíráš je za čtení, splněné úkoly, kvíz i komunitu. Levely jsou postupně těžší a končí levelem 10. Za vlastní úkoly se počítá nejvýš 5 splnění denně, ať má žebříček férový rytmus.</p></div>' +
-        '<button class="co-kpintro-x" type="button" data-act="kpintro-dismiss" aria-label="Rozumím">Rozumím</button></div>';
+      h += '<div class="kc-note"><div><strong>Co jsou Kenji Points (KP)?</strong>' +
+        '<p>Sbíráš je za čtení, splněné úkoly, kvíz i komunitu. Levely jsou postupně těžší a končí levelem 10. Za vlastní úkoly se počítá nejvýš 5 splnění denně.</p></div>' +
+        '<button type="button" data-act="kpintro-dismiss">Rozumím</button></div>';
     }
-
-    if (!jget('kenji_activation_hidden_v1', false)) h += activationPanel(b);
-
-    // LOSS FRAMING: pobídka udržet sérii — NAD webinářem. Jen když dnes ještě nezískal KP
-    // a nezavřel ji dnes křížkem (sama zmizí po prvním získaném KP i další den).
+    // Loss framing: pobídka udržet sérii — jen když dnes ještě nezískal KP a nezavřel ji.
     if (!earnedToday && streak >= 1 && jget('kenji_kpnudge_dismiss_v1', '') !== new Date().toDateString()) {
-      h += '<div class="co-streaknudge">' +
-        '<span class="co-fire">🔥</span>' +
-        '<span class="co-streaknudge-txt">Dnes jsi ještě nezískal žádné KP — <a href="#co-plan">splň jeden úkol</a> a udrž svou ' + streak + 'denní sérii, ať o ni nepřijdeš.</span>' +
-        '<button class="co-streaknudge-x" type="button" data-act="kpnudge-dismiss" aria-label="Skrýt upozornění">✕</button>' +
-        '</div>';
+      h += '<div class="kc-note kc-note-streak"><p>Dnes ještě žádné KP. <a href="#kc-now">Splň jeden úkol</a> a udrž svou ' + streak + 'denní sérii.</p>' +
+        '<button type="button" class="kc-note-x" data-act="kpnudge-dismiss" aria-label="Skrýt upozornění">✕</button></div>';
     }
 
-    h += webinarCard();
-
-    h += workPanel(b, active, done);
-    h += communityPulseCard();
+    h += '<div class="kc-bento">';
+    h += kcNow(b, active);
+    h += kcRings(x.xp, lvl, levelPct, toNext, nextAt, streak, weekOn, doneToday, todayTotal);
+    if (!jget('kenji_activation_hidden_v1', false)) h += kcStart(b);
+    h += kcWebinar();
+    h += kcChallenge();
+    h += kcWins();
+    h += kcNext(active, done);
+    h += kcAi(b);
+    h += '</div></div>';
 
     MOUNT.innerHTML = h;
+    kcStartTicker();
   }
 
-  // ---------- Úkol (řádek) ----------
-  function taskRow(t) {
-    var chips = '';
-    if (t.mins) chips += '<span class="co-task-chip co-task-time">⏱ ' + esc(t.mins) + ' min</span>';
-    if (t.cat) chips += '<span class="co-task-chip">' + esc(t.cat) + '</span>';
-    var ai = (t.aiQ || t.text) ? '<a class="co-task-ai" href="' + esc(aiUrl(t.aiQ || ('Poraď mi s úkolem: ' + t.text))) + '">Zeptat se Kenji AI</a>' : '';
-    return '<li class="co-task' + (t.done ? ' is-done' : '') + '" data-id="' + t.id + '">' +
-      '<button class="co-task-check" data-act="task-toggle" data-id="' + t.id + '" aria-label="Hotovo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></button>' +
-      '<div class="co-task-body">' +
-        '<div class="co-task-top"><span class="co-task-title">' + esc(t.text) + '</span>' +
-          '<button class="co-task-del" data-act="task-del" data-id="' + t.id + '" aria-label="Smazat">✕</button></div>' +
-        (t.why ? '<p class="co-task-why">' + esc(t.why) + '</p>' : '') +
-        '<div class="co-task-meta">' + chips + (t.done ? '' : ai) + '</div>' +
-      '</div>' +
-    '</li>';
-  }
+  // ============================================================
+  //  DLAŽDICE DASHBOARDU „KOUČ"
+  // ============================================================
+  var kcAnimated = false;
+  var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-11"/></svg>';
+  function kcKicker(text, cls) { return '<span class="kc-k' + (cls ? ' ' + cls : '') + '"><i></i>' + esc(text) + '</span>'; }
 
-  // ---------- Úkoly a AI v jednom pracovním bloku ----------
-  function workPanel(b, active, done) {
+  // Dnešní priorita — Kenji ukazuje na první aktivní úkol.
+  function kcNow(b, active) {
     var reasonMap = {
-      klienti: (b.portfolio ? 'Portfolio už z velké části máš, takže teď neřeš další techniku. ' : '') + 'Tvůj největší problém je teď získávání klientů — na to soustřeď energii.',
-      cena: 'Necháváš peníze na stole. Než sháníš víc klientů, zvedni hodnotu jedné zakázky.',
-      portfolio: 'Bez silného portfolia je všechno ostatní těžší. Teď je tvůj základ portfolio a positioning.',
-      cas: 'Nemáš problém s tvorbou, ale se systémem. Uvolni si kapacitu a zbytek pojede sám.',
-      zacatek: 'Jsi na startu — nejrychlejší posun je jedno jasné zaměření a první reálná práce.'
+      klienti: 'Nejrychlejší cesta k dalším zakázkám.',
+      cena: 'Než sháníš víc klientů, zvedni hodnotu jedné zakázky.',
+      portfolio: 'Bez silného portfolia je všechno ostatní těžší.',
+      cas: 'Uvolni si kapacitu a zbytek pojede sám.',
+      zacatek: 'Jedno jasné zaměření tě rozjede nejrychleji.'
     };
-    var reasoning = reasonMap[b.blocker] || reasonMap.klienti;
-    var h = '<section id="co-plan" class="co-card co-work"><div class="co-card-head"><div><span class="co-work-kicker">TVŮJ PLÁN</span><h2 class="co-card-title">Na čem teď pracuješ</h2></div><span class="co-count">' + active.length + ' aktivní</span></div>';
+    var h = '<section id="kc-now" class="kc-tile kc-now">';
     if (active && active.length) {
       var t = active[0];
       var aiQ = t.aiQ || ('Poraď mi konkrétně s úkolem: ' + t.text);
-      h += '<div class="co-priority-task"><button class="co-task-check" data-act="task-toggle" data-id="' + t.id + '" aria-label="Označit jako hotové"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></button>' +
-        '<div class="co-priority-body"><span class="co-priority-label">DNEŠNÍ PRIORITA</span><h3>' + esc(t.text) + '</h3><p>' + esc(t.why || reasoning) + '</p><div class="co-priority-meta">' +
-        (t.mins ? '<span>⏱ ' + esc(t.mins) + ' min</span>' : '') + (t.cat ? '<span>' + esc(t.cat) + '</span>' : '') +
-        '<a href="' + esc(aiUrl(aiQ)) + '"><span aria-hidden="true">✦</span> Probrat s Kenji AI</a></div></div>' +
-        '<button class="co-task-del" data-act="task-del" data-id="' + t.id + '" aria-label="Smazat">✕</button></div>';
-      if (active.length > 1) h += '<div class="co-work-next"><span>Potom</span><ul class="co-tasklist">' + active.slice(1, 5).map(taskRow).join('') + '</ul></div>';
+      h += '<div class="kc-now-copy"><span class="kc-pill"><i></i>Tvůj krok na dnes</span>' +
+        '<h2>' + esc(t.text) + '</h2><p>' + esc(t.why || reasonMap[b.blocker] || reasonMap.klienti) + '</p>' +
+        '<div class="kc-meta">' + (t.mins ? '<span>' + uiIcon('target') + esc(t.mins) + ' min</span>' : '') + (t.cat ? '<span>' + uiIcon('compass') + esc(t.cat) + '</span>' : '') + '</div>' +
+        '<div class="kc-actions"><button class="kc-btn-gold" type="button" data-act="task-toggle" data-id="' + t.id + '"><span class="kc-ck">' + CHECK_SVG + '</span>Hotovo<small>+20 KP</small></button>' +
+        '<a class="kc-btn-ghost" href="' + esc(aiUrl(aiQ)) + '">' + uiIcon('sparkles') + 'Jak na to</a>' +
+        '<button class="kc-now-del" type="button" data-act="task-del" data-id="' + t.id + '" aria-label="Smazat úkol" title="Smazat úkol">✕</button></div></div>';
     } else {
       var fallback = (REC[b.blocker] || REC.klienti)[0];
-      h += '<div class="co-work-empty"><div>' + emptyArt() + '</div><div><strong>Aktivní úkoly máš hotové.</strong><p>Kenji AI ti podle profilu pomůže vybrat další konkrétní krok.</p><a href="' + esc(aiUrl(fallback.aiQ || fallback.text)) + '">✦ Najít další krok s Kenji AI</a></div></div>';
+      h += '<div class="kc-now-copy"><span class="kc-pill"><i></i>Hotovo</span>' +
+        '<h2>Aktivní úkoly máš splněné.</h2><p>Kenji AI ti podle profilu najde další konkrétní krok.</p>' +
+        '<div class="kc-actions"><a class="kc-btn-gold" href="' + esc(aiUrl(fallback.aiQ || fallback.text)) + '"><span class="kc-ck">' + uiIcon('sparkles') + '</span>Najít další krok</a></div></div>';
     }
-    h += '<form class="co-taskadd" data-act="task-add"><input class="co-taskadd-input" type="text" maxlength="120" placeholder="Přidej vlastní úkol…" aria-label="Nový úkol"><button class="co-taskadd-btn" type="submit" aria-label="Přidat úkol">＋</button></form>';
+    return h + '<span class="kc-bubble" aria-hidden="true">Tohle dneska dáš!</span>' +
+      '<img class="kc-kenji" src="assets/kenji-cutout.webp" alt="" width="960" height="1350" decoding="async"></section>';
+  }
+
+  // Prstence: level · série v týdnu · dnešní úkoly.
+  function kcRings(kp, lvl, levelPct, toNext, nextAt, streak, weekOn, doneToday, todayTotal) {
+    function arc(r, pct, stroke) {
+      var len = 2 * Math.PI * r;
+      return '<circle cx="100" cy="100" r="' + r + '" class="kc-ring-bg"/>' +
+        '<circle cx="100" cy="100" r="' + r + '" class="kc-ring-arc" stroke="' + stroke + '" style="--len:' + len.toFixed(1) + ';stroke-dasharray:' + len.toFixed(1) + ';stroke-dashoffset:' + (len * (1 - Math.max(0.02, Math.min(1, pct)))).toFixed(1) + '"/>';
+    }
+    return '<section class="kc-tile kc-rings">' +
+      '<div class="kc-ring-wrap"><svg viewBox="0 0 200 200" role="img" aria-label="Level ' + lvl + ' na ' + levelPct + ' %, série ' + streak + ' dní, dnes ' + doneToday + ' z ' + todayTotal + ' úkolů">' +
+        '<defs><linearGradient id="kcGold" x1="0" x2="1" y1="0" y2="1"><stop offset="0" class="kc-g1"/><stop offset="1" class="kc-g2"/></linearGradient></defs>' +
+        arc(92, levelPct / 100, 'url(#kcGold)') + arc(78, weekOn / 7, 'var(--kc-week)') + arc(64, doneToday / todayTotal, 'var(--kc-day)') +
+      '</svg><div class="kc-ring-c"><b>' + kp + '</b><span>KP</span></div></div>' +
+      '<div class="kc-legend">' +
+        '<div><i class="kc-dot-gold"></i>' + (nextAt == null ? 'Maximální level' : 'Do levelu ' + (lvl + 1)) + '<b>' + (nextAt == null ? '100 %' : levelPct + ' %') + '</b></div>' +
+        '<div><i style="background:var(--kc-week)"></i>Série · dny v kuse<b>' + streak + ' ' + (streak === 1 ? 'den' : (streak >= 2 && streak <= 4 ? 'dny' : 'dní')) + '</b></div>' +
+        '<div><i style="background:var(--kc-day)"></i>Dnešní úkoly<b>' + doneToday + ' / ' + todayTotal + '</b></div>' +
+      '</div>' + (nextAt == null ? '' : '<p class="kc-rings-hint">Ještě ' + toNext + ' KP do levelu ' + (lvl + 1) + '</p>') + '</section>';
+  }
+
+  // Průvodce startem jako krokovník.
+  function kcStart(b) {
+    var tasks = activationTasks(b), doneCount = tasks.filter(function (t) { return t.done; }).length;
+    var next = tasks.find(function (t) { return !t.done; });
+    var lastDone = -1; tasks.forEach(function (t, i) { if (t.done) lastDone = i; });
+    var fill = tasks.length > 1 ? Math.max(0, lastDone) / (tasks.length - 1) : 1;
+    var short = { profile: 'Profil', read: 'Článek', ai: 'Kenji AI', intro: 'Představ se', feedback: 'Feedback' };
+    var steps = tasks.map(function (t) {
+      var cur = !!(next && next.key === t.key);
+      return '<a class="kc-st' + (t.done ? ' is-done' : '') + (cur ? ' is-cur' : '') + '" href="' + esc(t.href) + '"' + (cur ? ' aria-current="step"' : '') + ' title="' + esc(t.title) + '">' +
+        '<span class="kc-st-o">' + (t.done ? CHECK_SVG : uiIcon(t.icon === 'user' ? 'users' : t.icon)) + '</span>' +
+        '<b>' + esc(short[t.key] || t.title) + '</b><small>' + (cur ? '+' + t.xp + ' KP · teď' : '+' + t.xp) + '</small></a>';
+    }).join('');
+    return '<section class="kc-tile kc-start" data-tour="plan">' +
+      '<div class="kc-start-head">' + kcKicker('Tvůj start') + '<h3>' + (doneCount === tasks.length ? 'Hotovo' : doneCount + ' z ' + tasks.length + ' <span>kroků</span>') + '</h3>' +
+      (next ? '<p>' + esc(next.title) + '</p>' : '<p>Základ máš hotový.</p>') +
+      '<button class="kc-start-x" type="button" data-act="activation-dismiss" aria-label="Skrýt úvodní průvodce" title="Skrýt úvodní průvodce">✕</button></div>' +
+      '<div class="kc-steps" style="--n:' + tasks.length + ';--fill:' + fill + '">' + steps + '</div></section>';
+  }
+
+  // Webinář je vždy 12. v měsíci v 19:00. Po skončení (21:00) se přepne na další měsíc
+  // a tlačítko Stream každý měsíc otevře další záznam z tohoto seznamu (dokola).
+  var WEBINARS = [
+    { url: 'https://www.youtube.com/live/KjxMlOyCQHY', topic: 'Evenilo a Vánoce' },
+    { url: 'https://www.youtube.com/live/Kz9s7eO31No', topic: 'Webinář s Kenjim' },
+    { url: 'https://www.youtube.com/watch?v=F-x1s_Kkjp0', topic: 'Modelkování s Bárou Zavadilovou' },
+    { url: 'https://www.youtube.com/watch?v=Sc5-tMNl4JQ', topic: 'Hodnotím vaše portfolia' },
+    { url: 'https://www.youtube.com/watch?v=AsRC8uOHOrk', topic: 'Color grading v Lightroomu a Photoshopu' }
+  ];
+  function webinarInfo() {
+    var now = new Date();
+    var next = new Date(now.getFullYear(), now.getMonth(), 12, 19, 0);
+    if (now - next > 2 * 3600000) next = new Date(now.getFullYear(), now.getMonth() + 1, 12, 19, 0);
+    var prev = new Date(next.getFullYear(), next.getMonth() - 1, 12, 21, 0);
+    var idx = (((next.getFullYear() * 12 + next.getMonth()) - (2026 * 12 + 10)) % WEBINARS.length + WEBINARS.length) % WEBINARS.length;
+    var live = now >= next;
+    var diff = next - now, d = Math.floor(diff / 86400000), hh = Math.floor(diff % 86400000 / 3600000), mm = Math.floor(diff % 3600000 / 60000);
+    var dw = d === 1 ? 'den' : (d >= 2 && d <= 4 ? 'dny' : 'dní');
+    var M = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+    var W = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
+    return {
+      month: M[next.getMonth()], weekday: W[next.getDay()], topic: WEBINARS[idx].topic, url: WEBINARS[idx].url, live: live,
+      left: live ? 'Právě běží' : (d > 0 ? 'za ' + d + ' ' + dw + ' ' + hh + ' h' : 'za ' + hh + ' h ' + mm + ' min'),
+      pct: Math.max(4, Math.min(100, Math.round((now - prev) / (next - prev) * 100)))
+    };
+  }
+  function kcWebinar() {
+    var w = webinarInfo(), member = isAcademyMember();
+    var play = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor"/></svg>';
+    var btn = member
+      ? '<a class="kc-mini" href="' + esc(w.url) + '" target="_blank" rel="noopener">' + play + 'Stream</a>'
+      : '<a class="kc-mini kc-mini-lock" href="academy.html">Jen Academy</a>';
+    return '<section class="kc-tile kc-web">' + kcKicker('Webinář') +
+      '<div class="kc-web-date"><b class="kc-gold-text">12</b><span>' + esc(w.month) + '<small>' + esc(w.weekday) + ' · 19:00</small></span></div>' +
+      '<h4>' + esc(w.topic) + '</h4><div class="kc-bar"><i style="width:' + w.pct + '%"></i></div>' +
+      '<div class="kc-web-foot"><span>' + esc(w.left) + '</span>' + btn + '</div></section>';
+  }
+
+  function kcChallenge() {
+    var c = currentChallenge(), joined = challengeJoined(), left = daysLeftInWeek();
+    var url = 'prispevky.html?category=tydenni-vyzva&challenge=' + encodeURIComponent(c.key || weekKey());
+    return '<a class="kc-tile kc-chal" href="' + url + '">' + kcKicker('Týdenní výzva · ' + daysLeftText(left)) +
+      '<div class="kc-chal-big">+250<small> KP</small></div><h4>' + esc(c.title) + '</h4>' +
+      '<div class="kc-chal-row"><span>' + (joined ? '✓ Splněno' : 'Pro všechny') + '</span><span class="kc-chal-go" aria-hidden="true">→</span></div></a>';
+  }
+
+  function kcWins() {
+    var pool = (window.KENJI_COMMUNITY_WINS && window.KENJI_COMMUNITY_WINS.length) ? window.KENJI_COMMUNITY_WINS : WINS_SEED;
+    var mine = jget(MYWINS, []); if (!Array.isArray(mine)) mine = [];
+    var items = mine.slice(0, 2).map(function (w) { return { n: 'Ty', t: w }; }).concat(pool.slice(0, 6));
+    var colors = ['#2f6fe0', '#0f8a63', '#8a3fd1', '#c93636'];
+    var stack = pool.slice(0, 4).map(function (w, i) { return '<span style="background:' + colors[i % colors.length] + '">' + esc(String(w.n || '?').charAt(0)) + '</span>'; }).join('');
+    var cd = winCooldownMs();
+    return '<section class="kc-tile kc-wins">' + kcKicker('Úspěchy komunity') +
+      '<div class="kc-stack" aria-hidden="true">' + stack + '</div>' +
+      '<div class="kc-ticker">' + items.map(function (w, i) { return '<p' + (i === 0 ? ' class="on"' : '') + '><b>' + esc(w.n) + '</b> ' + esc(w.t) + '</p>'; }).join('') + '</div>' +
+      '<button class="kc-add-win" type="button" data-act="win-add"' + (cd > 0 ? ' disabled' : '') + '>' + (cd > 0 ? 'Další za ' + fmtCooldown(cd) : 'Přidat svůj úspěch') + '<em>+100 KP</em></button></section>';
+  }
+  var kcTickerTimer = null;
+  function kcStartTicker() {
+    if (kcTickerTimer) return;
+    kcTickerTimer = setInterval(function () {
+      var ps = MOUNT.querySelectorAll('.kc-ticker p'); if (ps.length < 2) return;
+      var cur = 0; ps.forEach(function (p, i) { if (p.classList.contains('on')) cur = i; });
+      ps[cur].classList.remove('on'); ps[(cur + 1) % ps.length].classList.add('on');
+    }, 3600);
+  }
+
+  function kcTaskRow(t) {
+    return '<li class="kc-li' + (t.done ? ' is-done' : '') + '"><button class="kc-li-c" type="button" data-act="task-toggle" data-id="' + t.id + '" aria-label="' + (t.done ? 'Vrátit mezi aktivní' : 'Označit jako hotové') + '">' + CHECK_SVG + '</button>' +
+      '<b>' + esc(t.text) + '</b>' + (t.mins ? '<span>' + esc(t.mins) + ' min</span>' : '') +
+      '<button class="kc-li-del" type="button" data-act="task-del" data-id="' + t.id + '" aria-label="Smazat úkol">✕</button></li>';
+  }
+  function kcNext(active, done) {
+    var h = '<section class="kc-tile kc-next">' + kcKicker('Potom') + '<h3>Další na řadě</h3><ul class="kc-list">' +
+      active.slice(1, 5).map(kcTaskRow).join('') + '</ul>' +
+      '<form class="kc-add" data-act="task-add"><span aria-hidden="true">+</span><input class="co-taskadd-input" type="text" maxlength="120" placeholder="Vlastní úkol" aria-label="Nový úkol"><button type="submit">Přidat</button></form>';
     if (done.length) {
-      h += '<button class="co-donetoggle" data-act="toggle-done">' + (showDone ? '▾ Skrýt hotové' : '▸ Hotové (' + done.length + ')') + '</button>';
-      if (showDone) h += '<ul class="co-tasklist co-tasklist-done">' + done.map(taskRow).join('') + '</ul>';
+      h += '<button class="kc-done-toggle" type="button" data-act="toggle-done">' + (showDone ? 'Skrýt hotové' : 'Hotové (' + done.length + ')') + '</button>';
+      if (showDone) h += '<ul class="kc-list kc-list-done">' + done.map(kcTaskRow).join('') + '</ul>';
     }
     return h + '</section>';
   }
 
-  // ---------- Výzva a úspěchy v jednom komunitním bloku ----------
-  // ---------- Živý webinář ----------
-  // Aktuální webinář se načítá z adminu; bez placeného členství se karta neukazuje.
-  var WEBINAR = null;
-  var webinarLoading = false;
-  async function loadWebinar() {
-    if (webinarLoading) return;
-    if (!isAcademyMember()) { WEBINAR = null; render(); return; }
-    webinarLoading = true;
-    try {
-      var A = window.KenjiAuth;
-      var sb = A && A.getSupabase ? await A.getSupabase() : null;
-      if (!sb) return;
-      var res = await sb.rpc('next_webinar');
-      if (res.error || !res.data || !res.data.length) { WEBINAR = null; render(); return; }
-      var w = res.data[0];
-      WEBINAR = { topic: w.title || 'Živý webinář', at: w.starts_at, youtube: w.link_url || '', info: w.body || '' };
-      render();
-    } catch (e) { console.warn('webinar', e); }
-    finally { webinarLoading = false; }
-  }
-  function webinarCard() {
-    if (!isAcademyMember() || !WEBINAR) return '';
-    var start = new Date(WEBINAR.at).getTime();
-    if (!start || isNaN(start)) return '';
-    var now = Date.now(), diff = start - now, d = new Date(start);
-    var mFull = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
-    var mShort = ['LED', 'ÚNO', 'BŘE', 'DUB', 'KVĚ', 'ČVN', 'ČVC', 'SRP', 'ZÁŘ', 'ŘÍJ', 'LIS', 'PRO'];
-    var dateText = d.getDate() + '. ' + mFull[d.getMonth()] + ' ' + d.getFullYear();
-    var timeText = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
-    var streamUrl = '';
-    try {
-      var parsedUrl = new URL(WEBINAR.youtube);
-      if (parsedUrl.protocol === 'https:' && /^(www\.)?(youtube\.com|youtu\.be)$/.test(parsedUrl.hostname)) streamUrl = parsedUrl.href;
-    } catch (e) {}
-    var isLive = now >= start && now <= start + 3 * 3600 * 1000 && !!streamUrl;
-    var countdown;
-    if (isLive) countdown = '🔴 právě běží';
-    else if (diff > 0) {
-      var days = Math.floor(diff / 86400000), hrs = Math.floor((diff % 86400000) / 3600000);
-      var dWord = days === 1 ? 'den' : (days >= 2 && days <= 4 ? 'dny' : 'dní');
-      countdown = days > 0 ? ('zbývá ' + days + ' ' + dWord + (days < 3 ? ' ' + hrs + ' h' : '')) : ('zbývá ' + hrs + ' h ' + Math.floor((diff % 3600000) / 60000) + ' min');
-    } else countdown = 'termín brzy potvrdíme';
-    var ytLogo = '<svg class="co-webinar-yt" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#FF0000"/><path d="M11 6l8 4-8 4z" fill="#fff"/></svg>';
-    var btn = streamUrl
-      ? '<a class="co-webinar-btn' + (isLive ? ' is-live' : '') + '" href="' + esc(streamUrl) + '" target="_blank" rel="noopener">' + ytLogo + '<span>' + (isLive ? 'Spustit stream' : 'Otevřít odkaz na webinář') + '</span></a>'
-      : '<button class="co-webinar-btn" type="button" data-act="stream-notyet">' + ytLogo + '<span>Spustit stream</span></button>';
-    return '<section class="co-card co-webinar' + (isLive ? ' is-live' : '') + '">' +
-      '<div class="co-webinar-cal"><span class="co-webinar-cal-m">' + mShort[d.getMonth()] + '</span><span class="co-webinar-cal-d">' + d.getDate() + '</span></div>' +
-      '<div class="co-webinar-body">' +
-        '<span class="co-webinar-kicker">Živý webinář</span>' +
-        '<h3>Doraž na další webinář, připrav si otázky</h3>' +
-        '<p class="co-webinar-topic">Téma: ' + esc(WEBINAR.topic) + '</p>' +
-        (WEBINAR.info ? '<p class="co-webinar-topic co-webinar-info">' + esc(WEBINAR.info) + '</p>' : '') +
-        '<p class="co-webinar-when"><span>📅 ' + dateText + ' · ' + timeText + '</span><strong>⏱ ' + countdown + '</strong></p>' +
-        '<div class="co-webinar-action">' + btn + '</div>' +
-      '</div>' +
-      '<div class="co-webinar-hero" aria-hidden="true"><img src="assets/kenjimen.webp" alt="" width="1025" height="576" loading="lazy" decoding="async"></div>' +
-    '</section>';
-  }
-
-  function communityPulseCard() {
-    var c = currentChallenge(), joined = challengeJoined(), left = daysLeftInWeek();
-    var challengeUrl = 'prispevky.html?category=tydenni-vyzva&challenge=' + encodeURIComponent(c.key || weekKey());
-    // Sdílený pool s pop-upem (nav.js). Fallback na lokální seed.
-    var pool = (window.KENJI_COMMUNITY_WINS && window.KENJI_COMMUNITY_WINS.length) ? window.KENJI_COMMUNITY_WINS : WINS_SEED;
-    var mine = jget(MYWINS, []); if (!Array.isArray(mine)) mine = [];
-
-    // Úspěch, který se dnes ukázal v pop-upu → dej ho navrch se štítkem „právě teď".
-    var featured = null;
-    var st = jget('kenji_winannounce_v1', null);
-    if (st && st.last && typeof st.idx === 'number' && pool.length) {
-      featured = pool[(st.idx - 1 + pool.length) % pool.length];
-    }
-    var seed = pool.filter(function (w) { return !(featured && w.n === featured.n && w.t === featured.t); });
-
-    var items = [];
-    if (featured) items.push({ n: featured.n, t: featured.t, fresh: true });
-    mine.forEach(function (w) { items.push({ n: 'Ty', t: w, mine: true }); });
-    seed.forEach(function (w) { items.push({ n: w.n, t: w.t }); });
-    items = items.slice(0, 3);
-
-    var winCooldown = winCooldownMs();
-    var canAddWin = winCooldown <= 0;
-    return '<section class="co-card co-community-pulse"><div class="co-card-head"><div><span class="co-community-kicker">TENTO TÝDEN</span><h2 class="co-card-title">Co se děje v komunitě</h2></div><a class="co-community-all" href="prispevky.html">Otevřít komunitu →</a></div>' +
-      '<div class="co-community-pulse-grid"><div class="co-community-challenge"><div class="co-community-subhead"><strong>Týdenní výzva</strong><span>+250 KP</span></div><h3>' + esc(c.title) + '</h3><p>' + esc(c.description) + '</p><div class="co-chal-meta"><span>Pro všechny</span><span>⏱ ' + daysLeftText(left) + '</span></div>' +
-      (joined ? '<a class="co-community-cta" href="' + challengeUrl + '">✓ Splněno · otevřít diskuzi</a>' : '<a class="co-community-cta" href="' + challengeUrl + '">Přidat svoji odpověď →</a>') + '</div>' +
-      '<div class="co-community-wins"><div class="co-community-subhead"><strong>Poslední úspěchy</strong><span>+100 KP</span></div><ul class="co-winlist">' + items.map(function (w) {
-        return '<li class="co-win' + (w.mine ? ' is-mine' : '') + '"><span class="co-win-dot">🎉</span><span class="co-win-txt"><strong>' + esc(w.n) + '</strong> ' + esc(w.t) + '</span>' + (w.fresh ? '<span class="co-win-fresh">právě teď</span>' : '') + '</li>';
-      }).join('') + '</ul>' +
-      '<button class="co-community-cta is-button" data-act="win-add"' + (canAddWin ? '' : ' disabled') + '>' + (canAddWin ? '+ Přidat svůj úspěch' : 'Další za ' + fmtCooldown(winCooldown)) + '</button></div></div>' +
-    '</section>';
+  function kcAi(b) {
+    var ctx = 'Jsem ' + (industryNames(b) || 'vizuální tvůrce') + ', jsem ve fázi „' + experienceText(b) + '“. ';
+    var sugg = [
+      { l: 'Co napsat klientovi?', q: ctx + 'Co mám napsat potenciálnímu klientovi, aby odpověděl? Dej mi konkrétní zprávu.' },
+      { l: 'Kolik si říct za zakázku?', q: ctx + 'Kolik si mám říct za zakázku? Proveď mě výpočtem krok po kroku.' },
+      { l: 'Vylepši mi BIO', q: ctx + 'Napiš mi silné Instagram BIO, ať je jasné, co nabízím a komu.' }
+    ];
+    return '<section class="kc-tile kc-ai">' + kcKicker('Kenji AI') + '<h3>Zasekl ses? Zeptej se.</h3>' +
+      '<form class="kc-ask" data-act="ai-ask"><input type="text" name="q" maxlength="400" placeholder="Napiš dotaz…" aria-label="Dotaz pro Kenji AI"><button type="submit" aria-label="Odeslat">↑</button></form>' +
+      '<div class="kc-sugg">' + sugg.map(function (s) { return '<a href="' + esc(aiUrl(s.q)) + '">' + esc(s.l) + '</a>'; }).join('') + '</div></section>';
   }
 
   // (Profil se needituje samostatnou kartou — z hlavičky přes „Upravit profil".)
@@ -896,6 +888,12 @@
   MOUNT.addEventListener('submit', function (e) {
     var el = e.target.closest('[data-act]'); if (!el) return;
     var act = el.getAttribute('data-act');
+    if (act === 'ai-ask') {
+      e.preventDefault();
+      var q = ((el.querySelector('input') || {}).value || '').trim();
+      if (q) location.href = aiUrl(q);
+      return;
+    }
     if (act === 'task-add') {
       e.preventDefault();
       var input = el.querySelector('.co-taskadd-input'), text = (input.value || '').trim();
@@ -925,8 +923,6 @@
   document.addEventListener('kenji-auth-ready', render);
   document.addEventListener('kenji-xp-synced', render);
   document.addEventListener('kenji:challenge-updated', render);
-  document.addEventListener('kenji-auth-ready', loadWebinar, { once: true });
-  setTimeout(loadWebinar, 1500);
 
   // Zápis úspěchu spuštěný z pop-upu (odkaz index.html?addwin=1)
   try {

@@ -61,6 +61,7 @@
   "59": "SUPABASE_KUPONY.md",
   "60": "_stripe.js",
   "61": "dc-mini.js",
-  "62": "academy-b.js",
-  "63": "20261026120000_plan_requests.sql"
+  "63": "20261026120000_plan_requests.sql",
+  "64": "20261027120000_admin_redesign.sql",
+  "65": "20261026150000_admin_plan_requests.sql"
 }

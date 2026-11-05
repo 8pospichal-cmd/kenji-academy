@@ -513,15 +513,69 @@
     return raw ? [raw] : [];
   }
 
+  // Fotky jako na Facebooku: nejvýš 4 dlaždice s pevným tvarem, na poslední „+N".
+  // Všechny fotky jsou v data-gallery a otevřou se v galerii (openGallery).
+  function galleryHtml(list) {
+    const shots = list.filter((s) => s && s.src);
+    if (!shots.length) return '';
+    const shown = shots.slice(0, 4), more = shots.length - shown.length;
+    return '<div class="post-media post-gallery count-' + shown.length + '" data-gallery="' + esc(JSON.stringify(shots.map((s) => s.src))) + '">' + shown.map((s, i) => {
+      const last = more > 0 && i === 3;
+      return '<button class="post-gallery-item" type="button" data-index="' + i + '" aria-label="' + (last ? 'Otevřít galerii, dalších ' + more + ' fotek' : 'Zvětšit fotografii') + '">' +
+        '<img src="' + esc(s.src) + '" alt="' + esc(s.alt || '') + '" loading="lazy">' + (last ? '<span class="post-gallery-more">+' + more + '</span>' : '') + '</button>';
+    }).join('') + '</div>';
+  }
+  function openGallery(srcs, start) {
+    let i = start;
+    const multi = srcs.length > 1;
+    const lb = document.createElement('div');
+    lb.className = 'post-lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.setAttribute('aria-label', 'Galerie fotek');
+    lb.innerHTML = '<div class="plb-top"><span class="plb-count"></span><button type="button" class="plb-close" aria-label="Zavřít galerii">✕</button></div>' +
+      '<div class="plb-stage"><img class="plb-img" alt="">' +
+      (multi ? '<button type="button" class="plb-nav plb-prev" aria-label="Předchozí fotka">‹</button><button type="button" class="plb-nav plb-next" aria-label="Další fotka">›</button>' : '') + '</div>' +
+      (multi ? '<div class="plb-thumbs">' + srcs.map((src, k) => '<button type="button" data-k="' + k + '" aria-label="Fotka ' + (k + 1) + '"><img src="' + esc(src) + '" alt=""></button>').join('') + '</div>' : '');
+    const img = lb.querySelector('.plb-img'), count = lb.querySelector('.plb-count'), strip = lb.querySelector('.plb-thumbs');
+    function show(k) {
+      i = (k + srcs.length) % srcs.length;
+      img.src = srcs[i];
+      count.textContent = multi ? (i + 1) + ' / ' + srcs.length : '';
+      if (!strip) return;
+      strip.querySelectorAll('button').forEach((b, n) => b.classList.toggle('on', n === i));
+      const on = strip.querySelector('.on');
+      if (on) strip.scrollLeft = on.offsetLeft - strip.clientWidth / 2 + on.clientWidth / 2;
+    }
+    function close() { lb.remove(); document.removeEventListener('keydown', onKey); document.body.classList.remove('plb-open'); }
+    function onKey(e) { if (e.key === 'Escape') close(); else if (e.key === 'ArrowLeft') show(i - 1); else if (e.key === 'ArrowRight') show(i + 1); }
+    lb.addEventListener('click', (e) => {
+      if (e.target.closest('.plb-close') || e.target === lb || e.target.classList.contains('plb-stage')) { close(); return; }
+      if (e.target.closest('.plb-prev')) { show(i - 1); return; }
+      if (e.target.closest('.plb-next')) { show(i + 1); return; }
+      const t = e.target.closest('[data-k]');
+      if (t) show(Number(t.getAttribute('data-k')));
+    });
+    // Telefon: posun prstem do stran listuje, tažení dolů zavře.
+    let x0 = null, y0 = null;
+    lb.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    lb.addEventListener('touchend', (e) => {
+      if (x0 == null) return;
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      x0 = null;
+      if (multi && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) show(dx < 0 ? i + 1 : i - 1);
+      else if (dy > 90 && Math.abs(dy) > Math.abs(dx)) close();
+    });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(lb);
+    document.body.classList.add('plb-open');
+    show(start);
+    lb.querySelector('.plb-close').focus();
+  }
   function renderMedia(p) {
     if (p.legacy) {
       let html = '';
-      const images = Array.isArray(p.images) ? p.images : [];
-      if (images.length) {
-        html += '<div class="post-media post-gallery count-' + Math.min(images.length, 5) + '">' + images.map((image) =>
-          '<button class="post-gallery-item" type="button" data-full="' + esc(image.src) + '" aria-label="Zvětšit fotografii"><img src="' + esc(image.src) + '" alt="' + esc(image.alt || '') + '" loading="lazy"></button>'
-        ).join('') + '</div>';
-      }
+      html += galleryHtml(Array.isArray(p.images) ? p.images : []);
       const videos = Array.isArray(p.videos) ? p.videos : [];
       html += videos.map((url) => {
         const id = ytId(url);
@@ -532,13 +586,7 @@
     if (p.media_type === 'image' && p.media_url) {
       // Víc fotek ukládáme jako JSON pole do stejného sloupce (databáze se nemění).
       const shots = parseMedia(p.media_url);
-      if (shots.length > 1) {
-        return '<div class="post-media post-gallery count-' + Math.min(shots.length, 5) + '">' + shots.slice(0, 5).map((src) =>
-          '<button class="post-gallery-item" type="button" data-full="' + esc(src) + '" aria-label="Zvětšit fotografii"><img src="' + esc(src) + '" alt="" loading="lazy"></button>'
-        ).join('') + '</div>';
-      }
-      const only = shots[0] || p.media_url;
-      return '<div class="post-media post-gallery count-1"><button class="post-gallery-item" type="button" data-full="' + esc(only) + '" aria-label="Zvětšit fotografii"><img src="' + esc(only) + '" alt="" loading="lazy"></button></div>';
+      return galleryHtml((shots.length ? shots : [p.media_url]).map((src) => ({ src: src })));
     }
     if (p.media_type === 'youtube' && p.link_url) { const id = ytId(p.link_url); if (id) return '<div class="post-media post-yt"><iframe src="https://www.youtube-nocookie.com/embed/' + id + '" frameborder="0" allowfullscreen></iframe></div>'; }
     if (p.link_url) return '<a class="post-link" href="' + esc(p.link_url) + '" target="_blank" rel="noopener">🔗 ' + esc(p.link_url) + '</a>';
@@ -649,13 +697,9 @@
       });
     });
     document.querySelectorAll('.post-gallery-item').forEach((button) => button.addEventListener('click', () => {
-      const src = button.getAttribute('data-full');
-      if (!src) return;
-      const lightbox = document.createElement('div');
-      lightbox.className = 'post-lightbox';
-      lightbox.innerHTML = '<button type="button" aria-label="Zavřít">✕</button><img src="' + esc(src) + '" alt="">';
-      lightbox.addEventListener('click', () => lightbox.remove());
-      document.body.appendChild(lightbox);
+      let srcs = [];
+      try { srcs = JSON.parse(button.parentNode.getAttribute('data-gallery') || '[]'); } catch (e) {}
+      if (srcs.length) openGallery(srcs, Number(button.getAttribute('data-index')) || 0);
     }));
     document.querySelectorAll('.post-more').forEach((button) => button.addEventListener('click', () => {
       const body = button.previousElementSibling;

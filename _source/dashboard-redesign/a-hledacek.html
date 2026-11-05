@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard A — Hledáček</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   KONCEPT A — HLEDÁČEK
+   Dashboard jako displej fotoaparátu. Dnešní úkol je objekt
+   v ostrosti, spoušť = hotovo, start = filmový pás.
+   ============================================================ */
+:root {
+  --bg: #0a0a0a; --card: #121212; --card-2: #181818; --line: #232323;
+  --text: #f5f5f5; --dim: #8d8d8d; --mute: #555;
+  --orange: #ff6b1a; --orange-2: #ff8f4d; --rec: #ff3b30; --ok: #34c759;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --display: 'Bebas Neue', Impact, sans-serif;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 28px 24px 80px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+.wrap > *, .grid2 > *, .sheet > * { min-width: 0; }
+
+/* ---------- HLAVIČKA ---------- */
+.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.who { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; color: var(--dim); letter-spacing: .06em; text-transform: uppercase; }
+.who .av { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), #b33c00); display: grid; place-items: center; color: #fff; font: 700 13px var(--sans); }
+.hi { font-family: var(--display); font-size: clamp(44px, 7vw, 76px); line-height: .9; letter-spacing: .01em; margin-top: 10px; }
+.hi em { font-style: normal; color: var(--orange); }
+
+/* Stavové ukazatele vpravo (jako HUD foťáku) */
+.hud { display: flex; gap: 10px; }
+.hud-cell { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 132px; }
+.hud-cell small { display: block; font: 500 10px var(--mono); letter-spacing: .12em; color: var(--dim); text-transform: uppercase; }
+.hud-cell strong { display: block; font: 400 34px/1 var(--display); margin-top: 6px; }
+.hud-cell strong span { font: 500 12px var(--sans); color: var(--dim); margin-left: 4px; }
+.bars { display: flex; gap: 4px; margin-top: 9px; }
+.bars i { width: 12px; height: 14px; border-radius: 3px; background: #2a2a2a; }
+.bars i.on { background: var(--orange); box-shadow: 0 0 10px rgba(255,107,26,.5); }
+.bars i.today { outline: 1.5px solid var(--orange); outline-offset: 2px; }
+.battery { display: flex; align-items: center; gap: 3px; margin-top: 10px; }
+.battery .cell { flex: 1; height: 12px; border: 1.5px solid #3a3a3a; border-radius: 3px; padding: 1.5px; }
+.battery .cell i { display: block; height: 100%; width: 0; border-radius: 1px; background: linear-gradient(90deg, var(--orange), var(--orange-2)); transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
+.battery b { width: 3px; height: 6px; background: #3a3a3a; border-radius: 0 2px 2px 0; }
+
+/* ---------- HLEDÁČEK (hlavní úkol) ---------- */
+.vf { position: relative; border-radius: 26px; overflow: hidden; min-height: 400px; isolation: isolate;
+  background: radial-gradient(120% 90% at 50% 40%, #241309 0%, #120a06 45%, #070707 100%); border: 1px solid #2a1a10; }
+/* třetinová mřížka */
+.vf::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .5;
+  background:
+    linear-gradient(90deg, transparent calc(33.33% - .5px), rgba(255,255,255,.07) calc(33.33% - .5px), rgba(255,255,255,.07) calc(33.33% + .5px), transparent calc(33.33% + .5px), transparent calc(66.66% - .5px), rgba(255,255,255,.07) calc(66.66% - .5px), rgba(255,255,255,.07) calc(66.66% + .5px), transparent calc(66.66% + .5px)),
+    linear-gradient(0deg, transparent calc(33.33% - .5px), rgba(255,255,255,.07) calc(33.33% - .5px), rgba(255,255,255,.07) calc(33.33% + .5px), transparent calc(33.33% + .5px), transparent calc(66.66% - .5px), rgba(255,255,255,.07) calc(66.66% - .5px), rgba(255,255,255,.07) calc(66.66% + .5px), transparent calc(66.66% + .5px)); }
+/* rohy hledáčku */
+.corner { position: absolute; width: 34px; height: 34px; border: 2px solid rgba(255,255,255,.55); }
+.corner.tl { top: 18px; left: 18px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
+.corner.tr { top: 18px; right: 18px; border-left: 0; border-bottom: 0; border-radius: 0 8px 0 0; }
+.corner.bl { bottom: 18px; left: 18px; border-right: 0; border-top: 0; border-radius: 0 0 0 8px; }
+.corner.br { bottom: 18px; right: 18px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
+.vf-hud { position: absolute; left: 64px; right: 64px; font: 500 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.7); display: flex; justify-content: space-between; }
+.vf-hud.top { top: 26px; } .vf-hud.bot { bottom: 26px; }
+.rec { display: inline-flex; align-items: center; gap: 7px; color: #fff; }
+.rec i { width: 8px; height: 8px; border-radius: 50%; background: var(--rec); animation: blink 1.4s infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+
+.vf-center { position: absolute; inset: 70px 64px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 32px; }
+/* zaostřovací rámeček kolem úkolu */
+.focus { position: relative; padding: 26px 30px; max-width: 620px; }
+.focus::before, .focus::after { content: ''; position: absolute; width: 18px; height: 18px; border: 2px solid var(--ok); transition: border-color .3s; }
+.focus::before { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.focus::after { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.focus .af { position: absolute; top: -9px; right: 30px; font: 700 10px var(--mono); letter-spacing: .14em; color: var(--ok); background: #0d0a08; padding: 2px 6px; }
+.focus .label { font: 500 11px var(--mono); letter-spacing: .16em; color: var(--orange); }
+.focus h2 { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 5.2vw, 60px); line-height: .95; margin: 10px 0 12px; }
+.focus p { color: #c9c0b8; font-size: 15px; line-height: 1.5; max-width: 46ch; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 99px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); font-size: 13px; font-weight: 500; }
+.chip.ai { background: rgba(255,107,26,.14); border-color: rgba(255,107,26,.35); color: #ffb088; transition: background .2s; }
+.chip.ai:hover { background: rgba(255,107,26,.25); }
+
+/* spoušť */
+.shutter-wrap { display: grid; justify-items: center; gap: 12px; }
+.shutter { width: 104px; height: 104px; border-radius: 50%; border: 3px solid rgba(255,255,255,.85); display: grid; place-items: center; transition: transform .15s; }
+.shutter span { width: 80px; height: 80px; border-radius: 50%; background: #fff; display: grid; place-items: center; transition: transform .15s, background .3s; }
+.shutter svg { width: 34px; height: 34px; stroke: #111; opacity: 0; transform: scale(.6); transition: .3s; }
+.shutter:hover span { transform: scale(.94); }
+.shutter:hover svg { opacity: .35; transform: scale(1); }
+.shutter:active span { transform: scale(.86); }
+.shutter-wrap small { font: 500 11px var(--mono); letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+.vf.done .shutter span { background: var(--ok); }
+.vf.done .shutter svg { opacity: 1; transform: scale(1); stroke: #fff; }
+.vf.done .focus h2 { color: #6f6f6f; text-decoration: line-through; text-decoration-thickness: 3px; }
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 5; }
+.flash.go { animation: flash .5s ease-out; }
+@keyframes flash { 0% { opacity: .9; } 100% { opacity: 0; } }
+
+/* ---------- FILMOVÝ PÁS (start) ---------- */
+.sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.sec-h h3 { font: 400 26px var(--display); letter-spacing: .02em; }
+.sec-h small { font: 500 11px var(--mono); letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+.film { background: #050505; border-radius: 16px; padding: 22px 16px; position: relative; overflow-x: auto; }
+.film::before, .film::after { content: ''; position: absolute; left: 10px; right: 10px; height: 8px;
+  background: repeating-linear-gradient(90deg, #262626 0 12px, transparent 12px 26px); border-radius: 2px; }
+.film::before { top: 7px; } .film::after { bottom: 7px; }
+.frames { display: grid; grid-template-columns: repeat(5, minmax(140px, 1fr)); gap: 10px; }
+.frame { position: relative; aspect-ratio: 3/2; border-radius: 8px; background: #161616; border: 1px solid #222; display: grid; place-items: center; overflow: hidden; transition: transform .2s; }
+.frame:hover { transform: translateY(-3px); }
+.frame svg { width: 34px; height: 34px; stroke: #5a5a5a; }
+.frame .n { position: absolute; top: 7px; left: 9px; font: 500 10px var(--mono); color: #555; }
+.frame .kp { position: absolute; top: 7px; right: 9px; font: 700 10px var(--mono); color: #666; }
+.frame .t { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 10px 8px; font-size: 12px; font-weight: 600; color: #888; background: linear-gradient(transparent, rgba(0,0,0,.7)); }
+.frame.done { background: linear-gradient(135deg, #2b2b2b, #1a1a1a); border-color: #333; }
+.frame.done svg { stroke: var(--ok); }
+.frame.done .t { color: #cfcfcf; }
+.frame.now { background: linear-gradient(135deg, #ff7a2e, #c4430a); border-color: var(--orange); box-shadow: 0 10px 30px rgba(255,107,26,.3); }
+.frame.now svg { stroke: #fff; }
+.frame.now .n, .frame.now .kp, .frame.now .t { color: #fff; }
+.frame.now::after { content: 'TEĎ'; position: absolute; top: 50%; right: 10px; transform: translateY(-50%); font: 700 10px var(--mono); letter-spacing: .14em; background: #000; color: #fff; padding: 3px 6px; border-radius: 4px; }
+
+/* ---------- SPODNÍ MŘÍŽKA ---------- */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px; }
+
+/* Fronta (další úkoly) */
+.queue { display: grid; gap: 8px; }
+.q { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--card-2); border: 1px solid transparent; transition: border-color .2s; }
+.q:hover { border-color: #333; }
+.q .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #444; flex: none; }
+.q b { flex: 1; font-size: 14px; font-weight: 600; }
+.q span { font: 500 11px var(--mono); color: var(--dim); }
+.add { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; border: 1.5px dashed #2d2d2d; color: var(--dim); font-size: 14px; }
+.add i { font-style: normal; font-size: 18px; color: var(--orange); }
+
+/* Webinář — kinolístek */
+.ticket { position: relative; display: grid; grid-template-columns: 1fr 120px; overflow: hidden; padding: 0; background: linear-gradient(135deg, #1b1310, #111); }
+.ticket .body { padding: 22px; }
+.ticket .live { font: 500 11px var(--mono); letter-spacing: .14em; color: var(--rec); display: inline-flex; align-items: center; gap: 7px; }
+.ticket .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--rec); animation: blink 1.4s infinite; }
+.ticket h4 { font: 400 30px/1 var(--display); margin: 10px 0 4px; }
+.ticket .topic { color: var(--dim); font-size: 13px; }
+.count { display: flex; gap: 8px; margin: 16px 0; }
+.count div { background: #000; border: 1px solid #2a2a2a; border-radius: 10px; padding: 8px 10px; text-align: center; min-width: 58px; }
+.count b { display: block; font: 700 24px var(--mono); }
+.count small { font: 500 9px var(--mono); letter-spacing: .12em; color: var(--dim); }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 99px; background: #fff; color: #000; font-weight: 700; font-size: 14px; }
+.ticket .stub { border-left: 2px dashed #2f2f2f; display: grid; place-items: center; position: relative; background: url('../../assets/kenji-cutout.webp') center 12% / cover no-repeat; filter: grayscale(.2); }
+.ticket .stub::before, .ticket .stub::after { content: ''; position: absolute; left: -11px; width: 20px; height: 20px; border-radius: 50%; background: var(--bg); }
+.ticket .stub::before { top: -10px; } .ticket .stub::after { bottom: -10px; }
+
+/* Komunita — kontaktní arch */
+.sheet { display: grid; grid-template-columns: 1fr 1.7fr; gap: 14px; }
+.chal { border-radius: 16px; padding: 18px; background: linear-gradient(150deg, #ff7a2e, #b8400a); color: #fff; display: flex; flex-direction: column; justify-content: space-between; min-height: 210px; }
+.chal small { font: 700 11px var(--mono); letter-spacing: .14em; opacity: .85; }
+.chal h4 { font: 400 32px/.95 var(--display); margin: 10px 0; }
+.chal .row { display: flex; justify-content: space-between; align-items: center; }
+.chal .row span { font: 700 13px var(--mono); }
+.chal .go { width: 40px; height: 40px; border-radius: 50%; background: #000; display: grid; place-items: center; font-size: 18px; transition: transform .2s; }
+.chal:hover .go { transform: rotate(-45deg); }
+.wins { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: start; }
+.win { background: var(--card-2); border-radius: 12px; padding: 10px; transform: rotate(var(--r, 0deg)); transition: transform .2s; }
+.win:hover { transform: rotate(0) scale(1.03); }
+.win .ph { aspect-ratio: 1; border-radius: 8px; display: grid; place-items: center; font: 400 30px var(--display); color: #fff; margin-bottom: 8px; }
+.win p { font-size: 11.5px; line-height: 1.35; color: #bdbdbd; }
+.win p b { color: #fff; }
+.win.add-win { border: 1.5px dashed #333; background: transparent; display: grid; place-items: center; text-align: center; color: var(--dim); font-size: 12px; align-self: stretch; }
+.win.add-win i { display: block; font-style: normal; font-size: 26px; color: var(--orange); }
+
+/* toast */
+.toast { position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 40px); opacity: 0; background: #fff; color: #000; padding: 12px 20px; border-radius: 99px; font-weight: 700; display: flex; gap: 10px; align-items: center; transition: .35s cubic-bezier(.2,.8,.2,1); z-index: 50; }
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+.toast b { color: var(--orange); font-family: var(--mono); }
+
+/* ---------- MOBIL ---------- */
+@media (max-width: 860px) {
+  .grid2, .sheet { grid-template-columns: 1fr; }
+  .wins { grid-template-columns: repeat(2, 1fr); }
+  .chal { min-height: 170px; }
+  .vf { min-height: 0; }
+  .vf-center { position: relative; inset: auto; grid-template-columns: 1fr; padding: 64px 22px 70px; justify-items: start; gap: 22px; }
+  .vf-hud { left: 22px; right: 22px; }
+  .shutter-wrap { justify-self: center; }
+  .shutter { width: 88px; height: 88px; } .shutter span { width: 66px; height: 66px; }
+  .focus { padding: 22px 20px; }
+  .hud { width: 100%; } .hud-cell { flex: 1; min-width: 0; }
+}
+@media (max-width: 520px) {
+  .wrap { padding: 20px 16px 60px; }
+  .ticket { grid-template-columns: 1fr 80px; }
+  .vf-hud .hide-m { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1) KDE JSEM -->
+  <header class="top">
+    <div>
+      <div class="who"><span class="av">D</span>Daniel · Svatby + portrét</div>
+      <h1 class="hi">Světlo nepočká.<br><em>Makej.</em></h1>
+    </div>
+    <div class="hud">
+      <div class="hud-cell" title="Dny v kuse, kdy jsi něco udělal">
+        <small>Série</small>
+        <strong>4<span>dny</span></strong>
+        <div class="bars" aria-label="Tento týden"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on today"></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="hud-cell" title="Kenji Points — sbíráš je za akci">
+        <small>Level 2 · 340 KP</small>
+        <strong>64<span>%</span></strong>
+        <div class="battery"><div class="cell"><i id="bat" data-w="64"></i></div><b></b></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2) CO DNES — hledáček -->
+  <section class="vf" id="vf">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="vf-hud top"><span class="rec"><i></i>Dnes</span><span class="hide-m">Úkol 1 / 3</span><span>⏱ 15 min</span></div>
+    <div class="vf-center">
+      <div class="focus">
+        <span class="af">AF ●</span>
+        <span class="label">DNEŠNÍ PRIORITA</span>
+        <h2>Oslov 5 potenciálních klientů</h2>
+        <p>Přímé oslovení je nejrychlejší cesta k prvním zakázkám.</p>
+        <div class="chips">
+          <span class="chip">Klienti</span>
+          <a class="chip ai" href="#">✦ Jak na to? Zeptej se Kenji AI</a>
+        </div>
+      </div>
+      <div class="shutter-wrap">
+        <button class="shutter" id="shutter" aria-label="Označit jako hotové"><span><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span></button>
+        <small id="shutter-l">Hotovo = +20 KP</small>
+      </div>
+    </div>
+    <div class="vf-hud bot"><span>Fokus: klienti</span><span class="hide-m">ISO 100 · f/2.8</span><span>Potom 2 další ↓</span></div>
+    <div class="flash" id="flash"></div>
+  </section>
+
+  <!-- 3) START — filmový pás -->
+  <section>
+    <div class="sec-h"><h3>Tvůj start</h3><small>2 z 5 políček hotovo</small></div>
+    <div class="film">
+      <div class="frames">
+        <a class="frame done" href="#"><span class="n">01</span><span class="kp">+20</span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg><span class="t">Profil</span></a>
+        <a class="frame done" href="#"><span class="n">02</span><span class="kp">+20</span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg><span class="t">První článek</span></a>
+        <a class="frame now" href="#"><span class="n">03</span><span class="kp">+20 KP</span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.3 3.7L17 8l-3.7 1.3L12 13l-1.3-3.7L7 8l3.7-1.3zM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg><span class="t">Zeptej se Kenji AI</span></a>
+        <a class="frame" href="#"><span class="n">04</span><span class="kp">+350</span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1a5.5 5.5 0 0 1 11 0v1M16 5.5a3 3 0 0 1 0 5.8M16 14a4.5 4.5 0 0 1 4.5 4.5V19"/></svg><span class="t">Představ se</span></a>
+        <a class="frame" href="#"><span class="n">05</span><span class="kp">+100</span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.4-2h7.2L17 8h3v10H4z"/><circle cx="12" cy="13" r="3.3"/></svg><span class="t">Foto feedback</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4) CO POTOM + WEBINÁŘ -->
+  <div class="grid2">
+    <section class="card">
+      <div class="sec-h"><h3>Potom</h3><small>max 5</small></div>
+      <div class="queue">
+        <div class="q"><span class="dot"></span><b>Vytvoř nabídku jednoho balíčku</b><span>20 min</span></div>
+        <div class="q"><span class="dot"></span><b>Aktualizuj Instagram BIO</b><span>10 min</span></div>
+        <div class="add"><i>＋</i>Vlastní úkol</div>
+      </div>
+    </section>
+
+    <section class="card ticket">
+      <div class="body">
+        <span class="live"><i></i>Živý webinář</span>
+        <h4>Ceník, který prodává</h4>
+        <p class="topic">Čt 12. 11. · 19:00 · připrav si otázky</p>
+        <div class="count"><div><b>03</b><small>DNY</small></div><div><b>14</b><small>HOD</small></div><div><b>22</b><small>MIN</small></div></div>
+        <a class="btn" href="#">▶ Odkaz na stream</a>
+      </div>
+      <div class="stub" aria-hidden="true"></div>
+    </section>
+  </div>
+
+  <!-- 5) KOMUNITA — kontaktní arch -->
+  <section>
+    <div class="sec-h"><h3>Komunita tento týden</h3><small><a href="#">Otevřít →</a></small></div>
+    <div class="sheet">
+      <a class="chal" href="#">
+        <small>TÝDENNÍ VÝZVA · ZBÝVAJÍ 4 DNY</small>
+        <h4>Ukaž svůj největší fail</h4>
+        <div class="row"><span>+250 KP</span><span class="go">→</span></div>
+      </a>
+      <div class="wins">
+        <div class="win" style="--r:-2deg"><div class="ph" style="background:linear-gradient(135deg,#3b82f6,#1e3a8a)">K</div><p><b>Klára</b> dokončila nové portfolio</p></div>
+        <div class="win" style="--r:1.5deg"><div class="ph" style="background:linear-gradient(135deg,#10b981,#065f46)">M</div><p><b>Martin</b> první svatba za 18 000 Kč</p></div>
+        <div class="win" style="--r:1deg"><div class="ph" style="background:linear-gradient(135deg,#a855f7,#581c87)">E</div><p><b>Eliška</b> zvedla ceny o 30 %</p></div>
+        <button class="win add-win" style="--r:-1deg"><span><i>＋</i>Tvůj úspěch<br>+100 KP</span></button>
+      </div>
+    </div>
+  </section>
+
+</div>
+<div class="toast" id="toast"><b>+20 KP</b> Úkol splněn · 1/5 dnes</div>
+
+<script>
+(function () {
+  var bat = document.getElementById('bat');
+  setTimeout(function () { bat.style.width = bat.getAttribute('data-w') + '%'; }, 150);
+  var vf = document.getElementById('vf'), flash = document.getElementById('flash'), toast = document.getElementById('toast');
+  document.getElementById('shutter').addEventListener('click', function () {
+    var done = vf.classList.toggle('done');
+    document.getElementById('shutter-l').textContent = done ? 'Hotovo ✓' : 'Hotovo = +20 KP';
+    if (!done) return;
+    flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+    toast.classList.add('show'); setTimeout(function () { toast.classList.remove('show'); }, 1700);
+  });
+})();
+</script>
+</body>
+</html>

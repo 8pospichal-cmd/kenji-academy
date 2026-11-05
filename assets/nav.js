@@ -224,8 +224,17 @@
     const icoDatabaze = '<svg class="sw-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.6C10.3 5.3 8 4.8 4 4.8v13.4c4 0 6.3.5 8 1.9 1.7-1.4 4-1.9 8-1.9V4.8c-4 0-6.3.5-8 1.8z"/><path d="M12 6.6v13.5"/><path d="M6.6 9.3c1.3 0 2.5.2 3.6.7M6.6 12.4c1.3 0 2.5.2 3.6.7"/></svg>';
     const icoKomunita = '<svg class="sw-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.6 18.5v-1.3a3.4 3.4 0 0 0-3.4-3.4H6.9a3.4 3.4 0 0 0-3.4 3.4v1.3"/><circle cx="9.55" cy="7.4" r="3.15"/><path d="M20.5 18.5v-1.3a3.4 3.4 0 0 0-2.55-3.29"/><path d="M15.6 4.45a3.15 3.15 0 0 1 0 6.05"/></svg>';
 
-    // Přepínač sekcí je nově dole ve spodní glass liště → v sidebaru už není.
-    let html = '';
+    // Hlavní záložky: na počítači nahoře v levém menu, na telefonu ve spodní glass liště.
+    const tabLink = (href, label, ico, active) => `<a href="${ROOT}${href}" class="sidebar-link sidebar-tab${active ? ' active' : ''}"${active ? ' aria-current="page"' : ''}><span class="icon">${ico}</span><span>${label}</span></a>`;
+    let html = `
+      <div class="sidebar-section sidebar-tabs">
+        <nav class="sidebar-nav" aria-label="Hlavní sekce">
+          ${tabLink('index.html', 'Můj přehled', uiIcon('home'), onHome)}
+          ${tabLink('kurzy.html', 'Kurzy', icoKurzy, section === 'kurzy')}
+          ${tabLink('prispevky.html', 'Komunita', icoKomunita, section === 'prispevky')}
+          ${tabLink('kenji-ai.html', 'Kenji AI', '<span class="sidebar-tab-ai" aria-hidden="true">AI</span>', currentFile === 'kenji-ai.html')}
+        </nav>
+      </div>`;
 
     // ================= KENJI AI (přepínač + historie chatu, plní kenji-ai.js) =================
     if (currentFile === 'kenji-ai.html') {
@@ -325,12 +334,8 @@
           <kbd class="search-kbd">/</kbd>
         </div>
         <div id="kenji-search-results" class="search-results" hidden></div>
-        <div class="sidebar-label">Přehled</div>
+        <div class="sidebar-label">Nástroje</div>
         <nav class="sidebar-nav">
-          <a href="${ROOT}index.html" class="sidebar-link${onHome ? ' active' : ''}">
-            <span class="icon">${uiIcon('home')}</span>
-            <span>Hlavní stránka</span>
-          </a>
           <a href="${ROOT}kviz.html" class="sidebar-link${(currentFile === 'kviz.html' || currentFile === 'odmena.html') ? ' active' : ''}">
             <span class="icon">${uiIcon('award')}</span>
             <span>Kvíz &amp; odměna</span>
@@ -1384,12 +1389,12 @@
     var cf = currentFile;
     var isHome = cf === 'index.html' || cf === '';
     var icoK = '<svg class="bnav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 2.6 8.2 12 12.4l9.4-4.2z"/><path d="M6.2 10.3v4.1c0 1.4 2.6 2.6 5.8 2.6s5.8-1.2 5.8-2.6v-4.1"/><path d="M21.4 8.2v4.6"/></svg>';
-    var icoD = '<svg class="bnav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.6C10.3 5.3 8 4.8 4 4.8v13.4c4 0 6.3.5 8 1.9 1.7-1.4 4-1.9 8-1.9V4.8c-4 0-6.3.5-8 1.8z"/><path d="M12 6.6v13.5"/></svg>';
     var icoC = '<svg class="bnav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.6 18.5v-1.3a3.4 3.4 0 0 0-3.4-3.4H6.9a3.4 3.4 0 0 0-3.4 3.4v1.3"/><circle cx="9.55" cy="7.4" r="3.15"/><path d="M20.5 18.5v-1.3a3.4 3.4 0 0 0-2.55-3.29"/><path d="M15.6 4.45a3.15 3.15 0 0 1 0 6.05"/></svg>';
     var icoAI = '<span class="bnav-ai" aria-hidden="true">AI</span>';
+    var icoH = '<svg class="bnav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg>';
     var items = [
       { href: ROOT + 'kurzy.html', label: 'Kurzy', active: (cf === 'kurzy.html' || cf === 'kurz.html'), ico: icoK },
-      { href: ROOT + 'index.html', label: 'Databáze', active: isHome, ico: icoD },
+      { href: ROOT + 'index.html', label: 'Přehled', active: isHome, ico: icoH },
       { href: ROOT + 'prispevky.html', label: 'Komunita', active: (cf === 'prispevky.html'), ico: icoC },
       { href: ROOT + 'kenji-ai.html', label: 'Kenji AI', active: (cf === 'kenji-ai.html'), ico: icoAI }
     ];
@@ -1397,7 +1402,7 @@
     nav.className = 'bottom-nav';
     nav.setAttribute('aria-label', 'Hlavní navigace');
     nav.innerHTML = '<div class="bottom-nav-inner">' + items.map(function (it) {
-      return '<a href="' + it.href + '" class="bnav-item' + (it.active ? ' active' : '') + '" aria-label="' + it.label + '" title="' + it.label + '"' + (it.active ? ' aria-current="page"' : '') + '>' + it.ico + '</a>';
+      return '<a href="' + it.href + '" class="bnav-item' + (it.active ? ' active' : '') + '" aria-label="' + it.label + '" title="' + it.label + '"' + (it.active ? ' aria-current="page"' : '') + '>' + it.ico + '<span class="bnav-label">' + it.label + '</span></a>';
     }).join('') + '</div>';
     document.body.appendChild(nav);
     document.body.classList.add('has-bottom-nav');

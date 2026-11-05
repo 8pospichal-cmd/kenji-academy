@@ -41,7 +41,12 @@ a{color:#0E0E10}a:hover{color:#8A5A14}
 .marq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
 .track{display:flex;gap:16px;width:max-content;animation:bmarq 52s linear infinite}
 .track.rev{animation-direction:reverse;animation-duration:60s}
-.track:hover{animation-play-state:paused}
+@media (hover:hover){.track:hover{animation-play-state:paused}}
+.testimonial-marq{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+.testimonial-marq::-webkit-scrollbar{display:none}
+.testimonial-marq .track{animation:none}
+.review-rating-mobile{display:none}
+@media (max-width:520px){.review-rating-desktop{display:none}.review-rating-mobile{display:flex;align-items:center;justify-content:center;gap:9px}.review-rating-mobile .stars{color:#B07A22;letter-spacing:.06em}}
 .bento{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
 .nav-l{display:flex;gap:26px}
 .shelf{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px max(24px, calc((100% - 1200px) / 2 + 24px)) 34px;scrollbar-width:none}
@@ -463,9 +468,10 @@ a{color:#0E0E10}a:hover{color:#8A5A14}
   <div class="wrap center">
     <span class="kick"><span class="dot"></span>Slova členů, ne moje</span>
     <h2 class="bh2">Poslechni si lidi, co <span class="acc">už do toho šli</span>.</h2>
-    <p class="sub" style="font-weight:600;color:#0E0E10">4,65 · 173+ hodnocení · 110+ členů</p>
+    <p class="sub review-rating-desktop" style="font-weight:600;color:#0E0E10">4,65 · 173+ hodnocení · 110+ členů</p>
+    <p class="sub review-rating-mobile" style="font-weight:800;color:#0E0E10" aria-label="Hodnocení 4,65 z 5"><span>4,65</span><span class="stars" aria-hidden="true">★★★★★</span></p>
   </div>
-  <div class="marq" style="margin-top:44px">
+  <div class="marq testimonial-marq" style="margin-top:44px">
     <div class="track" style="align-items:stretch">
       <sc-for list="{{rowA}}" as="r" hint-placeholder-count="8">
         <figure class="glass" aria-hidden="{{r.dup}}" style="margin:0;flex:none;width:380px;padding:26px;display:flex;flex-direction:column;gap:14px">
@@ -479,7 +485,7 @@ a{color:#0E0E10}a:hover{color:#8A5A14}
       </sc-for>
     </div>
   </div>
-  <div class="marq" style="margin-top:16px">
+  <div class="marq testimonial-marq" style="margin-top:16px">
     <div class="track rev" style="align-items:stretch">
       <sc-for list="{{rowB}}" as="r" hint-placeholder-count="6">
         <figure class="glass" aria-hidden="{{r.dup}}" style="margin:0;flex:none;width:380px;padding:26px;display:flex;flex-direction:column;gap:14px">

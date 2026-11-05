@@ -64,7 +64,7 @@
       text: 'Tady doplníš fotku, jméno, Instagram a pár vět o sobě. Díky tomu dostaneš přesnější pomoc od AI i komunity.'
     },
     {
-      id: 'points', route: 'index.html', anchor: 'dash-modules', place: 'bottom-right', mobilePlace: 'bottom', target: '.co-xp-badge', eyebrow: 'KP — KENJI POINTY',
+      id: 'points', route: 'index.html', anchor: 'dash-modules', place: 'bottom-right', mobilePlace: 'bottom', target: '.kc-rings', eyebrow: 'KP — KENJI POINTY',
       title: 'Za aktivitu sbíráš KP.',
       text: 'Počítá se všechno: splněné úkoly z plánu, zhlédnutá videa a lekce, účast na webinářích i aktivita v komunitě — vlastní příspěvky, komentáře a pomoc ostatním. Každých 100 KP = nový level.'
     },

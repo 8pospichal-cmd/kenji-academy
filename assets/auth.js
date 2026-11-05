@@ -1137,7 +1137,7 @@
     // Průvodce otevíráme pouze na vyžádání; pokračování zachovává tourStep v URL.
     if (!/[?&](?:tour=1(?:&|$)|tourStep=)/.test(location.search)) return;
     const tourScript = document.createElement('script');
-    tourScript.src = ROOT + 'assets/tour.js?v=20260907-cistaurl-v1';
+    tourScript.src = ROOT + 'assets/tour.js?v=20261105-kouc-v1';
     tourScript.dataset.kenjiTour = '1';
     document.body.appendChild(tourScript);
   }

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard B — Kouč</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   KONCEPT B — KOUČ
+   Bento dlaždice, zlatý přechod, Kenji ukazuje na tvůj krok.
+   Pokrok jako prstence aktivity (level · týden · dnes).
+   ============================================================ */
+:root {
+  --bg: #0b0b0c; --tile: #141416; --tile-2: #1b1b1e; --line: rgba(255,255,255,.07);
+  --text: #f6f5f2; --dim: #8e8c88; --mute: #5b5a57;
+  --g1: #C8913A; --g2: #F4D58F; --gold: linear-gradient(120deg, var(--g1), var(--g2));
+  --ring-week: #ff8a3d; --ring-day: #f6f5f2;
+  --sans: 'Inter', system-ui, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.gold-text { background: var(--gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 30px 24px 80px; }
+.bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+.tile { background: var(--tile); border: 1px solid var(--line); border-radius: 28px; padding: 24px; position: relative; overflow: hidden; }
+.s8 { grid-column: span 8; } .s4 { grid-column: span 4; } .s12 { grid-column: span 12; } .s6 { grid-column: span 6; }
+.k { font: 600 12px var(--sans); color: var(--dim); display: flex; align-items: center; gap: 8px; }
+.k .d { width: 6px; height: 6px; border-radius: 50%; background: var(--g2); }
+
+/* ---------- HLAVIČKA ---------- */
+.head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 16px; }
+.head small { font: 500 13px var(--sans); color: var(--dim); }
+.head h1 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 900; letter-spacing: -.035em; line-height: 1.05; margin-top: 4px; }
+.me { display: flex; align-items: center; gap: 10px; background: var(--tile); border: 1px solid var(--line); border-radius: 99px; padding: 5px 14px 5px 5px; font-weight: 600; font-size: 14px; }
+.me .av { width: 34px; height: 34px; border-radius: 50%; background: var(--gold); color: #111; display: grid; place-items: center; font-weight: 800; }
+
+/* ---------- TEĎ (hlavní dlaždice s Kenjim) ---------- */
+.now { min-height: 360px; padding: 30px; background:
+  radial-gradient(80% 120% at 100% 0%, rgba(200,145,58,.28), transparent 60%),
+  radial-gradient(60% 80% at 85% 100%, rgba(244,213,143,.12), transparent 60%), var(--tile); }
+.now .copy { position: relative; z-index: 2; max-width: 56%; display: flex; flex-direction: column; height: 100%; }
+.pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 99px; background: rgba(244,213,143,.12); color: var(--g2); font-weight: 700; font-size: 12.5px; }
+.now h2 { font-size: clamp(30px, 3.8vw, 44px); font-weight: 900; letter-spacing: -.035em; line-height: 1.02; margin: 18px 0 12px; transition: color .3s; }
+.now p { color: var(--dim); font-size: 15px; line-height: 1.5; }
+.meta { display: flex; gap: 16px; margin-top: 16px; font: 500 13px var(--sans); color: #bbb; }
+.meta span { display: inline-flex; align-items: center; gap: 6px; }
+.meta svg { width: 16px; height: 16px; stroke: var(--g2); }
+.actions { display: flex; gap: 10px; margin-top: auto; padding-top: 26px; flex-wrap: wrap; }
+.btn-gold { display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px 0 8px; border-radius: 99px; background: var(--gold); color: #111; font-weight: 800; font-size: 15px; box-shadow: 0 10px 30px rgba(200,145,58,.25); transition: transform .15s, box-shadow .2s; }
+.btn-gold:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(200,145,58,.38); }
+.btn-gold .ck { width: 38px; height: 38px; border-radius: 50%; background: #111; display: grid; place-items: center; }
+.btn-gold .ck svg { width: 18px; height: 18px; stroke: var(--g2); }
+.btn-gold small { font: 700 12px var(--mono); opacity: .6; }
+.btn-ghost { display: inline-flex; align-items: center; gap: 8px; height: 52px; padding: 0 20px; border-radius: 99px; border: 1px solid rgba(255,255,255,.14); font-weight: 600; font-size: 14.5px; transition: background .2s; }
+.btn-ghost:hover { background: rgba(255,255,255,.06); }
+.kenji { position: absolute; right: -10px; bottom: -6px; height: 112%; z-index: 1; pointer-events: none; filter: drop-shadow(0 20px 40px rgba(0,0,0,.5)); transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+.now:hover .kenji { transform: translateX(-6px) rotate(-1deg); }
+.bubble { position: absolute; z-index: 3; right: 37%; top: 26px; background: #fff; color: #111; font-weight: 800; font-size: 13px; padding: 8px 12px; border-radius: 14px 14px 4px 14px; transform: rotate(-3deg); }
+.now.done h2 { color: var(--mute); text-decoration: line-through; }
+.now.done .btn-gold { background: #2a2a2a; color: #fff; box-shadow: none; }
+.now.done .btn-gold .ck { background: #34c759; } .now.done .btn-gold .ck svg { stroke: #fff; }
+
+/* ---------- PRSTENCE ---------- */
+.rings { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.rings svg.r { width: 188px; height: 188px; transform: rotate(-90deg); }
+.rings circle { fill: none; stroke-linecap: round; stroke-width: 15; }
+.rings .bgc { stroke: rgba(255,255,255,.06); }
+.rings .arc { transition: stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); }
+.ring-c { position: absolute; top: 24px; left: 0; right: 0; height: 188px; display: grid; place-items: center; text-align: center; pointer-events: none; }
+.ring-c b { display: block; font-size: 40px; font-weight: 900; letter-spacing: -.04em; line-height: 1; }
+.ring-c small { font: 600 11px var(--sans); color: var(--dim); }
+.legend { width: 100%; display: grid; gap: 8px; }
+.legend div { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 10px; font-size: 13.5px; color: #c8c6c2; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; }
+.legend b { font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ---------- START (stepper) ---------- */
+.start { display: grid; grid-template-columns: 180px 1fr; gap: 24px; align-items: center; }
+.start h3 { font-size: 22px; font-weight: 900; letter-spacing: -.03em; margin-top: 6px; }
+.start h3 span { color: var(--dim); font-weight: 600; }
+.steps { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); }
+.steps::before { content: ''; position: absolute; left: 10%; right: 10%; top: 27px; height: 3px; background: rgba(255,255,255,.08); border-radius: 3px; }
+.steps::after { content: ''; position: absolute; left: 10%; top: 27px; height: 3px; width: calc(80% * .5); background: var(--gold); border-radius: 3px; }
+.st { position: relative; z-index: 1; display: grid; justify-items: center; gap: 8px; text-align: center; }
+.st .o { width: 56px; height: 56px; border-radius: 50%; background: var(--tile-2); border: 1px solid var(--line); display: grid; place-items: center; transition: transform .2s; }
+.st:hover .o { transform: scale(1.08); }
+.st .o svg { width: 24px; height: 24px; stroke: var(--mute); }
+.st b { font-size: 12.5px; font-weight: 700; color: var(--dim); }
+.st small { font: 700 10.5px var(--mono); color: var(--mute); }
+.st.done .o { background: var(--gold); border: 0; } .st.done .o svg { stroke: #111; } .st.done b { color: #ddd; }
+.st.cur .o { background: #111; border: 2px solid var(--g2); box-shadow: 0 0 0 6px rgba(244,213,143,.12); animation: pulse 2s infinite; }
+.st.cur .o svg { stroke: var(--g2); } .st.cur b { color: var(--text); } .st.cur small { color: var(--g2); }
+@keyframes pulse { 50% { box-shadow: 0 0 0 12px rgba(244,213,143,0); } }
+
+/* ---------- WEBINÁŘ ---------- */
+.web { display: flex; flex-direction: column; gap: 14px; }
+.web .date { display: flex; align-items: flex-end; gap: 12px; }
+.web .date b { font-size: 76px; font-weight: 900; letter-spacing: -.06em; line-height: .8; }
+.web .date span { font-weight: 800; font-size: 15px; line-height: 1.2; color: #ddd; }
+.web .date span small { display: block; color: var(--dim); font-weight: 600; font-size: 13px; }
+.web h4 { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+.bar { height: 6px; border-radius: 6px; background: rgba(255,255,255,.07); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 70%; background: var(--gold); border-radius: 6px; }
+.web .foot { display: flex; justify-content: space-between; align-items: center; font: 600 12.5px var(--sans); color: var(--dim); }
+.mini { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 99px; background: #fff; color: #111; font-weight: 800; font-size: 13px; }
+
+/* ---------- VÝZVA (zlatá dlaždice) ---------- */
+.chal { background: var(--gold); color: #141006; border: 0; display: flex; flex-direction: column; justify-content: space-between; min-height: 250px; transition: transform .25s; }
+.chal:hover { transform: translateY(-3px); }
+.chal .k { color: rgba(20,16,6,.65); } .chal .k .d { background: #141006; }
+.chal .big { font-size: 64px; font-weight: 900; letter-spacing: -.06em; line-height: .85; }
+.chal .big small { font-size: 22px; letter-spacing: -.02em; }
+.chal h4 { font-size: 21px; font-weight: 900; letter-spacing: -.03em; line-height: 1.1; }
+.chal .row { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 13px; }
+.chal .arrow { width: 44px; height: 44px; border-radius: 50%; background: #141006; color: var(--g2); display: grid; place-items: center; font-size: 20px; transition: transform .25s; }
+.chal:hover .arrow { transform: rotate(-45deg); }
+
+/* ---------- ÚSPĚCHY ---------- */
+.wins { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+.stack { display: flex; }
+.stack span { width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--tile); margin-left: -12px; display: grid; place-items: center; font-weight: 800; color: #fff; font-size: 16px; }
+.stack span:first-child { margin-left: 0; }
+.stack .more { background: var(--tile-2); color: var(--dim); font-size: 12px; }
+.ticker { position: relative; height: 66px; }
+.ticker p { position: absolute; inset: 0; font-size: 17px; font-weight: 700; letter-spacing: -.02em; line-height: 1.3; opacity: 0; transform: translateY(10px); transition: .5s cubic-bezier(.2,.8,.2,1); }
+.ticker p.on { opacity: 1; transform: none; }
+.ticker p b { color: var(--g2); }
+.add-win { display: flex; align-items: center; justify-content: space-between; height: 46px; padding: 0 8px 0 16px; border-radius: 99px; background: var(--tile-2); font-weight: 700; font-size: 14px; transition: background .2s; }
+.add-win:hover { background: #242428; }
+.add-win em { font-style: normal; font: 700 12px var(--mono); color: #111; background: var(--gold); padding: 6px 10px; border-radius: 99px; }
+
+/* ---------- POTOM + AI ---------- */
+.next h3, .ai h3 { font-size: 18px; font-weight: 800; letter-spacing: -.02em; margin: 6px 0 14px; }
+.list { display: grid; gap: 6px; }
+.li { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 16px; background: var(--tile-2); transition: background .2s; }
+.li:hover { background: #222226; }
+.li .c { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #46464b; flex: none; }
+.li b { flex: 1; font-size: 14.5px; font-weight: 600; }
+.li span { font-size: 12.5px; color: var(--dim); font-weight: 500; }
+.li.add { background: transparent; border: 1.5px dashed rgba(255,255,255,.1); color: var(--dim); }
+.li.add .c { border: 0; display: grid; place-items: center; color: var(--g2); font-size: 20px; }
+.ai { background: radial-gradient(90% 90% at 0% 0%, rgba(244,213,143,.1), transparent 60%), var(--tile); }
+.ask { display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 6px 0 18px; border-radius: 99px; background: #0b0b0c; border: 1px solid rgba(255,255,255,.1); color: var(--dim); font-size: 14.5px; }
+.ask span { flex: 1; }
+.ask button { width: 42px; height: 42px; border-radius: 50%; background: var(--gold); color: #111; font-size: 18px; font-weight: 900; }
+.sugg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.sugg a { font-size: 12.5px; font-weight: 600; padding: 7px 11px; border-radius: 99px; background: var(--tile-2); color: #cfcdc9; transition: background .2s; }
+.sugg a:hover { background: #26262a; }
+
+/* toast */
+.toast { position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 40px); opacity: 0; background: var(--gold); color: #111; padding: 13px 22px; border-radius: 99px; font-weight: 800; transition: .35s cubic-bezier(.2,.8,.2,1); z-index: 50; box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+/* ---------- RESPONZIVITA ---------- */
+@media (max-width: 960px) {
+  .s8, .s4, .s6 { grid-column: span 12; }
+  .rings { flex-direction: row; } .ring-c { left: 24px; right: auto; width: 188px; }
+  .bento > .s4.web, .bento > .s4.chal { grid-column: span 6; }
+  .bento > .s4.wins { grid-column: span 12; }
+}
+@media (max-width: 640px) {
+  .wrap { padding: 20px 16px 60px; }
+  .tile { border-radius: 24px; padding: 20px; }
+  .now { padding: 22px; min-height: 0; }
+  .now .copy { max-width: 100%; }
+  .kenji { height: 200px; top: 6px; bottom: auto; right: -24px; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+  .bubble { right: 112px; top: 118px; }
+  .now .pill { margin-top: 0; }
+  .now h2 { margin-top: 150px; }
+  .rings { flex-direction: column; } .ring-c { left: 0; right: 0; width: auto; }
+  .start { grid-template-columns: 1fr; }
+  .st .o { width: 46px; height: 46px; } .steps::before, .steps::after { top: 22px; }
+  .st b { font-size: 11px; }
+  .bento > .s4.web, .bento > .s4.chal { grid-column: span 12; }
+  .actions { gap: 8px; } .btn-gold, .btn-ghost { flex: 1; justify-content: center; }
+  .head h1 { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="head">
+    <div>
+      <small>Pondělí 2. listopadu</small>
+      <h1>Ahoj Danieli, <span class="gold-text">jdeme na to.</span></h1>
+    </div>
+    <div class="me"><span class="av">D</span>Level 2</div>
+  </header>
+
+  <div class="bento">
+
+    <!-- TEĎ -->
+    <section class="tile s8 now" id="now">
+      <div class="copy">
+        <span class="pill">● Tvůj krok na dnes</span>
+        <h2>Oslov 5 potenciálních klientů</h2>
+        <p>Nejrychlejší cesta k prvním zakázkám.</p>
+        <div class="meta">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>15 min</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1a5.5 5.5 0 0 1 11 0v1M16 5.5a3 3 0 0 1 0 5.8"/></svg>Klienti</span>
+        </div>
+        <div class="actions">
+          <button class="btn-gold" id="done"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span><span id="done-l">Hotovo</span><small>+20 KP</small></button>
+          <a class="btn-ghost" href="#">✦ Jak na to</a>
+        </div>
+      </div>
+      <span class="bubble">Tohle dneska dáš!</span>
+      <img class="kenji" src="../../assets/kenji-cutout.webp" alt="">
+    </section>
+
+    <!-- PRSTENCE -->
+    <section class="tile s4 rings">
+      <svg class="r" viewBox="0 0 200 200" aria-hidden="true">
+        <defs><linearGradient id="gg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#C8913A"/><stop offset="1" stop-color="#F4D58F"/></linearGradient></defs>
+        <circle class="bgc" cx="100" cy="100" r="88"/><circle class="arc" data-p=".64" cx="100" cy="100" r="88" stroke="url(#gg)"/>
+        <circle class="bgc" cx="100" cy="100" r="68"/><circle class="arc" data-p=".57" cx="100" cy="100" r="68" stroke="var(--ring-week)"/>
+        <circle class="bgc" cx="100" cy="100" r="48"/><circle class="arc" data-p=".34" cx="100" cy="100" r="48" stroke="var(--ring-day)"/>
+      </svg>
+      <div class="ring-c"><div><b>340</b><small>KP</small></div></div>
+      <div class="legend">
+        <div><i style="background:var(--gold)"></i>Do levelu 3<b>64 %</b></div>
+        <div><i style="background:var(--ring-week)"></i>Série · dny v kuse<b>4 🔥</b></div>
+        <div><i style="background:var(--ring-day)"></i>Dnešní úkoly<b>1 / 3</b></div>
+      </div>
+    </section>
+
+    <!-- START -->
+    <section class="tile s12 start">
+      <div><span class="k"><span class="d"></span>Tvůj start</span><h3>2 z 5 <span>kroků</span></h3></div>
+      <div class="steps">
+        <a class="st done" href="#"><span class="o"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span><b>Profil</b><small>+20</small></a>
+        <a class="st done" href="#"><span class="o"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span><b>Článek</b><small>+20</small></a>
+        <a class="st cur" href="#"><span class="o"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.3 3.7L17 8l-3.7 1.3L12 13l-1.3-3.7L7 8l3.7-1.3zM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg></span><b>Kenji AI</b><small>+20 KP · teď</small></a>
+        <a class="st" href="#"><span class="o"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1a5.5 5.5 0 0 1 11 0v1M16 5.5a3 3 0 0 1 0 5.8M16 14a4.5 4.5 0 0 1 4.5 4.5V19"/></svg></span><b>Představ se</b><small>+350</small></a>
+        <a class="st" href="#"><span class="o"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.4-2h7.2L17 8h3v10H4z"/><circle cx="12" cy="13" r="3.3"/></svg></span><b>Feedback</b><small>+100</small></a>
+      </div>
+    </section>
+
+    <!-- WEBINÁŘ -->
+    <section class="tile s4 web">
+      <span class="k"><span class="d" style="background:#ff3b30"></span>Živý webinář</span>
+      <div class="date"><b class="gold-text">12</b><span>listopadu<small>čtvrtek · 19:00</small></span></div>
+      <h4>Ceník, který prodává</h4>
+      <div class="bar"><i></i></div>
+      <div class="foot"><span>za 3 dny 14 h</span><a class="mini" href="#">▶ Stream</a></div>
+    </section>
+
+    <!-- VÝZVA -->
+    <a class="tile s4 chal" href="#">
+      <span class="k"><span class="d"></span>Týdenní výzva · 4 dny</span>
+      <div class="big">+250<small> KP</small></div>
+      <h4>Ukaž svůj největší fail</h4>
+      <div class="row"><span>Pro všechny</span><span class="arrow">→</span></div>
+    </a>
+
+    <!-- ÚSPĚCHY -->
+    <section class="tile s4 wins">
+      <span class="k"><span class="d"></span>Úspěchy komunity</span>
+      <div class="stack"><span style="background:#3b82f6">K</span><span style="background:#10b981">M</span><span style="background:#a855f7">E</span><span style="background:#ef4444">J</span><span class="more">+38</span></div>
+      <div class="ticker" id="ticker">
+        <p class="on"><b>Martin</b> získal první svatbu za 18 000 Kč 🎉</p>
+        <p><b>Klára</b> dokončila nové portfolio 🎉</p>
+        <p><b>Eliška</b> zvedla ceny o 30 % a klienti zůstali 🎉</p>
+        <p><b>Jakub</b> získal klienta přes cold outreach 🎉</p>
+      </div>
+      <button class="add-win">Přidat svůj úspěch <em>+100 KP</em></button>
+    </section>
+
+    <!-- POTOM -->
+    <section class="tile s6 next">
+      <span class="k"><span class="d"></span>Potom</span>
+      <h3>Další na řadě</h3>
+      <div class="list">
+        <div class="li"><span class="c"></span><b>Vytvoř nabídku jednoho balíčku</b><span>20 min</span></div>
+        <div class="li"><span class="c"></span><b>Aktualizuj Instagram BIO</b><span>10 min</span></div>
+        <div class="li add"><span class="c">＋</span><b>Vlastní úkol</b></div>
+      </div>
+    </section>
+
+    <!-- KENJI AI -->
+    <section class="tile s6 ai">
+      <span class="k"><span class="d"></span>Kenji AI</span>
+      <h3>Zasekl ses? Zeptej se.</h3>
+      <div class="ask"><span>Napiš dotaz…</span><button aria-label="Odeslat">↑</button></div>
+      <div class="sugg"><a href="#">Co napsat klientovi?</a><a href="#">Kolik si říct za svatbu?</a><a href="#">Vylepši mi BIO</a></div>
+    </section>
+
+  </div>
+</div>
+<div class="toast" id="toast">+20 KP · úkol splněn 🎉</div>
+
+<script>
+(function () {
+  // Prstence se při načtení „dotočí" na svou hodnotu.
+  document.querySelectorAll('.arc').forEach(function (c) {
+    var len = 2 * Math.PI * Number(c.getAttribute('r'));
+    c.style.strokeDasharray = len; c.style.strokeDashoffset = len;
+    setTimeout(function () { c.style.strokeDashoffset = len * (1 - Number(c.getAttribute('data-p'))); }, 200);
+  });
+  var day = document.querySelectorAll('.arc')[2];
+  var now = document.getElementById('now'), toast = document.getElementById('toast');
+  document.getElementById('done').addEventListener('click', function () {
+    var d = now.classList.toggle('done');
+    document.getElementById('done-l').textContent = d ? 'Splněno' : 'Hotovo';
+    var len = 2 * Math.PI * 48;
+    day.style.strokeDashoffset = len * (1 - (d ? .67 : .34));
+    if (d) { toast.classList.add('show'); setTimeout(function () { toast.classList.remove('show'); }, 1700); }
+  });
+  // Úspěchy komunity se střídají.
+  var ps = document.querySelectorAll('#ticker p'), i = 0;
+  setInterval(function () { ps[i].classList.remove('on'); i = (i + 1) % ps.length; ps[i].classList.add('on'); }, 3200);
+})();
+</script>
+</body>
+</html>

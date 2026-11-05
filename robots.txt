@@ -16,4 +16,4 @@ Disallow: /netlify/
 Disallow: /tools/
 Disallow: /graphify-out/
 
-Sitemap: https://kenjiacademy.cz/sitemap.xml
+Sitemap: https://www.kenjiacademy.cz/sitemap.xml

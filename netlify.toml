@@ -7,6 +7,22 @@
 [functions]
   directory = "netlify/functions"
 
+# Staré uložené záložky a odkazy z původní Netlify adresy převeď na hlavní
+# doménu. Pravidlo musí být před přesměrováním jednotlivých cest i před 404.
+# Funkce (např. Stripe webhook) na staré adrese dál obsluhuj bez přesměrování —
+# POST z webhooku by 301 nenásledoval.
+[[redirects]]
+  from = "https://kenjihodatabaze.netlify.app/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://kenjihodatabaze.netlify.app/*"
+  to = "https://www.kenjiacademy.cz/:splat"
+  status = 301
+  force = true
+
 # Klikací pokladna pro e-maily a sítě: /koupit → Stripe Checkout (GET, viz
 # netlify/functions/koupit.js). /koupit/academy volí produkt, ?od= značí zdroj.
 [[redirects]]
