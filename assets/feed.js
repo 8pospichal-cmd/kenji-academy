@@ -382,7 +382,7 @@
     return '' +
       '<div class="composer" data-tour="community-composer" hidden>' +
         introGuide +
-        '<div class="composer-top"><span class="feed-avatar">' + initials(ig) + '</span>' +
+        '<div class="composer-top">' + avatar(myProfile().displayName || ig || email, myProfile().avatar, false) +
           '<textarea id="composer-text" class="composer-input" rows="2" placeholder="Co je nového' + (ig ? ', @' + esc(ig) : '') + '?"></textarea>' +
         '</div>' +
         '<div id="composer-preview" class="composer-preview" hidden></div>' +
@@ -435,6 +435,11 @@
     '<div class="feed-wrap">' + communityViewTabs() + '<div class="feed-mobile-categories"><span>Kategorie</span>' + catTabs() + '</div>' + weeklyChallengeBanner() + searchBar() +
     '<div id="community-reconnect" class="community-reconnect" hidden></div>' + composer() +
     '<div id="feed-list" class="feed-list"><div class="feed-loading">Načítám příspěvky…</div></div></div>';
+  // Když profil ještě není v cache, doplň fotku u psaní příspěvku hned po načtení ze serveru.
+  if (email && !myProfile().avatar) ensureMyProfile().then((me) => {
+    const slot = ROOT_EL.querySelector('.composer-top .feed-avatar');
+    if (slot && me.avatar) slot.outerHTML = avatar(me.displayName || ig || email, me.avatar, false);
+  });
 
   // ---------- SUPABASE ----------
   async function getSB() { if (sb) return sb; sb = A.getSupabase ? await A.getSupabase() : null; return sb; }

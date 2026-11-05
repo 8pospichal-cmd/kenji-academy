@@ -61,13 +61,8 @@
   "59": "SUPABASE_KUPONY.md",
   "60": "_stripe.js",
   "61": "dc-mini.js",
-  "62": "public.post_comments",
   "63": "20261026120000_plan_requests.sql",
   "64": "20261027120000_admin_redesign.sql",
   "65": "20261026150000_admin_plan_requests.sql",
-  "66": "public.list_posts",
-  "67": "public.post_likes",
-  "68": "public.posts",
-  "69": "public.users",
-  "70": "stripe-webhook.js"
+  "66": "public.list_posts"
 }

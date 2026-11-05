@@ -342,3 +342,10 @@ body.plb-open { overflow: hidden; }
 .co-lbrow.is-me .co-lbxp { color: var(--kc-on-gold) !important; }
 .co-lbme { padding: 12px 14px; border-radius: 16px; }
 .co-lbhint { color: var(--kc-accent); }
+
+/* ---------- SJEDNOCENÍ AKCENTU DO ZLATÉ ---------- */
+.community-reconnect[hidden] { display: none; }
+.community-reconnect { border-left-color: var(--kc-g1); border-radius: 16px; }
+.sidebar-link.active { background: var(--kc-accent-soft); color: var(--kc-accent); }
+.sidebar-link.active::before { background: var(--kc-gold); }
+.composer-send { background: var(--kc-gold); color: var(--kc-on-gold); border-radius: 99px; padding: 10px 20px; }
