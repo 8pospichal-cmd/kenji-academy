@@ -344,6 +344,12 @@
   }
   function updateCategoryUI(current) {
     document.querySelectorAll('[data-feed-cat]').forEach((el) => el.classList.toggle('active', el.getAttribute('data-feed-cat') === activeCat));
+    // Kategorie nad feedem (na telefonu jediné viditelné) — zvýraznit a posunout do záběru.
+    document.querySelectorAll('.feed-tab[data-cat]').forEach((el) => {
+      const on = el.getAttribute('data-cat') === activeCat;
+      el.classList.toggle('active', on);
+      if (on && el.parentNode.scrollWidth > el.parentNode.clientWidth) el.parentNode.scrollLeft = el.offsetLeft - 16;
+    });
     document.querySelectorAll('[data-feed-count]').forEach((el) => {
       el.textContent = categoryCount(el.getAttribute('data-feed-count'), current);
     });
@@ -476,6 +482,8 @@
   }
 
   // ---------- FEED ----------
+  const FEED_BATCH = 20;
+  let feedObserver = null;
   async function loadFeed() {
     const list = document.getElementById('feed-list');
     list.innerHTML = '<div class="feed-loading">Načítám příspěvky…</div>';
@@ -491,8 +499,32 @@
         updateCategoryUI(current);
         return;
       }
-      list.innerHTML = posts.map(renderPost).join('');
-      wirePosts();
+      // Vykresluj po dávkách: na telefonu by 130+ příspěvků naráz zbytečně zdrželo stránku.
+      if (feedObserver) feedObserver.disconnect();
+      list.innerHTML = '';
+      const sentinel = document.createElement('div');
+      sentinel.className = 'feed-sentinel';
+      sentinel.innerHTML = '<button type="button" class="feed-more">Načíst další příspěvky</button>';
+      list.appendChild(sentinel);
+      sentinel.querySelector('.feed-more').addEventListener('click', () => renderMore());
+      let shown = 0;
+      const renderMore = () => {
+        const next = posts.slice(shown, shown + FEED_BATCH);
+        shown += next.length;
+        const batch = document.createElement('div');
+        batch.className = 'feed-batch';
+        batch.innerHTML = next.map(renderPost).join('');
+        list.insertBefore(batch, sentinel);
+        wirePosts(batch);
+        if (shown >= posts.length) { if (feedObserver) feedObserver.disconnect(); sentinel.remove(); return; }
+        // Když je konec seznamu pořád v dosahu, observer by se znovu neozval — přihlásit znovu.
+        if (feedObserver) { feedObserver.unobserve(sentinel); feedObserver.observe(sentinel); }
+      };
+      renderMore();
+      if (shown < posts.length) {
+        feedObserver = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) renderMore(); }, { rootMargin: '1400px 0px' });
+        feedObserver.observe(sentinel);
+      }
       updateCategoryUI(current);
     };
     if (archived.length) paint();
@@ -669,15 +701,16 @@
   }
 
   // ---------- INTERAKCE ----------
-  function wirePosts() {
-    document.querySelectorAll('[data-profile]').forEach((btn) => {
+  function wirePosts(root) {
+    root = root || document;
+    root.querySelectorAll('[data-profile]').forEach((btn) => {
       if (btn._pwired) return; btn._pwired = true;
       btn.addEventListener('click', (ev) => {
         ev.preventDefault(); ev.stopPropagation();
         openProfileModal(btn.getAttribute('data-profile'), { name: btn.getAttribute('data-pname'), avatar: btn.getAttribute('data-pavatar') });
       });
     });
-    document.querySelectorAll('.post').forEach((el) => {
+    root.querySelectorAll('.post').forEach((el) => {
       const id = el.getAttribute('data-id');
       if (el.classList.contains('post-legacy')) {
         const legacyLike = el.querySelector('.post-legacy-like');
@@ -713,19 +746,19 @@
         try { await rpc('delete_post', { p_email: email, p_post: id }); el.remove(); } catch (e) { console.warn('del', e); }
       });
     });
-    document.querySelectorAll('.post-gallery-item').forEach((button) => button.addEventListener('click', () => {
+    root.querySelectorAll('.post-gallery-item').forEach((button) => button.addEventListener('click', () => {
       let srcs = [];
       try { srcs = JSON.parse(button.parentNode.getAttribute('data-gallery') || '[]'); } catch (e) {}
       if (srcs.length) openGallery(srcs, Number(button.getAttribute('data-index')) || 0);
     }));
-    document.querySelectorAll('.post-more').forEach((button) => button.addEventListener('click', () => {
+    root.querySelectorAll('.post-more').forEach((button) => button.addEventListener('click', () => {
       const body = button.previousElementSibling;
       const expanded = button.getAttribute('aria-expanded') === 'true';
       body.classList.toggle('is-collapsed', expanded);
       button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
       button.textContent = expanded ? 'Zobrazit více' : 'Zobrazit méně';
     }));
-    document.querySelectorAll('.post-pin').forEach((button) => button.addEventListener('click', async () => {
+    root.querySelectorAll('.post-pin').forEach((button) => button.addEventListener('click', async () => {
       const post = button.closest('.post');
       const id = post.getAttribute('data-id');
       const legacy = post.classList.contains('post-legacy');

@@ -142,6 +142,31 @@
   status = 404
   force = true
 
+# Graf kódu (popis architektury) a soubory závislostí nepatří na veřejný web.
+[[redirects]]
+  from = "/graphify-out/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package-lock.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/deno.lock"
+  to = "/404.html"
+  status = 404
+  force = true
+
 # Interní poznámky v Markdownu — Netlify neumí vzor "/*.md", proto výčet.
 
 [[redirects]]

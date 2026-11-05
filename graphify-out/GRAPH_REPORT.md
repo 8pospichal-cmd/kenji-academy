@@ -1,17 +1,17 @@
 # Graph Report - kenji-knihovna  (2026-11-05)
 
 ## Corpus Check
-- 84 files · ~256,514 words
+- 84 files · ~256,801 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 18 file(s) not represented in the graph (top: (none) 12, .css 3, .lock 1)
 
 ## Summary
-- 1059 nodes · 1940 edges · 67 communities (47 shown, 20 thin omitted)
+- 1060 nodes · 1943 edges · 67 communities (47 shown, 20 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 141 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6186099c`
+- Built from commit: `3f34db42`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -92,14 +92,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `Graphify-first codebase workflow` --semantically_similar_to--> `Graphify-first codebase workflow`  [INFERRED] [semantically similar]
   AGENTS.md → CLAUDE.md
-- `ensureMyProfile()` --indirect_call--> `email()`  [INFERRED]
-  assets/feed.js → netlify/functions/_ecomail.js
-- `loadLegacyPinOverrides()` --indirect_call--> `email()`  [INFERRED]
-  assets/feed.js → netlify/functions/_ecomail.js
-- `loadFeed()` --indirect_call--> `email()`  [INFERRED]
-  assets/feed.js → netlify/functions/_ecomail.js
-- `wirePosts()` --indirect_call--> `email()`  [INFERRED]
-  assets/feed.js → netlify/functions/_ecomail.js
+- `save()` --indirect_call--> `store()`  [INFERRED]
+  assets/kenji-ai.js → netlify/functions/plan-request.js
+- `toggle()` --indirect_call--> `key()`  [INFERRED]
+  assets/nav.js → tools/build-legacy-uspechy.mjs
+- `addCoupon()` --indirect_call--> `email()`  [INFERRED]
+  assets/settings.js → netlify/functions/_ecomail.js
+- `loadCoupons()` --indirect_call--> `email()`  [INFERRED]
+  assets/settings.js → netlify/functions/_ecomail.js
 
 ## Import Cycles
 - None detected.
@@ -121,15 +121,15 @@ Nodes (81): activationTasks(), addXp(), aiUrl(), article(), awardTaskXp(), bizGe
 
 ### Community 2 - "auth.js"
 Cohesion: 0.06
-Nodes (72): adoptSession(), anonymousId(), applyGating(), bizComplete(), cleanAuthLocation(), currentCampaignUrl(), dismissPointsIntro(), doLogout() (+64 more)
+Nodes (73): adoptSession(), anonymousId(), applyGating(), bizComplete(), cleanAuthLocation(), currentCampaignUrl(), dismissPointsIntro(), doLogout() (+65 more)
 
 ### Community 3 - "feed.js"
 Cohesion: 0.07
-Nodes (69): avatar(), awardWeeklyChallengeXp(), bodyBlocks(), buildProfiles(), canAccessCategory(), categoryCount(), catTabs(), closeComposer() (+61 more)
+Nodes (70): avatar(), awardWeeklyChallengeXp(), bodyBlocks(), buildProfiles(), canAccessCategory(), categoryCount(), catTabs(), closeComposer() (+62 more)
 
 ### Community 4 - "_ecomail.js"
 Cohesion: 0.08
-Nodes (46): E, handler(), status(), webhookUrl(), adminUser(), articleBlock(), articleEmailHtml(), articlePlainText() (+38 more)
+Nodes (45): E, handler(), status(), webhookUrl(), adminUser(), articleBlock(), articleEmailHtml(), articlePlainText() (+37 more)
 
 ### Community 5 - "nav.js"
 Cohesion: 0.09
@@ -307,8 +307,8 @@ Nodes (6): public.list_comments(), public.list_posts(), public.post_comments, pu
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `email()` connect `_ecomail.js` to `settings.js`, `feed.js`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **Why does `email()` connect `feed.js` to `settings.js`, `_ecomail.js`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Why does `store()` connect `plan-request.js` to `kenji-ai.js`?**
   _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **Why does `save()` connect `kenji-ai.js` to `plan-request.js`?**

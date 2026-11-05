@@ -18,9 +18,9 @@
     "semantic_hash": "eba2504d626c959af4298a9cf1c57148"
   },
   "assets/auth.js": {
-    "mtime": 1793889392.428784,
-    "seen": 1793889506.520927,
-    "ast_hash": "47cdfa7c3bf09690a4825806ba490b0c",
+    "mtime": 1793889956.6693096,
+    "seen": 1793890290.406045,
+    "ast_hash": "11cf7aa41c5df1303852c038ce99fe9f",
     "semantic_hash": ""
   },
   "assets/challenges.js": {
@@ -48,9 +48,9 @@
     "semantic_hash": ""
   },
   "assets/feed.js": {
-    "mtime": 1793889466.6966867,
-    "seen": 1793889506.520931,
-    "ast_hash": "17c3981e3c512eef045ae778a9f071e4",
+    "mtime": 1793890259.717632,
+    "seen": 1793890290.40605,
+    "ast_hash": "2ad0f898f7c7bca275c073268ea9e787",
     "semantic_hash": ""
   },
   "assets/img-util.js": {
@@ -72,9 +72,9 @@
     "semantic_hash": "e1e0cfe6d34a8e8ba025c96760e40316"
   },
   "assets/nav.js": {
-    "mtime": 1793889173.613124,
-    "seen": 1793889506.5209339,
-    "ast_hash": "b68b55e0e43b91380feff30141f552a7",
+    "mtime": 1793890018.3101256,
+    "seen": 1793890290.406052,
+    "ast_hash": "3e83149538f7c0970843ef6035a4f0c0",
     "semantic_hash": ""
   },
   "assets/notify.js": {
@@ -396,39 +396,39 @@
     "semantic_hash": "35e355b3bb792f8979f6c8a0871e7598"
   },
   "academy.html": {
-    "mtime": 1793889414.7763705,
-    "seen": 1793889506.520981,
-    "ast_hash": "1ac5dbff9a36b34bd412d69d0cb379f2",
+    "mtime": 1793890288.4647372,
+    "seen": 1793890290.406098,
+    "ast_hash": "7faf11efa1a674a5b0e0c194b9c59219",
     "semantic_hash": ""
   },
   "admin.html": {
-    "mtime": 1793889414.7790685,
-    "seen": 1793889506.520981,
-    "ast_hash": "c71f8090ed5dfd1ce5a37e62b469fb89",
+    "mtime": 1793890288.466795,
+    "seen": 1793890290.4060988,
+    "ast_hash": "fbd67e5319b2dabf1b000325a5e17b45",
     "semantic_hash": ""
   },
   "audit.html": {
-    "mtime": 1793889414.7833564,
-    "seen": 1793889506.520982,
-    "ast_hash": "6deae828869796bc0aadb6d6e2c1f7fc",
+    "mtime": 1793890288.4705675,
+    "seen": 1793890290.4060988,
+    "ast_hash": "3a333cced349d001b5362f578ce6b450",
     "semantic_hash": ""
   },
   "index.html": {
-    "mtime": 1793889414.7906258,
-    "seen": 1793889506.52103,
-    "ast_hash": "2adfa8cb514cf63daf5a178a25caa5ea",
+    "mtime": 1793890288.4783123,
+    "seen": 1793890290.406147,
+    "ast_hash": "e037831dd0fddc9316e3c2c6dc2d1c15",
     "semantic_hash": ""
   },
   "nastaveni.html": {
-    "mtime": 1793889414.8027606,
-    "seen": 1793889506.521033,
-    "ast_hash": "98546b6fbeed5bddffc2eecbdc7e1cc7",
+    "mtime": 1793890288.4897308,
+    "seen": 1793890290.4061508,
+    "ast_hash": "27c199081324fe5f0bf0eed5bc932c06",
     "semantic_hash": ""
   },
   "preset.html": {
-    "mtime": 1793889414.819565,
-    "seen": 1793889506.521037,
-    "ast_hash": "9977cad3d980504e58283a5e46af61dc",
+    "mtime": 1793890288.5059588,
+    "seen": 1793890290.406155,
+    "ast_hash": "c11facc2a54b44415458fbfc922516e2",
     "semantic_hash": ""
   },
   "supabase/email-templates/README.md": {
@@ -438,9 +438,9 @@
     "semantic_hash": "0d9fca4d01f38782241df092b8ef86c4"
   },
   "404.html": {
-    "mtime": 1793889414.700918,
-    "seen": 1793889506.520972,
-    "ast_hash": "3da86f66d9081f591a9fde1a35551dc0",
+    "mtime": 1793890288.3988879,
+    "seen": 1793890290.406089,
+    "ast_hash": "80687278ba6e6ffd9d89551321af2b18",
     "semantic_hash": ""
   },
   "CONTEXT.md": {
@@ -468,585 +468,585 @@
     "semantic_hash": ""
   },
   "clanky/5-chyb-fotografu.html": {
-    "mtime": 1793889414.8287797,
-    "seen": 1793889506.520983,
-    "ast_hash": "97ae11350844402188ddde775b22d628",
+    "mtime": 1793890288.514429,
+    "seen": 1793890290.4061,
+    "ast_hash": "5678c6322050854e392352836f09dffa",
     "semantic_hash": ""
   },
   "clanky/ai-pro-tvurce.html": {
-    "mtime": 1793889414.8325562,
-    "seen": 1793889506.520983,
-    "ast_hash": "b3fcb948192fd4669ab48732dd61ad9c",
+    "mtime": 1793890288.5176244,
+    "seen": 1793890290.4061,
+    "ast_hash": "c2db88c3027da3fd2dd9058bf055f822",
     "semantic_hash": ""
   },
   "clanky/aps-c-vs-full-frame.html": {
-    "mtime": 1793889414.8354087,
-    "seen": 1793889506.5209842,
-    "ast_hash": "082093a0392f98758a3b482e4df6580d",
+    "mtime": 1793890288.5200005,
+    "seen": 1793890290.406101,
+    "ast_hash": "b993aa6a644157ce66f109226f176d51",
     "semantic_hash": ""
   },
   "clanky/autofocus.html": {
-    "mtime": 1793889414.8380294,
-    "seen": 1793889506.5209842,
-    "ast_hash": "7b19899336b7a0569d8c22c1c9970977",
+    "mtime": 1793890288.5220015,
+    "seen": 1793890290.406102,
+    "ast_hash": "6d8c0b76c59ba1c43fa52799bd421b4e",
     "semantic_hash": ""
   },
   "clanky/autorska-prava.html": {
-    "mtime": 1793889414.8423061,
-    "seen": 1793889506.5209851,
-    "ast_hash": "00a755089fa51d52e83538a228e54d7d",
+    "mtime": 1793890288.5242374,
+    "seen": 1793890290.406102,
+    "ast_hash": "9e82b28232ec8487d1ec9f20de8a67b1",
     "semantic_hash": ""
   },
   "clanky/blesky.html": {
-    "mtime": 1793889414.8447254,
-    "seen": 1793889506.5209851,
-    "ast_hash": "864d476745493a7aa1bb8ec4781b6ee8",
+    "mtime": 1793890288.526844,
+    "seen": 1793890290.4061031,
+    "ast_hash": "30dc6e6263ac11346dfdd3ff79a90a0e",
     "semantic_hash": ""
   },
   "clanky/burnout.html": {
-    "mtime": 1793889414.8470788,
-    "seen": 1793889506.520986,
-    "ast_hash": "632129c73b15f013915ecbe8689e7512",
+    "mtime": 1793890288.5291474,
+    "seen": 1793890290.4061031,
+    "ast_hash": "2fb449ecf1169be58e9e0ec5ac9d1c35",
     "semantic_hash": ""
   },
   "clanky/cenik-ktery-prodava.html": {
-    "mtime": 1793889414.8496199,
-    "seen": 1793889506.5209868,
-    "ast_hash": "742a9f6f9a2565ffcfb55ec1100c9f70",
+    "mtime": 1793890288.5313148,
+    "seen": 1793890290.406104,
+    "ast_hash": "082b3d305a569b4178a79065b54c7fee",
     "semantic_hash": ""
   },
   "clanky/cenova-psychologie.html": {
-    "mtime": 1793889414.8520248,
-    "seen": 1793889506.5209868,
-    "ast_hash": "b98a477d0a73da3ea730d02870565803",
+    "mtime": 1793890288.5334232,
+    "seen": 1793890290.406104,
+    "ast_hash": "77f144cb3e3e55cdab3d2a2e600b94cc",
     "semantic_hash": ""
   },
   "clanky/cenove-urovne.html": {
-    "mtime": 1793889414.8543859,
-    "seen": 1793889506.520988,
-    "ast_hash": "d19e04f00ffe2354ac977ff64c3d3dcb",
+    "mtime": 1793890288.5357578,
+    "seen": 1793890290.406105,
+    "ast_hash": "a893d3c1763377ed1ba7e89992db56a9",
     "semantic_hash": ""
   },
   "clanky/cold-outreach.html": {
-    "mtime": 1793889414.8565502,
-    "seen": 1793889506.520988,
-    "ast_hash": "6f7c117318d8e7e7c4f82e1ed007c68b",
+    "mtime": 1793890288.5376995,
+    "seen": 1793890290.406106,
+    "ast_hash": "7f6b2cdd5b4b93b9b1ddf9f19cf546b2",
     "semantic_hash": ""
   },
   "clanky/creative-block.html": {
-    "mtime": 1793889414.8588238,
-    "seen": 1793889506.520989,
-    "ast_hash": "a7146189d7ba3006784ba93097b2d1b8",
+    "mtime": 1793890288.539918,
+    "seen": 1793890290.406106,
+    "ast_hash": "150fa8e603eb7b7ed92b4809929079e3",
     "semantic_hash": ""
   },
   "clanky/danove-naklady.html": {
-    "mtime": 1793889414.8612106,
-    "seen": 1793889506.52099,
-    "ast_hash": "89e05c1e8aa6f4b72e9ce890f1e7377f",
+    "mtime": 1793890288.542017,
+    "seen": 1793890290.406107,
+    "ast_hash": "ddd536263601f6ed1f47ca949675f391",
     "semantic_hash": ""
   },
   "clanky/difficult-clients.html": {
-    "mtime": 1793889414.8634553,
-    "seen": 1793889506.52099,
-    "ast_hash": "d129f0c7d23c620c9e7df018199a245b",
+    "mtime": 1793890288.5440023,
+    "seen": 1793890290.406107,
+    "ast_hash": "3d556937c497781579d8453d657d3dca",
     "semantic_hash": ""
   },
   "clanky/discovery-call.html": {
-    "mtime": 1793889414.8655374,
-    "seen": 1793889506.520991,
-    "ast_hash": "dd06bb44b5eed1f64b7b92d13ab22cf1",
+    "mtime": 1793890288.5461557,
+    "seen": 1793890290.406108,
+    "ast_hash": "56c1c686487eb5d23480889f4e0981a8",
     "semantic_hash": ""
   },
   "clanky/doporucovaci-system.html": {
-    "mtime": 1793889414.8680477,
-    "seen": 1793889506.520991,
-    "ast_hash": "f478d320e7e5485fc1708d08f85c3f38",
+    "mtime": 1793890288.5483785,
+    "seen": 1793890290.406108,
+    "ast_hash": "92350b30cc7e137b7d67b6fcc82e450c",
     "semantic_hash": ""
   },
   "clanky/drony.html": {
-    "mtime": 1793889414.871536,
-    "seen": 1793889506.520992,
-    "ast_hash": "3ff313b644818683a5896dade404f2bd",
+    "mtime": 1793890288.5524673,
+    "seen": 1793890290.4061089,
+    "ast_hash": "74a2534bf73fb2b717cbbacf7b91b424",
     "semantic_hash": ""
   },
   "clanky/druhy-svetel.html": {
-    "mtime": 1793889414.8758519,
-    "seen": 1793889506.520992,
-    "ast_hash": "da36dc80e116dd8266262e264fab5e45",
+    "mtime": 1793890288.555266,
+    "seen": 1793890290.40611,
+    "ast_hash": "c17bd65fbb353894e72afd51b3465bec",
     "semantic_hash": ""
   },
   "clanky/email-marketing.html": {
-    "mtime": 1793889414.878192,
-    "seen": 1793889506.520993,
-    "ast_hash": "e3a035630bf8668ab92cf0a11eeb6b4b",
+    "mtime": 1793890288.5587702,
+    "seen": 1793890290.40611,
+    "ast_hash": "5dd23553727c03453371f7607feddae3",
     "semantic_hash": ""
   },
   "clanky/expozice.html": {
-    "mtime": 1793889414.8820662,
-    "seen": 1793889506.520993,
-    "ast_hash": "b08116e10770cdda126a143f8b69dba4",
+    "mtime": 1793890288.561383,
+    "seen": 1793890290.406111,
+    "ast_hash": "2731cc98b9cea36a0788d29d69f84879",
     "semantic_hash": ""
   },
   "clanky/fakturace-do-zahranici.html": {
-    "mtime": 1793889414.8840914,
-    "seen": 1793889506.520994,
-    "ast_hash": "4cf8028e6e1adec417bcde20b55723df",
+    "mtime": 1793890288.5635908,
+    "seen": 1793890290.406111,
+    "ast_hash": "bfa92ed5abe58d90534a2a7ef3d78d6b",
     "semantic_hash": ""
   },
   "clanky/fakturace.html": {
-    "mtime": 1793889414.8862584,
-    "seen": 1793889506.5209951,
-    "ast_hash": "e47e0a30968bd48dbcadbc17d6ac89c5",
+    "mtime": 1793890288.566054,
+    "seen": 1793890290.406112,
+    "ast_hash": "9cb38450ce52bea23f2987f0ecc4ad01",
     "semantic_hash": ""
   },
   "clanky/firemni-klienti-retainery.html": {
-    "mtime": 1793889414.8893328,
-    "seen": 1793889506.5209951,
-    "ast_hash": "044096f5c6f730e0622229c10f941224",
+    "mtime": 1793890288.569547,
+    "seen": 1793890290.406112,
+    "ast_hash": "ced651d0814f34ecd011f42c735c309e",
     "semantic_hash": ""
   },
   "clanky/follow-up.html": {
-    "mtime": 1793889414.8913496,
-    "seen": 1793889506.520996,
-    "ast_hash": "179680653a2800970c387b56bbc3dda8",
+    "mtime": 1793890288.571744,
+    "seen": 1793890290.406113,
+    "ast_hash": "5725bec1d63af36b7e3002ecb6cc2bdd",
     "semantic_hash": ""
   },
   "clanky/fotit-pro-sebe.html": {
-    "mtime": 1793889414.8939264,
-    "seen": 1793889506.520996,
-    "ast_hash": "1c41c56c33e9c0cc4e4da8fb3e6e6a6b",
+    "mtime": 1793890288.5737824,
+    "seen": 1793890290.406113,
+    "ast_hash": "03fb8fa4dbcfecefd3e9917bd33a4768",
     "semantic_hash": ""
   },
   "clanky/funnel.html": {
-    "mtime": 1793889414.896899,
-    "seen": 1793889506.520997,
-    "ast_hash": "c4cc25117f7e56c606d8ab215dbe90f0",
+    "mtime": 1793890288.576143,
+    "seen": 1793890290.406114,
+    "ast_hash": "54391183173fbef000ed4621e0767b4d",
     "semantic_hash": ""
   },
   "clanky/gdpr.html": {
-    "mtime": 1793889414.8990364,
-    "seen": 1793889506.520997,
-    "ast_hash": "077d81791efcad596926f9a0ffcdd918",
+    "mtime": 1793890288.5782716,
+    "seen": 1793890290.406114,
+    "ast_hash": "6ac21c1d53a995f616387379bd428f71",
     "semantic_hash": ""
   },
   "clanky/hlavni-vedlejsi-cinnost.html": {
-    "mtime": 1793889414.9012787,
-    "seen": 1793889506.520998,
-    "ast_hash": "e9df282530d37826855d5277395cd67c",
+    "mtime": 1793890288.5803876,
+    "seen": 1793890290.406115,
+    "ast_hash": "fc42e60dc7f0b77e9249cdaf20cff235",
     "semantic_hash": ""
   },
   "clanky/hloubka-ostrosti.html": {
-    "mtime": 1793889414.903898,
-    "seen": 1793889506.520998,
-    "ast_hash": "fca99669aea3d192272d11ecb71799d9",
+    "mtime": 1793890288.583412,
+    "seen": 1793890290.406115,
+    "ast_hash": "6e1ced726a4abe2217b6daee9791bae2",
     "semantic_hash": ""
   },
   "clanky/hodina-vs-balicky.html": {
-    "mtime": 1793889414.9061608,
-    "seen": 1793889506.520999,
-    "ast_hash": "8589f07fc04642e8102f32524c1e0db6",
+    "mtime": 1793890288.5857432,
+    "seen": 1793890290.406116,
+    "ast_hash": "97948a2a80770cef856248239c81bea4",
     "semantic_hash": ""
   },
   "clanky/imposter-syndrom.html": {
-    "mtime": 1793889414.908583,
-    "seen": 1793889506.520999,
-    "ast_hash": "8a51b3212a36b003a4aaed7329cd7217",
+    "mtime": 1793890288.58786,
+    "seen": 1793890290.406116,
+    "ast_hash": "64be4b401ff915382810d4c1701419e6",
     "semantic_hash": ""
   },
   "clanky/in-person-sales.html": {
-    "mtime": 1793889414.9118104,
-    "seen": 1793889506.521,
-    "ast_hash": "3395de25ff0b592d1478b9283efe3b38",
+    "mtime": 1793890288.5906074,
+    "seen": 1793890290.4061172,
+    "ast_hash": "acc1e9313892ccd7bd807f638cba8530",
     "semantic_hash": ""
   },
   "clanky/instagram.html": {
-    "mtime": 1793889414.914166,
-    "seen": 1793889506.521,
-    "ast_hash": "c5898520a0c9907af3d66bb26e01e9a7",
+    "mtime": 1793890288.5928347,
+    "seen": 1793890290.406118,
+    "ast_hash": "de1d4918af679634d0c8444709660741",
     "semantic_hash": ""
   },
   "clanky/jak-funguji-objektivy.html": {
-    "mtime": 1793889414.9166815,
-    "seen": 1793889506.5210009,
-    "ast_hash": "bd6b0ea716f21831a55b2c46cba972e9",
+    "mtime": 1793890288.5949767,
+    "seen": 1793890290.406118,
+    "ast_hash": "fe88185b9a3c1d6d002a89b3d8f96d83",
     "semantic_hash": ""
   },
   "clanky/jak-vybrat-fotak.html": {
-    "mtime": 1793889414.9189787,
-    "seen": 1793889506.521002,
-    "ast_hash": "abfe14643d958d1cd62dd5f253a809b6",
+    "mtime": 1793890288.5975182,
+    "seen": 1793890290.4061189,
+    "ast_hash": "a89d18cc36ee261ab568999e98d35853",
     "semantic_hash": ""
   },
   "clanky/jaky-objektiv.html": {
-    "mtime": 1793889414.921037,
-    "seen": 1793889506.521002,
-    "ast_hash": "46736b0c986b63667c2ab0a535a24790",
+    "mtime": 1793890288.599561,
+    "seen": 1793890290.4061189,
+    "ast_hash": "a5434fa7b6b4b21eea6ccec665d35e27",
     "semantic_hash": ""
   },
   "clanky/kdy-zdrazit.html": {
-    "mtime": 1793889414.9232738,
-    "seen": 1793889506.521003,
-    "ast_hash": "059abb0b323276cd9c4e08fe0479c181",
+    "mtime": 1793890288.6017468,
+    "seen": 1793890290.4061198,
+    "ast_hash": "505444d52840e7bf1f20109baee4ea32",
     "semantic_hash": ""
   },
   "clanky/klient-nezaplatil.html": {
-    "mtime": 1793889414.9253747,
-    "seen": 1793889506.521003,
-    "ast_hash": "8125cc543da79187640ea8d95ad948d2",
+    "mtime": 1793890288.6039476,
+    "seen": 1793890290.4061198,
+    "ast_hash": "97ad31b40ffa4dd12a3a476e5b32ccbc",
     "semantic_hash": ""
   },
   "clanky/kompozice.html": {
-    "mtime": 1793889414.9275196,
-    "seen": 1793889506.521004,
-    "ast_hash": "5cfe6fe835aef9c8ce7e46705610f2a7",
+    "mtime": 1793890288.60602,
+    "seen": 1793890290.406121,
+    "ast_hash": "b9b5ebfca5c10d0c46ca2bf3715775bf",
     "semantic_hash": ""
   },
   "clanky/konkurence-pozice.html": {
-    "mtime": 1793889414.9298594,
-    "seen": 1793889506.521004,
-    "ast_hash": "f668daf628d3381fd22204c2c4e7ff1d",
+    "mtime": 1793890288.6082,
+    "seen": 1793890290.406122,
+    "ast_hash": "189c3d8578e8bf6dbae7e7e4836e6bf0",
     "semantic_hash": ""
   },
   "clanky/lead-magnety.html": {
-    "mtime": 1793889414.9323308,
-    "seen": 1793889506.5210052,
-    "ast_hash": "a1a80da22a986703a6520ccf701bd09e",
+    "mtime": 1793890288.6104677,
+    "seen": 1793890290.406122,
+    "ast_hash": "3705010bf02f6ba70c951860e0667f2b",
     "semantic_hash": ""
   },
   "clanky/mikrofony-pro-video.html": {
-    "mtime": 1793889414.934588,
-    "seen": 1793889506.5210052,
-    "ast_hash": "5590df19d07768d3a2c463f9e0649fb3",
+    "mtime": 1793890288.6126447,
+    "seen": 1793890290.406123,
+    "ast_hash": "dff782d8bcae14893a3c3dd4d00eef49",
     "semantic_hash": ""
   },
   "clanky/motivace-slow.html": {
-    "mtime": 1793889414.9365456,
-    "seen": 1793889506.521006,
-    "ast_hash": "cf057b3d34bfafa68dfd560922f75010",
+    "mtime": 1793890288.6145504,
+    "seen": 1793890290.406123,
+    "ast_hash": "ea52cb51fa56c40e315a3fa8abd2a3cd",
     "semantic_hash": ""
   },
   "clanky/namitky.html": {
-    "mtime": 1793889414.9386315,
-    "seen": 1793889506.521007,
-    "ast_hash": "ac3c36a08e53b544fb9bc9f21c9ccf41",
+    "mtime": 1793890288.616665,
+    "seen": 1793890290.406124,
+    "ast_hash": "7783fa61fc2630c67ce93200eedae7bf",
     "semantic_hash": ""
   },
   "clanky/negativni-recenze.html": {
-    "mtime": 1793889414.94042,
-    "seen": 1793889506.521007,
-    "ast_hash": "75e231b75a0e3f18043e92a6c3bfc7ac",
+    "mtime": 1793890288.6187959,
+    "seen": 1793890290.406124,
+    "ast_hash": "b1bcc1a7201a16b3c3b6c9c1e166b8a0",
     "semantic_hash": ""
   },
   "clanky/networking.html": {
-    "mtime": 1793889414.9423046,
-    "seen": 1793889506.521008,
-    "ast_hash": "f016e07c2dd95eec4efeca02e3466736",
+    "mtime": 1793890288.6206234,
+    "seen": 1793890290.406125,
+    "ast_hash": "22c5de1e79e02c6e20ac8c9a9803fee2",
     "semantic_hash": ""
   },
   "clanky/obor-architektura.html": {
-    "mtime": 1793889414.944204,
-    "seen": 1793889506.521008,
-    "ast_hash": "7bbf809c0e139ee33722c70ce54fdba8",
+    "mtime": 1793890288.6226945,
+    "seen": 1793890290.406126,
+    "ast_hash": "a3adcc7c9906c5ebb8ee83eeea636328",
     "semantic_hash": ""
   },
   "clanky/obor-maturity-plesy.html": {
-    "mtime": 1793889414.9464016,
-    "seen": 1793889506.521009,
-    "ast_hash": "e33fc42e66fc171c04308716c8f06f82",
+    "mtime": 1793890288.6257157,
+    "seen": 1793890290.406126,
+    "ast_hash": "ed593a8b8cb6888232c19c9c38beec17",
     "semantic_hash": ""
   },
   "clanky/obor-moda.html": {
-    "mtime": 1793889414.9488883,
-    "seen": 1793889506.52101,
-    "ast_hash": "3a66d68bf276d1923e8e4f5037714646",
+    "mtime": 1793890288.6278443,
+    "seen": 1793890290.4061272,
+    "ast_hash": "1f575f5acf25b31c4375603f1c5183e0",
     "semantic_hash": ""
   },
   "clanky/obor-newborn.html": {
-    "mtime": 1793889414.9512699,
-    "seen": 1793889506.52101,
-    "ast_hash": "af058b3b6f344eabd2d79dc481387dcc",
+    "mtime": 1793890288.629803,
+    "seen": 1793890290.4061272,
+    "ast_hash": "3fe654c8960e662ef27f56e5aed2cb79",
     "semantic_hash": ""
   },
   "clanky/obor-niche.html": {
-    "mtime": 1793889414.9536254,
-    "seen": 1793889506.5210109,
-    "ast_hash": "b6f222cff6e3d990830165adb378c39b",
+    "mtime": 1793890288.6317804,
+    "seen": 1793890290.4061282,
+    "ast_hash": "edb7e2a994a4410f9ce9c4af3fe02ad3",
     "semantic_hash": ""
   },
   "clanky/obor-portret.html": {
-    "mtime": 1793889414.9557288,
-    "seen": 1793889506.5210109,
-    "ast_hash": "008fa0df5400b24f6702ce9842bc395a",
+    "mtime": 1793890288.6339815,
+    "seen": 1793890290.4061282,
+    "ast_hash": "2bbea813610d43551774435fdd3f4baf",
     "semantic_hash": ""
   },
   "clanky/obor-produkt.html": {
-    "mtime": 1793889414.9579227,
-    "seen": 1793889506.521012,
-    "ast_hash": "ce5e33a205b03b654e260df831935a34",
+    "mtime": 1793890288.636128,
+    "seen": 1793890290.406129,
+    "ast_hash": "f7919c195acbae4432f14853c2004f34",
     "semantic_hash": ""
   },
   "clanky/obor-reportaz.html": {
-    "mtime": 1793889414.9598584,
-    "seen": 1793889506.521012,
-    "ast_hash": "f0cb37669bb542dd824c64119919dcb3",
+    "mtime": 1793890288.638022,
+    "seen": 1793890290.4061298,
+    "ast_hash": "6894ee8ba382bd14002f7a92f2ab4dd2",
     "semantic_hash": ""
   },
   "clanky/obor-sport.html": {
-    "mtime": 1793889414.9617243,
-    "seen": 1793889506.521013,
-    "ast_hash": "e87ba52f6fffd5040412e08b0174155c",
+    "mtime": 1793890288.639843,
+    "seen": 1793890290.4061298,
+    "ast_hash": "51a30a76a976f3bc231c4390b299e2ef",
     "semantic_hash": ""
   },
   "clanky/obor-svatby.html": {
-    "mtime": 1793889414.9638352,
-    "seen": 1793889506.521014,
-    "ast_hash": "413123d65111815ddd6b47293a5a261c",
+    "mtime": 1793890288.6416497,
+    "seen": 1793890290.406131,
+    "ast_hash": "ac44a61aa8165560654e0565e8c89354",
     "semantic_hash": ""
   },
   "clanky/ohnisko.html": {
-    "mtime": 1793889414.9662735,
-    "seen": 1793889506.521014,
-    "ast_hash": "a0a4b4a04711c7d65b1ba2eea13e62dc",
+    "mtime": 1793890288.6440566,
+    "seen": 1793890290.406131,
+    "ast_hash": "06dedd243abd8cbc20d5f9693356bf58",
     "semantic_hash": ""
   },
   "clanky/onboarding.html": {
-    "mtime": 1793889414.968372,
-    "seen": 1793889506.521015,
-    "ast_hash": "ccc58b84bc48e96e6dc7c1992d449829",
+    "mtime": 1793890288.6462133,
+    "seen": 1793890290.406132,
+    "ast_hash": "54ddbd864610b93308f4a5682333f8f7",
     "semantic_hash": ""
   },
   "clanky/pausal-vs-vydaje.html": {
-    "mtime": 1793889414.970328,
-    "seen": 1793889506.521015,
-    "ast_hash": "8b3c50ab8f02438a73f81bba7fe3d0c0",
+    "mtime": 1793890288.648071,
+    "seen": 1793890290.406132,
+    "ast_hash": "ddacbf9970a65aad8b1b0f2f975803dd",
     "semantic_hash": ""
   },
   "clanky/planovani-roku.html": {
-    "mtime": 1793889414.9723537,
-    "seen": 1793889506.5210161,
-    "ast_hash": "cbdecd42d013a86f0f2aa0f0eb24eb2b",
+    "mtime": 1793890288.6503088,
+    "seen": 1793890290.406133,
+    "ast_hash": "5738477b54069c8a83e14a0b4f901e46",
     "semantic_hash": ""
   },
   "clanky/pojisteni.html": {
-    "mtime": 1793889414.974445,
-    "seen": 1793889506.521017,
-    "ast_hash": "64461c3314ee752dcabc41df9d41aae7",
+    "mtime": 1793890288.6522415,
+    "seen": 1793890290.406133,
+    "ast_hash": "2522eaf8d52b999426411c922dec5618",
     "semantic_hash": ""
   },
   "clanky/pomala-sezona.html": {
-    "mtime": 1793889414.9764857,
-    "seen": 1793889506.521017,
-    "ast_hash": "166ebafe1f2fbfc90a11be25e380eda1",
+    "mtime": 1793890288.6541173,
+    "seen": 1793890290.4061341,
+    "ast_hash": "af6c80b5ebaf5fe6557b2a9e27db495f",
     "semantic_hash": ""
   },
   "clanky/portfolio.html": {
-    "mtime": 1793889414.9785712,
-    "seen": 1793889506.521018,
-    "ast_hash": "c835fbd3eb9915daaede7b83376c205d",
+    "mtime": 1793890288.655898,
+    "seen": 1793890290.406135,
+    "ast_hash": "646803d7d0b0284a74f5e866cd66d6e8",
     "semantic_hash": ""
   },
   "clanky/prehled-oboru.html": {
-    "mtime": 1793889414.9810536,
-    "seen": 1793889506.521018,
-    "ast_hash": "d18c8a4a641ffe29aa011c46afd5c387",
+    "mtime": 1793890288.657887,
+    "seen": 1793890290.406135,
+    "ast_hash": "33e07379cba3950c469a91fef483b4db",
     "semantic_hash": ""
   },
   "clanky/prezentace-ceniku.html": {
-    "mtime": 1793889414.9856822,
-    "seen": 1793889506.521019,
-    "ast_hash": "ac6081e57d79a65324650ab98c5355ac",
+    "mtime": 1793890288.6598268,
+    "seen": 1793890290.406136,
+    "ast_hash": "629233fb2bffaf06d6827e4b942afa67",
     "semantic_hash": ""
   },
   "clanky/prvni-klienti.html": {
-    "mtime": 1793889414.9881496,
-    "seen": 1793889506.521019,
-    "ast_hash": "7ed1a770ad588d263ba99e24307c6826",
+    "mtime": 1793890288.6624532,
+    "seen": 1793890290.406136,
+    "ast_hash": "b1af4f68f93da42039e3e1f3c413752e",
     "semantic_hash": ""
   },
   "clanky/raw-vs-jpeg.html": {
-    "mtime": 1793889414.9903057,
-    "seen": 1793889506.52102,
-    "ast_hash": "f92e20cf0d13c810a8375a3e1424359f",
+    "mtime": 1793890288.6647322,
+    "seen": 1793890290.406137,
+    "ast_hash": "2d1c4516229312812d8e4c1b0a8a04ab",
     "semantic_hash": ""
   },
   "clanky/reklama-ze-zahranici.html": {
-    "mtime": 1793889414.9926093,
-    "seen": 1793889506.52102,
-    "ast_hash": "ffe79f3159c1172ff9f3f37b3f63faf3",
+    "mtime": 1793890288.6668596,
+    "seen": 1793890290.406137,
+    "ast_hash": "5e1cbd750724076ede47b8ae46380678",
     "semantic_hash": ""
   },
   "clanky/rodina-freelance.html": {
-    "mtime": 1793889414.9948947,
-    "seen": 1793889506.521021,
-    "ast_hash": "255a681da0711de217b1f75500714957",
+    "mtime": 1793890288.6689036,
+    "seen": 1793890290.4061382,
+    "ast_hash": "be02171810a8b5c528cb403d26ae22c1",
     "semantic_hash": ""
   },
   "clanky/seo.html": {
-    "mtime": 1793889414.997342,
-    "seen": 1793889506.521021,
-    "ast_hash": "34c1a1bde94cde3d1def6c4d1835a5b6",
+    "mtime": 1793890288.6710715,
+    "seen": 1793890290.4061382,
+    "ast_hash": "742a4b81c4e8c1d4711b823c032af321",
     "semantic_hash": ""
   },
   "clanky/skin-tones.html": {
-    "mtime": 1793889414.9993856,
-    "seen": 1793889506.5210218,
-    "ast_hash": "7b92b64e97ffdb3ffbe07417e440dccc",
+    "mtime": 1793890288.6730886,
+    "seen": 1793890290.406139,
+    "ast_hash": "613ff9ae594017af59f0ee2da02cd1cb",
     "semantic_hash": ""
   },
   "clanky/smlouvy-pro-fotografy.html": {
-    "mtime": 1793889415.00185,
-    "seen": 1793889506.521023,
-    "ast_hash": "51c1d698b682e02f601a2b33a4285b00",
+    "mtime": 1793890288.6750605,
+    "seen": 1793890290.4061399,
+    "ast_hash": "ab52677d1b969c63f2f6fa130181c788",
     "semantic_hash": ""
   },
   "clanky/socialni-zdravotni-osvc.html": {
-    "mtime": 1793889415.0040846,
-    "seen": 1793889506.521023,
-    "ast_hash": "b20864a30145ae3049278310d09a8c78",
+    "mtime": 1793890288.6772337,
+    "seen": 1793890290.4061399,
+    "ast_hash": "310a14358053b235f9a04af78023bb0b",
     "semantic_hash": ""
   },
   "clanky/souhlas-foceni.html": {
-    "mtime": 1793889415.0061157,
-    "seen": 1793889506.521024,
-    "ast_hash": "060975e9f8a7b6e4584a217f713d3d93",
+    "mtime": 1793890288.679671,
+    "seen": 1793890290.406141,
+    "ast_hash": "f8c4e7fa8aba38c2fc17df352604e740",
     "semantic_hash": ""
   },
   "clanky/spoluprace-partneri.html": {
-    "mtime": 1793889415.007995,
-    "seen": 1793889506.521024,
-    "ast_hash": "44bc8e17bba86acec925512d56e1af4d",
+    "mtime": 1793890288.6819193,
+    "seen": 1793890290.406141,
+    "ast_hash": "d2aeb98f0e07ef3f1dad034e4ba3a177",
     "semantic_hash": ""
   },
   "clanky/srovnavani.html": {
-    "mtime": 1793889415.0102441,
-    "seen": 1793889506.521025,
-    "ast_hash": "dbab2d9e263aa46737f58f1bc3c50ecc",
+    "mtime": 1793890288.6839318,
+    "seen": 1793890290.406142,
+    "ast_hash": "1c9b72b5f38b1d693889d01106a1ad4c",
     "semantic_hash": ""
   },
   "clanky/storytelling.html": {
-    "mtime": 1793889415.0125155,
-    "seen": 1793889506.521025,
-    "ast_hash": "dd572428a48f70552fcef539c662afc3",
+    "mtime": 1793890288.6860163,
+    "seen": 1793890290.406142,
+    "ast_hash": "cd35b767b9bed63d3cd8b6cad4edc4e5",
     "semantic_hash": ""
   },
   "clanky/svetlo.html": {
-    "mtime": 1793889415.0163589,
-    "seen": 1793889506.5210261,
-    "ast_hash": "0186ec79269943ba8f40725f71f72ece",
+    "mtime": 1793890288.688508,
+    "seen": 1793890290.406143,
+    "ast_hash": "afa73f60f2a3740a14d67645a89aa707",
     "semantic_hash": ""
   },
   "clanky/tiktok.html": {
-    "mtime": 1793889415.0229816,
-    "seen": 1793889506.5210261,
-    "ast_hash": "593d59cdcaf0bc4558405041e5b8e732",
+    "mtime": 1793890288.6910183,
+    "seen": 1793890290.406143,
+    "ast_hash": "9fbd5359cfa47f392270a7f22e1f73a8",
     "semantic_hash": ""
   },
   "clanky/top-nastroje.html": {
-    "mtime": 1793889415.025283,
-    "seen": 1793889506.521027,
-    "ast_hash": "664c977cb66dd1734536e41f02b66fc7",
+    "mtime": 1793890288.6930711,
+    "seen": 1793890290.406144,
+    "ast_hash": "78876298eebbf46dca70662793683fe7",
     "semantic_hash": ""
   },
   "clanky/upsell.html": {
-    "mtime": 1793889415.0275064,
-    "seen": 1793889506.521027,
-    "ast_hash": "91d74208ed5581f54b20f386a8c54a08",
+    "mtime": 1793890288.6951969,
+    "seen": 1793890290.406144,
+    "ast_hash": "2d38af047ff7f29e1b0233fd202d4609",
     "semantic_hash": ""
   },
   "clanky/white-balance.html": {
-    "mtime": 1793889415.0300024,
-    "seen": 1793889506.521028,
-    "ast_hash": "60ebcc7e3b3f1620f2934e0f77dd223b",
+    "mtime": 1793890288.6979084,
+    "seen": 1793890290.406145,
+    "ast_hash": "32f899031ec92aded737299e2ca3eeed",
     "semantic_hash": ""
   },
   "clanky/youtube.html": {
-    "mtime": 1793889415.0321293,
-    "seen": 1793889506.521028,
-    "ast_hash": "6468d4bfec80413369468f3a55006939",
+    "mtime": 1793890288.6998591,
+    "seen": 1793890290.406146,
+    "ast_hash": "082821d2bf21638413aa39fe6853041f",
     "semantic_hash": ""
   },
   "cookies.html": {
-    "mtime": 1793889414.7855425,
-    "seen": 1793889506.5210292,
-    "ast_hash": "5946e506d16e310f8b877f04c5cb08ec",
+    "mtime": 1793890288.472838,
+    "seen": 1793890290.406146,
+    "ast_hash": "51dac80598791aa95f03c9e1c4164167",
     "semantic_hash": ""
   },
   "hodinovka.html": {
-    "mtime": 1793889414.7885175,
-    "seen": 1793889506.5210292,
-    "ast_hash": "f000dfafdc6e27cd1ed31003132ef471",
+    "mtime": 1793890288.475974,
+    "seen": 1793890290.406147,
+    "ast_hash": "2589331d0efed448a5a8f88f969e9764",
     "semantic_hash": ""
   },
   "kenji-ai.html": {
-    "mtime": 1793889414.7926066,
-    "seen": 1793889506.521031,
-    "ast_hash": "1a60983bdbb5735665a05c3933fef82f",
+    "mtime": 1793890288.4801865,
+    "seen": 1793890290.4061482,
+    "ast_hash": "87227b2b3ac66245bcc6e1ad5c64c492",
     "semantic_hash": ""
   },
   "kurz.html": {
-    "mtime": 1793889414.7947514,
-    "seen": 1793889506.521031,
-    "ast_hash": "f3968c3cebdee25cb86f5341ee40024f",
+    "mtime": 1793890288.482061,
+    "seen": 1793890290.4061482,
+    "ast_hash": "3e6ddbc25a76c6be2b2d0d9bc60747ca",
     "semantic_hash": ""
   },
   "kurzy.html": {
-    "mtime": 1793889414.7967322,
-    "seen": 1793889506.5210319,
-    "ast_hash": "ea845942150966a3cf3b6e5f79a0937c",
+    "mtime": 1793890288.4839194,
+    "seen": 1793890290.4061491,
+    "ast_hash": "2564ef98505add2086365ffeb26247d7",
     "semantic_hash": ""
   },
   "kviz.html": {
-    "mtime": 1793889414.7990925,
-    "seen": 1793889506.5210319,
-    "ast_hash": "f07a72b222656fbe8314d8541de6229b",
+    "mtime": 1793890288.4861643,
+    "seen": 1793890290.4061491,
+    "ast_hash": "b19f505be8c3cb21752fa7b69608c662",
     "semantic_hash": ""
   },
   "moje-presety.html": {
-    "mtime": 1793889414.8007789,
-    "seen": 1793889506.521033,
-    "ast_hash": "4a01b63ca8f43ac357c7da33044bdf6a",
+    "mtime": 1793890288.4879405,
+    "seen": 1793890290.4061499,
+    "ast_hash": "5b68f568c56ae41a0d302f38d44dfc12",
     "semantic_hash": ""
   },
   "obchodni-podminky.html": {
-    "mtime": 1793889414.805065,
-    "seen": 1793889506.521034,
-    "ast_hash": "bbd8ada1a097ee4936840e91db955201",
+    "mtime": 1793890288.4918692,
+    "seen": 1793890290.4061508,
+    "ast_hash": "d28ad4c035bcc0d50c05c04bac4c9957",
     "semantic_hash": ""
   },
   "obnova-hesla.html": {
-    "mtime": 1793889414.8068972,
-    "seen": 1793889506.521034,
-    "ast_hash": "5aff799aeed871c23dd8f9a5032c7efb",
+    "mtime": 1793890288.4936032,
+    "seen": 1793890290.406152,
+    "ast_hash": "b83d64d51caee8198081125bf8fa5c01",
     "semantic_hash": ""
   },
   "odmena.html": {
-    "mtime": 1793889414.808649,
-    "seen": 1793889506.521035,
-    "ast_hash": "246d760e628264fa197abc8f43a0191d",
+    "mtime": 1793890288.4952176,
+    "seen": 1793890290.406152,
+    "ast_hash": "9465627b57ff5ea3bce0f0c8f1f9440d",
     "semantic_hash": ""
   },
   "platba-uspesna.html": {
-    "mtime": 1793889414.8140395,
-    "seen": 1793889506.5210361,
-    "ast_hash": "17e636613967f610f1cce00110340427",
+    "mtime": 1793890288.5010197,
+    "seen": 1793890290.406153,
+    "ast_hash": "8394f2b4e71c26151f05dc2463e7fb1b",
     "semantic_hash": ""
   },
   "platba-zrusena.html": {
-    "mtime": 1793889414.816262,
-    "seen": 1793889506.521037,
-    "ast_hash": "7bab3758915673682abf58882b0025a2",
+    "mtime": 1793890288.5029163,
+    "seen": 1793890290.406154,
+    "ast_hash": "a4aedf8b00d03718b6dfc8b0c5b5dad7",
     "semantic_hash": ""
   },
   "prispevky.html": {
-    "mtime": 1793889414.8218973,
-    "seen": 1793889506.521038,
-    "ast_hash": "81155ba5a50b33f298903f8691488c27",
+    "mtime": 1793890288.5076907,
+    "seen": 1793890290.406155,
+    "ast_hash": "f15fc426c6ab80945b431aeff3072814",
     "semantic_hash": ""
   },
   "sablony.html": {
-    "mtime": 1793889414.8239403,
-    "seen": 1793889506.521039,
-    "ast_hash": "7457f0fc18da6b3ae82eb2f5cb420be6",
+    "mtime": 1793890288.5097077,
+    "seen": 1793890290.406157,
+    "ast_hash": "a554ab946f0a97ea38922aa42a8a147d",
     "semantic_hash": ""
   },
   "supabase/email-templates/confirm-signup.html": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "zasady-ochrany-udaju.html": {
-    "mtime": 1793889414.8259213,
-    "seen": 1793889506.5210419,
-    "ast_hash": "1b29e03878c4e89c4716e5123f69185e",
+    "mtime": 1793890288.5118356,
+    "seen": 1793890290.4061592,
+    "ast_hash": "0804c062974cb4cfb37e45e3ec85a355",
     "semantic_hash": ""
   },
   "netlify/functions/koupit.js": {
@@ -1134,8 +1134,8 @@
     "semantic_hash": ""
   },
   "plan-na-miru.html": {
-    "mtime": 1793889414.8118827,
-    "seen": 1793889506.5210361,
+    "mtime": 1793890288.498698,
+    "seen": 1793890290.406153,
     "ast_hash": "c22afd3e7b4ddb7998a7d5b118f303bd",
     "semantic_hash": ""
   },

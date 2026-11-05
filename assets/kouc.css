@@ -440,3 +440,18 @@ body.composer-open { overflow: hidden; }
 .acct-av.no-img img { display: none; }
 .acct-av.no-img .acct-ico { display: block; color: var(--kc-on-gold); }
 .kc-me-save { display: inline-flex; margin-top: 12px; padding: 9px 16px; border: 0; border-radius: 99px; background: var(--kc-accent-soft); color: var(--kc-accent); font: 700 13px 'Inter', sans-serif; cursor: pointer; }
+
+/* Světlý režim: dlaždice s Kenjim zůstává tmavá (fotka má tmavé okraje, na světlé ploše by z ní byl obdélník). */
+:root[data-theme="light"] .kc-now {
+  --text-strong: #ffffff; --text: #e8e6e1; --text-dim: #a3a19c; --text-mute: #85837f; --border: rgba(255,255,255,.16);
+  --kc-g1: #C8913A; --kc-g2: #F4D58F; --kc-gold: linear-gradient(120deg, #C8913A, #F4D58F); --kc-on-gold: #141006;
+  --kc-accent: #F4D58F; --kc-accent-soft: rgba(244,213,143,.13); --kc-tile-2: #222226;
+  border-color: transparent;
+  background: radial-gradient(80% 120% at 100% 0%, rgba(200,145,58,.3), transparent 60%), radial-gradient(60% 80% at 85% 100%, rgba(244,213,143,.1), transparent 60%), #17171a;
+}
+
+/* Dávky feedu jsou jen obal — rozložení drží .feed-list */
+.feed-batch { display: contents; }
+.feed-sentinel { display: flex; justify-content: center; padding: 6px 0 12px; }
+.feed-more { height: 46px; padding: 0 22px; border: 1px solid var(--kc-line); border-radius: 99px; background: var(--bg-card); color: var(--text-strong); font: 700 14px 'Inter', sans-serif; cursor: pointer; }
+.feed-more:hover { border-color: var(--kc-accent); color: var(--kc-accent); }

@@ -888,7 +888,7 @@
     const level = levelOf(xp);
     const ig = String(pc.instagram || (user && user.instagram) || '').replace(/^@+/, '');
     const name = String(pc.displayName || '').trim() || (ig ? '@' + ig : String((user && user.email) || '').split('@')[0]) || 'Tvůj profil';
-    const avatar = String(pc.avatar || '').trim();
+    const avatar = rootUrl(pc.avatar);
     const bio = String(pc.bio || '').trim();
     const tierLabel = currentTier() === 'academy' ? 'ACADEMY' : (currentTier() === 'knihovna' ? 'DATABÁZE' : 'FREE');
     const tierClass = currentTier() === 'free' ? 'free' : 'member';
@@ -925,9 +925,14 @@
   }
 
   // Fotka v tlačítku účtu (vpravo nahoře) — z profilu, jinak obecná ikona.
+  // Relativní cesta k fotce (např. assets/…) musí vést od kořene webu i z článků v clanky/.
+  function rootUrl(src) {
+    src = String(src || '').trim();
+    return src && !/^(?:https?:|data:|blob:|\/)/i.test(src) ? ROOT + src : src;
+  }
   function headerAvatarHtml(src) {
     const icon = '<svg class="acct-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>';
-    src = String(src || '').trim();
+    src = rootUrl(src);
     if (!src) return icon;
     return '<span class="acct-av"><img src="' + escapeHtml(src) + '" alt="" onerror="this.parentNode.classList.add(\'no-img\')">' + icon + '</span>';
   }

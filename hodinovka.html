@@ -23,7 +23,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css?v=20261026-auth-help-v1">
-<link rel="stylesheet" href="assets/kouc.css?v=20261105-kouc-v3">
+<link rel="stylesheet" href="assets/kouc.css?v=20261105-kouc-v4">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <style>
@@ -63,6 +63,7 @@
 .calc-app .cost-val { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--a-orange); letter-spacing:0; white-space:nowrap; }
 .calc-app .cost-del { flex-shrink:0; width:24px; height:24px; border-radius:6px; background:transparent; border:1px solid var(--a-border); color:var(--a-dim); font-size:14px; line-height:1; cursor:pointer; transition:all .15s; }
 .calc-app .cost-del:hover { border-color:var(--a-red); color:var(--a-red); }
+@media (pointer: coarse) { .calc-app .cost-del { width:40px; height:40px; font-size:17px; border-radius:10px; } }
 .calc-app input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:3px; background:var(--a-surface2); border-radius:2px; outline:none; cursor:pointer; }
 .calc-app input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--a-orange); cursor:pointer; box-shadow:0 0 0 4px var(--a-orange-dim); transition:box-shadow .15s; }
 .calc-app input[type=range]::-webkit-slider-thumb:hover { box-shadow:0 0 0 7px var(--a-orange-dim); }
@@ -217,9 +218,9 @@
 </div>
 
 <script src="assets/articles.js?v=20260907-presety-v2"></script>
-<script src="assets/nav.js?v=20261105-kouc-v2"></script>
+<script src="assets/nav.js?v=20261105-kouc-v3"></script>
 <script src="assets/notify.js?v=20260903-komunita-v1"></script>
-<script src="assets/auth.js?v=20261105-kouc-v2"></script>
+<script src="assets/auth.js?v=20261105-kouc-v3"></script>
 <script src="assets/script.js?v=20260907-email-v1"></script>
 
 <script>
@@ -280,7 +281,7 @@
         '<div class="cost-head">'+
           '<input class="cost-label" value="'+esc(item.label)+'" data-key="'+key+'" data-i="'+i+'" aria-label="Název položky">'+
           '<span class="cost-val" id="v-'+key+'-'+i+'">'+fmt(item.value)+'</span>'+
-          (key!=='zisk' ? '<button class="cost-del" data-key="'+key+'" data-i="'+i+'" title="Odebrat">×</button>' : '')+
+          (key!=='zisk' ? '<button class="cost-del" type="button" data-key="'+key+'" data-i="'+i+'" title="Odebrat" aria-label="Odebrat položku">×</button>' : '')+
         '</div>'+
         '<input type="range" min="0" max="'+item.max+'" step="'+item.step+'" value="'+item.value+'" data-key="'+key+'" data-i="'+i+'">';
       el.appendChild(row);

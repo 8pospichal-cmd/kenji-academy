@@ -9,6 +9,16 @@
 // aby scrollspy ve script.js našel vygenerované TOC odkazy.
 // ============================================
 
+// Přechod mezi stránkami (bublinka ve spodní liště) prohlížeč občas přeskočí
+// (rychlé kliknutí, skrytá karta) — bez ošetření to hlásí chybu do konzole.
+['pageswap', 'pagereveal'].forEach(function (type) {
+  window.addEventListener(type, function (e) {
+    var vt = e.viewTransition;
+    if (!vt) return;
+    ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt[k] && vt[k].catch) vt[k].catch(function () {}); });
+  });
+});
+
 (function () {
   const cats = window.KENJI_CATEGORIES || [];
   const articles = window.KENJI_ARTICLES || [];
