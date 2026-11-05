@@ -43,6 +43,8 @@
   const canPremiumCommunity = !!(A.can && A.can('communityPremium'));
   const email = user && user.email ? user.email : '';
   const ig = user && user.instagram ? user.instagram : '';
+  // Vlastní jméno a fotka z Nastavení (cache v localStorage) pro náhled u psaní komentáře.
+  function myProfile() { try { return JSON.parse(localStorage.getItem('kenji_profile_v1') || '{}') || {}; } catch (e) { return {}; } }
   const isAdmin = ADMIN_EMAILS.indexOf((email || '').toLowerCase()) >= 0;
   const requestedCat = normCat(new URLSearchParams(location.search).get('category') || '');
   const communityView = new URLSearchParams(location.search).get('view') === 'leaderboard' ? 'leaderboard' : 'feed';
@@ -679,12 +681,14 @@
     try {
       const comments = await rpc('list_comments', { p_email: email, p_post: id });
       box.innerHTML =
-        (comments || []).map((c) =>
-          '<div class="comment" data-cid="' + c.id + '"><span class="feed-avatar sm">' + initials(c.author_ig) + '</span>' +
-          '<div class="comment-body"><span class="comment-author">' + (c.author_ig ? '@' + esc(c.author_ig) : 'člen') + '</span> ' +
-          esc(c.body) + '<div class="comment-sub">' + timeAgo(c.created_at) +
-          (c.can_delete ? ' · <button class="comment-del">smazat</button>' : '') + '</div></div></div>').join('') +
-        '<div class="comment-add"><span class="feed-avatar sm">' + initials(ig) + '</span>' +
+        (comments || []).map((c) => {
+          const who = c.author_name || (c.author_ig ? '@' + c.author_ig : 'člen');
+          return '<div class="comment" data-cid="' + c.id + '">' + avatar(who, c.author_avatar, true) +
+            '<div class="comment-body"><span class="comment-author">' + esc(who) + '</span> ' +
+            esc(c.body) + '<div class="comment-sub">' + timeAgo(c.created_at) +
+            (c.can_delete ? ' · <button class="comment-del">smazat</button>' : '') + '</div></div></div>';
+        }).join('') +
+        '<div class="comment-add">' + avatar(myProfile().displayName || ig || email, myProfile().avatar, true) +
         '<input type="text" class="comment-input" placeholder="Napiš komentář…">' +
         '<button class="comment-send">Odeslat</button></div>';
       // odeslání komentáře
